@@ -88,7 +88,10 @@ export function compile({ mission, domain, query, level }) {
     rules: rules.map((r) => ({ id: r.id, authority: r.authority, version: r.version, source: r.source })),
   }
   const hash = crypto.createHash('sha1').update(JSON.stringify(hashBase)).digest('hex').slice(0, 12)
-  return { bundle: { manifest, rules }, hash, outPath: path.join(ROOT, 'bundles', `${mission}-${hash}.json`) }
+  const outPath = path.join(ROOT, 'bundles', `${mission}-${hash}.json`)
+  fs.mkdirSync(path.dirname(outPath), { recursive: true })
+  fs.writeFileSync(outPath, JSON.stringify({ manifest, rules }, null, 2))
+  return { bundle: { manifest, rules }, hash, outPath }
 }
 
 // --- CLI (uniquement si lancé directement, pas à l'import) ---
@@ -99,8 +102,6 @@ if (dryRun) {
   console.log(JSON.stringify(bundle, null, 2))
   console.log(`\n[DRY-RUN] aurait ecrit: ${outPath} (${bundle.rules.length} regle(s))`)
 } else {
-  fs.mkdirSync(path.dirname(outPath), { recursive: true })
-  fs.writeFileSync(outPath, JSON.stringify(bundle, null, 2))
   console.log(`Bundle: ${outPath}`)
   console.log(`Hash: ${hash} | Rules: ${bundle.rules.length} | Domain: ${domain || 'all'}`)
   for (const r of bundle.rules) console.log(`  - [${r.authority}] ${r.id} (v${r.version}) ${r.type}`)
