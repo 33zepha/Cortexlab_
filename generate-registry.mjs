@@ -20,8 +20,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const MANIFESTS = path.join(ROOT, 'manifests')
-const OUT = path.join(ROOT, 'registry', 'registry.generated.json')
-const LEGACY = path.join(ROOT, 'registry', 'registry.json')
+const OUT = path.join(ROOT, 'registry', 'registry.json')
 
 // --- helpers ---
 function readYaml(p) {
@@ -68,6 +67,8 @@ for (const mf of manifestFiles) {
         version: doc?.version ?? 1,
         source: e.source,
         applies_when: e.applies_when || doc?.applies_when || null,
+        controls: e.controls || doc?.controls || null,
+        check: doc?.check ?? null,
       })
     }
   }
@@ -90,9 +91,10 @@ const generated = {
 fs.mkdirSync(path.dirname(OUT), { recursive: true })
 fs.writeFileSync(OUT, JSON.stringify(generated, null, 2))
 
-// --- mode --check : equivalence avec l'ancien ---
-if (process.argv.includes('--check')) {
-  const legacy = JSON.parse(fs.readFileSync(LEGACY, 'utf8'))
+// --- mode --verify : le registry ecrit est bien la derive des manifests ---
+if (process.argv.includes('--verify')) {
+  const onDisk = JSON.parse(fs.readFileSync(OUT, 'utf8'))
+  const fresh = generated
   const norm = (r) => JSON.stringify({
     entries: r.entries.map((e) => ({
       id: e.id, type: e.type, authority: e.authority, domain: e.domain,
@@ -100,8 +102,8 @@ if (process.argv.includes('--check')) {
       controls: e.controls || null, applies_when: e.applies_when || null,
     })),
   })
-  const same = norm(generated) === norm(legacy)
-  console.log(same ? 'OK: registry genere == legacy (equivalence structurelle)' : 'DIFF: les deux registres divergent')
+  const same = norm(onDisk) === norm(fresh)
+  console.log(same ? 'OK: registry.json est a jour (derive des manifests)' : 'DIFF: registry.json desynchronise — relance npm run generate')
   process.exit(same ? 0 : 1)
 }
 

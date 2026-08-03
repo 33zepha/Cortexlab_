@@ -1,0 +1,21 @@
+schema_version: 1
+id: CTRL-NO-DEBUG-LOG
+type: control
+authority: 2
+status: active
+version: 1
+effective: 2026-08-03
+domain: frontend
+source: cortex-orchestration/schemas/ctrl-no-debug-log.yaml
+description: >
+  Interdit les traces de debug (console.log/console.debug) laissees en
+  production dans le code frontend Cortex. Anti-slop identifie par
+  l'utilisateur. Verifiable par grep sur le JS/JSX cible.
+applies_when: "toute modification de composant frontend Cortex"
+controls: [ctrl-no-direct-exec]
+check:
+  type: grep
+  target: "src/**/*.{js,jsx,ts,tsx}"
+  pattern: "console\\.(log|debug)\\s*\\("
+  on_match: block
+  message: "Trace de debug console.log/debug detectee — a retirer avant prod."

@@ -6,6 +6,12 @@
       "domain": "frontend",
       "source": "schemas/ctrl-no-label-uppercase.yaml",
       "applies_when": "toute modification de composant formulaire Cortex"
+    },
+    {
+      "id": "CTRL-NO-DEBUG-LOG",
+      "domain": "frontend",
+      "source": "schemas/ctrl-no-debug-log.yaml",
+      "applies_when": "toute modification de composant frontend Cortex"
     }
   ]
 }
