@@ -1,0 +1,21 @@
+schema_version: 1
+id: CTRL-NO-LABEL-UPPERCASE
+type: control
+authority: 2
+status: active
+version: 1
+effective: 2026-08-02
+domain: frontend
+source: cortex-orchestration/schemas/ctrl-no-label-uppercase.yaml
+description: >
+  Interdit les labels de formulaire en petites capitales (text-transform:
+  uppercase) sur l'UI Cortex. Anti-slop identifie par l'utilisateur comme
+  'full slop'. Verifiable par grep sur le CSS/JSX cible.
+applies_when: "toute modification de composant formulaire Cortex"
+check:
+  type: grep
+  target: "src/**/*.{jsx,css}"
+  pattern: "text-transform:\\s*uppercase"
+  on_match: block
+  message: "Label en uppercase detecte — anti-slop 'full slop' interdit."
+controls: [ctrl-no-direct-exec]
