@@ -12,7 +12,7 @@ import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
-const REAL_REGISTRY = path.join(ROOT, 'registry', 'registry.generated.json')
+const REAL_REGISTRY = path.join(ROOT, 'registry', 'registry.json')
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cortex-reg-'))
 const tmpRegistry = path.join(tmpDir, 'registry.json')
@@ -80,14 +80,14 @@ function compileOn(regPath) {
     const out = compile({ mission: 'det', domain: 'frontend', query: '', level: 'standard' })
     return out
   } finally {
-    fs.copyFileSync(path.join(ROOT, 'registry', 'registry.generated.json.bak'), REAL_REGISTRY)
+    fs.copyFileSync(path.join(ROOT, 'registry', 'registry.json.bak'), REAL_REGISTRY)
   }
 }
 
 before(() => {
-  fs.copyFileSync(REAL_REGISTRY, path.join(ROOT, 'registry', 'registry.generated.json.bak'))
+  fs.copyFileSync(REAL_REGISTRY, path.join(ROOT, 'registry', 'registry.json.bak'))
 })
 after(() => {
-  fs.rmSync(path.join(ROOT, 'registry', 'registry.generated.json.bak'), { force: true })
+  fs.rmSync(path.join(ROOT, 'registry', 'registry.json.bak'), { force: true })
   fs.rmSync(tmpDir, { recursive: true, force: true })
 })
