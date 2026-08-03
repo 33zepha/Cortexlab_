@@ -20,6 +20,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { executeCheck } from './checks.mjs'
+import { EventStore } from './event-store.mjs'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 
@@ -51,7 +52,8 @@ export function loadBundle(bundlePath) {
  *   budget: {maxExplorations, maxReworks, maxCost} (INV-010)
  * @returns {object} rapport de mission (closure + détails)
  */
-export async function runMission({ bundlePath, target, budget = {} }) {
+export async function runMission({ bundlePath, target, budget = {}, eventStore = null }) {
+  const store = eventStore
   const bundle = loadBundle(bundlePath)
   const maxReworks = budget.maxReworks ?? 1
   const maxExplorations = budget.maxExplorations ?? 3
@@ -60,6 +62,8 @@ export async function runMission({ bundlePath, target, budget = {} }) {
   const startAt = new Date().toISOString()
   const escalationReasons = []
   const budgetState = { explorations: 0, reworks: 0, cost: 0 }
+
+  store?.emit('mission.start', { mission: bundle.manifest.mission, domain: bundle.manifest.domain || null, target, rules: bundle.rules.length })
 
   // 1) Appliquer chaque control vérifiable (INV-005 : preuves pilotées par risque)
   const controlsReport = []
@@ -93,6 +97,7 @@ export async function runMission({ bundlePath, target, budget = {} }) {
           `(${result.findings.length} occurrence(s))`
       )
     }
+    store?.emit('check.run', { rule: rule.id, matched: result.matched, violation: isViolation, findings: result.findings.length })
     controlsReport.push({
       id: rule.id,
       type: rule.type,
@@ -118,6 +123,8 @@ export async function runMission({ bundlePath, target, budget = {} }) {
   }
   if (overBudget.length) escalationReasons.push(`BUDGET DEPASSE : ${overBudget.join(' ; ')}`)
 
+  store?.emit('budget.eval', { ...budgetState, limits: { maxExplorations, maxReworks, maxCost }, over: overBudget })
+
   // 3) Décision de closure (INV-006)
   let closure, rationale
   if (escalationReasons.length) {
@@ -137,6 +144,8 @@ export async function runMission({ bundlePath, target, budget = {} }) {
       : "Mission calibrée, réversible et contrôlée : aucune violation, budget " +
         "respecté, tous les controls sont auto-vérifiés. LIVRAISON AUTONOME."
   }
+
+  store?.emit('mission.closure', { closure, escalations: escalationReasons.length })
 
   return {
     mission: bundle.manifest.mission,
@@ -178,7 +187,12 @@ if (me != null) budget.maxExplorations = Number(me)
 const mc = get('--max-cost')
 if (mc != null) budget.maxCost = Number(mc)
 
-const report = await runMission({ bundlePath, target, budget })
+// ledger: un events.ndjson a cote du bundle (ou chemin --events)
+const eventsPath = get('--events') || path.join(path.dirname(bundlePath), 'events.ndjson')
+const eventStore = new EventStore(eventsPath)
+
+const report = await runMission({ bundlePath, target, budget, eventStore })
+eventStore.close()
 if (asJson) {
   console.log(JSON.stringify(report, null, 2))
 } else {
