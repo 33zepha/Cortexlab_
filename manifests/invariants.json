@@ -1,0 +1,16 @@
+{
+  "kind": "invariants",
+  "source": "constitution/core.yaml",
+  "entries": [
+    { "id": "INV-001", "domain": "orchestration", "controls": ["ctrl-no-direct-exec"] },
+    { "id": "INV-002", "domain": "orchestration", "controls": ["ctrl-no-fixed-pipeline"] },
+    { "id": "INV-003", "domain": "autonomy", "controls": ["ctrl-perimeter-lived"] },
+    { "id": "INV-004", "domain": "communication", "controls": ["ctrl-bounded-channel"] },
+    { "id": "INV-005", "domain": "verification", "controls": ["ctrl-evidence-based"] },
+    { "id": "INV-006", "domain": "closure", "controls": ["ctrl-autonomous-closure"] },
+    { "id": "INV-007", "domain": "learning", "controls": ["ctrl-visual-confidence"] },
+    { "id": "INV-008", "domain": "post-error", "controls": ["ctrl-error-governance"] },
+    { "id": "INV-009", "domain": "versioning", "controls": ["ctrl-single-source"] },
+    { "id": "INV-010", "domain": "budget", "controls": ["ctrl-mission-budget"] }
+  ]
+}

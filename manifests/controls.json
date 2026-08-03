@@ -1,0 +1,11 @@
+{
+  "kind": "controls",
+  "entries": [
+    {
+      "id": "CTRL-NO-LABEL-UPPERCASE",
+      "domain": "frontend",
+      "source": "schemas/ctrl-no-label-uppercase.yaml",
+      "applies_when": "toute modification de composant formulaire Cortex"
+    }
+  ]
+}
