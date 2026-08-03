@@ -32,8 +32,8 @@ const query = argv.get('--query') || ''
 const level = argv.get('--level') || 'standard'
 const dryRun = argv.has('--dry-run')
 
-function loadRegistry() {
-  return JSON.parse(fs.readFileSync(REGISTRY, 'utf8'))
+export function loadRegistry(regPath = REGISTRY) {
+  return JSON.parse(fs.readFileSync(regPath, 'utf8'))
 }
 
 function loadSchema(rel) {
@@ -47,7 +47,7 @@ function loadSchema(rel) {
   return doc
 }
 
-function compile({ mission, domain, query, level }) {
+export function compile({ mission, domain, query, level }) {
   const reg = loadRegistry()
   const entries = reg.entries.filter(
     (e) => (!domain || e.domain === domain) && (!e.status || e.status === 'active')
@@ -91,6 +91,9 @@ function compile({ mission, domain, query, level }) {
   return { bundle: { manifest, rules }, hash, outPath: path.join(ROOT, 'bundles', `${mission}-${hash}.json`) }
 }
 
+// --- CLI (uniquement si lancé directement, pas à l'import) ---
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+if (isMain) {
 const { bundle, hash, outPath } = compile({ mission, domain, query, level })
 if (dryRun) {
   console.log(JSON.stringify(bundle, null, 2))
@@ -101,4 +104,5 @@ if (dryRun) {
   console.log(`Bundle: ${outPath}`)
   console.log(`Hash: ${hash} | Rules: ${bundle.rules.length} | Domain: ${domain || 'all'}`)
   for (const r of bundle.rules) console.log(`  - [${r.authority}] ${r.id} (v${r.version}) ${r.type}`)
+}
 }
