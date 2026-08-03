@@ -16,7 +16,7 @@ import yaml from 'js-yaml'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
-const REGISTRY = path.join(ROOT, 'registry', 'registry.json')
+const REGISTRY = path.join(ROOT, 'registry', 'registry.generated.json')
 const COMPILER_VERSION = 2
 
 // --- args (minimal: --cle=val ou --flag) ---
