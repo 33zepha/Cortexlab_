@@ -1,0 +1,9 @@
+{
+  "kind": "agents",
+  "entries": [
+    { "id": "AG-HERMES", "tier": "ceo", "source": "constitution/agents.yaml" },
+    { "id": "AG-CLAUDE", "tier": "manager", "source": "constitution/agents.yaml" },
+    { "id": "AG-ANTIGRAVITY", "tier": "manager", "source": "constitution/agents.yaml" },
+    { "id": "AG-KIMI", "tier": "manager", "source": "constitution/agents.yaml" }
+  ]
+}

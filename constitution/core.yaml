@@ -128,3 +128,17 @@ invariants:
       les risques residuels acceptables, et qu'aucun controle supplementaire
       ne modifierait raisonnablement la decision. Les boucles sont detectees.
     controls: [ctrl-mission-budget]
+
+  - id: INV-011
+    type: invariant
+    authority: 1
+    domain: orchestration
+    statement: >-
+      Modele d'entreprise: Hermes raisonne en CEO H24 et orchestre des
+      managers (IAs de haut niveau, ex. Claude/Antigravity/Kimi) qui
+      orchestrent des salaries (agents/workers). Toutes les IAs branchees
+      sont utilisables; le choix d'une IA pour une mission vise la meilleure
+      qualite au cout le plus bas, via des rapports concis de chaque IA.
+      Aucune IA n'est privilegiee par defaut: le routing est pilote par
+      aptitude, cout et rapport qualite/prix, jamais par habitude.
+    controls: [ctrl-single-source]

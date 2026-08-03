@@ -11,6 +11,7 @@
     { "id": "INV-007", "domain": "learning", "controls": ["ctrl-visual-confidence"] },
     { "id": "INV-008", "domain": "post-error", "controls": ["ctrl-error-governance"] },
     { "id": "INV-009", "domain": "versioning", "controls": ["ctrl-single-source"] },
-    { "id": "INV-010", "domain": "budget", "controls": ["ctrl-mission-budget"] }
+    { "id": "INV-010", "domain": "budget", "controls": ["ctrl-mission-budget"] },
+    { "id": "INV-011", "domain": "orchestration", "controls": ["ctrl-single-source"] }
   ]
 }

@@ -1,0 +1,56 @@
+# Agents gouvernés — source canonique (derivation, pas dupliquee)
+#
+# Modele d'entreprise Cortex (rapport deep-research) :
+#   Hermes = CEO qui raisonne H24 (orchestration globale)
+#   Managers = IAs de haut niveau qui orchestrent les salaries
+#   Salaries = agents/workers execution
+# Toutes les IAs branchees sont utilisees ; optimisation par rapports concis
+# de chaque IA -> meilleure qualite, couts diminues.
+#
+# Ce fichier est la VERITE sur les entites. manifests/agents.json ne porte que
+# les metadonnees ; generate-registry.mjs tire le reste d'ici.
+
+agents:
+  - id: AG-CLAUDE
+    name: Claude
+    provider: anthropic
+    tier: manager
+    model: claude-opus-4-8
+    role: "Manager produit/strategie : decomposer, piloter les salaries, reporter a Hermes"
+    strengths: [raisonnement, redaction, code, conformite]
+    cost_index: 1.7          # relatif (1.0 = base)
+    quality_index: 0.95
+    status: active
+
+  - id: AG-ANTIGRAVITY
+    name: Antigravity
+    provider: google
+    tier: manager
+    model: antigravity-code-agent
+    role: "Manager code/engineering : orchestration agents de code, livraison technique"
+    strengths: [code, orchestration-agents, autonomie]
+    cost_index: 1.3
+    quality_index: 0.92
+    status: active
+
+  - id: AG-KIMI
+    name: Kimi
+    provider: moonshot
+    tier: manager
+    model: kimi-k3
+    role: "Manager recherche/donnees : synthese long contexte, reporting dense"
+    strengths: [long-context, recherche, resume]
+    cost_index: 0.8
+    quality_index: 0.88
+    status: active
+
+  - id: AG-HERMES
+    name: Hermes
+    provider: nous
+    tier: ceo
+    model: hy3
+    role: "CEO : raisonne H24, orchestration des managers, decisions de closure"
+    strengths: [orchestration, outils, multi-IA, raisonnement-metis]
+    cost_index: 0.4
+    quality_index: 0.90
+    status: active

@@ -29,9 +29,13 @@ function readYaml(p) {
 function findInvariant(doc, id) {
   return Array.isArray(doc?.invariants) ? doc.invariants.find((i) => i.id === id) : null
 }
+function findAgent(doc, id) {
+  return Array.isArray(doc?.agents) ? doc.agents.find((a) => a.id === id) : null
+}
 
 // --- collecte des sources canoniques ---
 const constitution = readYaml(path.join(ROOT, 'constitution', 'core.yaml'))
+const agentsDoc = readYaml(path.join(ROOT, 'constitution', 'agents.yaml'))
 const schemaFiles = fs.readdirSync(path.join(ROOT, 'schemas')).filter((f) => f.endsWith('.yaml'))
 const schemas = Object.fromEntries(
   schemaFiles.map((f) => [path.join('schemas', f), readYaml(path.join(ROOT, 'schemas', f))])
@@ -70,20 +74,41 @@ for (const mf of manifestFiles) {
         controls: e.controls || doc?.controls || null,
         check: doc?.check ?? null,
       })
+    } else if (m.kind === 'agents') {
+      const ag = findAgent(agentsDoc, e.id)
+      entries.push({
+        id: e.id,
+        type: 'agent',
+        tier: e.tier || ag?.tier || 'worker',
+        name: ag?.name || e.id,
+        authority: e.tier === 'ceo' ? 1 : 2,
+        domain: 'orchestration',
+        status: ag?.status ?? 'active',
+        version: 1,
+        source: e.source,
+        role: ag?.role || null,
+        provider: ag?.provider || null,
+        model: ag?.model || null,
+        strengths: ag?.strengths || null,
+        cost_index: ag?.cost_index ?? null,
+        quality_index: ag?.quality_index ?? null,
+      })
     }
   }
 }
 
-// ordre stable : invariants d'abord, puis controls, tri par id
+// ordre stable : invariants, controls, agents — tri par type puis id
 entries.sort((a, b) => {
-  if (a.type !== b.type) return a.type === 'invariant' ? -1 : 1
+  const order = { invariant: 0, control: 1, agent: 2 }[a.type] ?? 3
+  const orderB = { invariant: 0, control: 1, agent: 2 }[b.type] ?? 3
+  if (order !== orderB) return order - orderB
   return a.id.localeCompare(b.id)
 })
 
 const generated = {
   schema_version: 1,
   generated_at: new Date().toISOString().slice(0, 10),
-  authority_classes: ['invariants', 'policies', 'architecture', 'heuristics', 'preferences', 'proofs', 'index'],
+  authority_classes: ['invariants', 'policies', 'architecture', 'heuristics', 'preferences', 'proofs', 'index', 'agents'],
   entries,
 }
 
