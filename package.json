@@ -1,7 +1,7 @@
 {
   "name": "cortex-orchestration",
   "version": "1.0.0",
-  "description": "🚧 Cortex Lab — runtime d'orchestration IA en chantier : gouverne le travail multi-agents via bundles immuables et checks vérifiables.",
+  "description": "Cortex Lab — a work-in-progress AI orchestration runtime: governs multi-agent work through immutable bundles and verifiable checks.",
   "main": "index.js",
   "scripts": {
     "generate": "node generate-registry.mjs",

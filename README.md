@@ -1,48 +1,50 @@
-# 🧠 Cortex Lab
+# Cortex Lab
 
-> 🚧 **Atelier ouvert, en construction.** On façonne la discipline silencieuse des agents IA :
-> des règles et des garde-fous qui les gardent alignés, responsables et dignes de confiance.
-> Viens regarder ça prendre forme.
+![state](https://img.shields.io/badge/state-WIP-yellow)
+![tests](https://img.shields.io/badge/tests-13%2F13%20passing-brightgreen)
+![node](https://img.shields.io/badge/node-%3E%3D18-9cf)
 
-Cortex Lab est un terrain de jeu où les agents IA cessent d'improviser pour travailler
-comme **une seule équipe disciplinée**. L'idée n'est pas de leur dicter quoi produire —
-c'est de poser, en sourdine, les repères qui les empêchent de dériver.
+> 🚧 work-in-progress — an open workshop where AI agents stop improvising
+> and start working as one disciplined team.
 
-**Pas de promesse magique. Juste de l'ordre, patiemment construit.**
+Cortex Lab is where AI agents stop improvising and start working as a
+single disciplined team. The point isn't to tell them what to build —
+it's to lay down, quietly, the guardrails that keep them aligned,
+accountable, and trustworthy.
 
----
+No magic. Just order, built patiently.
 
-## ✨ Ce qu'on cherche
+## what we're after
 
-- Des agents qui **respectent le cadre** au lieu de le contourner.
-- Une exécution **traçable**, où chaque décision se justifie.
-- Une frontière nette entre « autorisé » et « hors limites » — jamais floue.
+- agents that **respect the frame** instead of bending around it
+- execution you can **trace** — every decision justified
+- a clear line between *allowed* and *off-limits* — never blurry
 
-## 🚧 Où on en est
+## where we stand
 
-| État | Ce qui vit déjà |
-|---|---|
-| ✅ | Le cœur minimal tourne et ses tests passent. |
-| 🚧 | L'interface et les garde-fous avancés se montent. |
-| 🔜 | La boucle d'adaptation, puis l'ouverture à plusieurs équipes. |
+| state | what's alive                          |
+| ----- | ------------------------------------- |
+| done  | the minimal core runs, its tests pass |
+| wip   | interface + advanced guardrails       |
+| next  | adaptive loop, then multi-team        |
 
-## 🔭 Regarder de plus près
+## take a closer look
 
-Le lab est vivant sur cette branche. Pour sentir le moteau sans tout percer :
+The lab is alive on this branch. To feel the engine without breaking
+it open:
 
 ```bash
 npm install
-npm test     # le contrat minimal est verrouillé par les tests
+npm test     # the minimal contract is locked by tests
 ```
 
-Les esprits curieux trouveront les notes de conception dans `docs/` — mais chut,
-c'est encore en chantier.
+Curious minds will find design notes under `docs/` — though it's still
+under construction.
 
-## 🤝 Construire avec nous
+## build with us
 
-Chantier ouvert : ouvre une *issue*, propose une *PR*, ou simply reste dans le coin.
-Tout regard neuf et toute aide sont les bienvenus.
+Open an issue, send a PR, or just hang around. Fresh eyes welcome.
 
 ---
 
-*Cortex Lab — un atelier, pas un manifeste.*
+*cortex lab — a workshop, not a manifesto.*
