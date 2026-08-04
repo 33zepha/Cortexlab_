@@ -3,21 +3,21 @@ version: alpha
 name: Cortex Console
 description: Design system for the Cortex local observability console — watch, control and understand your agents, IA and Hermes in real time. Derived from 10 reference dashboards (Orchestra, Synqra, JunoMind, Agentic UI, Recent Executions, Agent Timestamp, Cost Breakdown, Logistics, +2).
 colors:
-  primary: "#4F46E5"
-  primary-hover: "#4338CA"
+  primary: "#0B725D"
+  primary-hover: "#075344"
   success: "#16A34A"
-  warning: "#D97706"
-  error: "#DC2626"
-  info: "#2563EB"
-  running: "#0EA5E9"
-  bg: "#F6F7F8"
-  sidebar: "#FBFBFC"
+  warning: "#D48A2C"
+  error: "#D75252"
+  info: "#5872C5"
+  running: "#0B725D"
+  bg: "#F6F8F6"
+  sidebar: "#FBFCFB"
   surface: "#FFFFFF"
-  sub-surface: "#F8F9FA"
-  border: "#DFE2E6"
-  border-strong: "#CDD2D8"
-  text: "#17191C"
-  text-muted: "#70757D"
+  sub-surface: "#F8FAF9"
+  border: "#DDE4DF"
+  border-strong: "#C8D2CB"
+  text: "#17231E"
+  text-muted: "#728078"
 typography:
   h1:
     fontFamily: Inter
@@ -115,16 +115,17 @@ Real-time data is fed by the existing NDJSON ledger (`runtime/event-store.mjs`) 
 
 # Colors
 
-- **Primary (#4F46E5):** Cortex indigo. The only high-emphasis interaction color (primary buttons, active nav, links).
+- **Primary (#0B725D):** Cortex jade. The only high-emphasis interaction color (primary buttons, active nav, links, running state). No purple, no indigo — jade is the single accent.
 - **Success (#16A34A):** autonomous delivery, agent active, complete.
-- **Warning (#D97706):** needs human information, threshold 60–85%.
-- **Error (#DC2626):** escalation required, failed, threshold >85%.
-- **Info / Running (#2563EB / #0EA5E9):** navigation accents, in-progress states.
+- **Warning (#D48A2C):** needs human information, waiting for intervention — orange is reserved for this meaning only.
+- **Error (#D75252):** escalation required, failed, destructive action — red is reserved for this meaning only.
+- **Info (#5872C5):** discreet navigation/informational accents only, never a dominant color.
 - **Neutrals — a layered stack, not one flat wash.** Four surface values that must stay
-  distinguishable: canvas `#F6F7F8` → sidebar `#FBFBFC` → surface `#FFFFFF` (cards) →
-  sub-surface `#F8F9FA` (blocks nested *inside* a card). Borders carry the separation:
-  `#DFE2E6` default, `#CDD2D8` for emphasis (hover, selected, dividers that must read).
-  Text `#17191C`, muted `#70757D` — muted stays legible, never a pale gray.
+  distinguishable: canvas `#F6F8F6` (broken-white, slightly mineral) → sidebar `#FBFCFB` → surface `#FFFFFF` (cards) →
+  sub-surface `#F8FAF9` (blocks nested *inside* a card). Borders carry the separation:
+  `#DDE4DF` default, `#C8D2CB` for emphasis (hover, selected, dividers that must read).
+  Text `#17231E` (graphite), muted `#728078` — muted stays legible, never a pale gray.
+  No black backgrounds anywhere, including technical/terminal surfaces.
 
 # Typography
 

@@ -110,35 +110,35 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
               const lastEvent = activity.lastResult
               return (
                 <tr key={agent.id}>
-                  <td>
+                  <td data-label="Agent">
                     <div className="agent-identity-cell">
                       <span className={`agent-avatar avatar-${agent.name?.toLowerCase()}`}>{agent.name?.slice(0, 1) || 'A'}</span>
                       <span><strong>{agent.name}</strong><small>{agent.id}</small></span>
                     </div>
                   </td>
-                  <td><span className="role-cell">{agent.role || '—'}</span></td>
-                  <td>
+                  <td data-label="Rôle"><span className="role-cell">{agent.role || '—'}</span></td>
+                  <td data-label="Modèle">
                     <div className="model-cell"><strong>{agent.model || '—'}</strong><small>{agent.provider || '—'}</small></div>
                   </td>
-                  <td>
+                  <td data-label="Statut">
                     <span className={`status-pill ${active ? 'status-success' : 'status-neutral'}`}>
                       {activity.running ? 'En cours' : active ? 'Actif' : 'Inactif'}<i aria-hidden="true" />
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Mission actuelle">
                     <div className="mission-agent-cell">
                       <strong>{mission?.name || '—'}</strong>
                       <small>{activity.rule || (mission ? `${PHASE_LABELS[mission.phase] || 'En cours'} · ${mission.progress}%` : 'Disponible')}</small>
                     </div>
                   </td>
-                  <td><strong className="mono-number">{activity.cost.toFixed(2).replace('.', ',')}</strong></td>
-                  <td>
+                  <td data-label="Coût"><strong className="mono-number">{activity.cost.toFixed(2).replace('.', ',')}</strong></td>
+                  <td data-label="Qualité">
                     <div className="quality-cell">
                       <strong>{quality}%</strong>
                       <span className="mini-progress"><i style={{ width: `${quality}%` }} /></span>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Dernier événement">
                     <div className="event-cell">
                       <strong>{lastEventLabel(activity)}</strong>
                       <small>{relativeTime(lastEvent?.ts || activity.since, now)}</small>

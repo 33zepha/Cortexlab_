@@ -9,16 +9,18 @@ export default function Topbar({
   onQueryChange,
   attentionOnly,
   onToggleFilters,
-  onRunMission,
-  running,
+  onMenu,
 }) {
   return (
     <header className="topbar-shell">
       <div className="topbar-title-block">
+        <button type="button" className="topbar-menu" onClick={onMenu} aria-label="Ouvrir la navigation">
+          <Icon name="menu" />
+        </button>
         <h1>Console</h1>
         <span className={`runtime-state ${connected ? 'is-online' : ''}`}>
           <i aria-hidden="true" />
-          {connected ? 'Runtime opérationnel' : 'Runtime hors ligne'}
+          <span>{connected ? 'Runtime opérationnel' : 'Runtime hors ligne'}</span>
         </span>
         <span className="last-sync">
           Dernière synchro : {lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}
@@ -42,16 +44,7 @@ export default function Topbar({
           onClick={onToggleFilters}
         >
           <Icon name="filter" />
-          Filtres
-        </button>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={onRunMission}
-          disabled={running}
-        >
-          <Icon name="play" />
-          {running ? 'Exécution…' : 'Lancer une mission'}
+          <span>Filtres</span>
         </button>
       </div>
     </header>
