@@ -128,11 +128,20 @@ Real-time data is fed by the existing NDJSON ledger (`runtime/event-store.mjs`) 
 
 # Typography
 
-Inter for everything (matches all 10 references). JetBrains Mono for ledger hashes, IDs, technical values. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Labels are uppercase tracked (`letterSpacing: 0.04em`) for section eyebrows and badge text.
+Inter for everything (matches all 10 references). JetBrains Mono for ledger hashes, IDs, technical values. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.04em`) is for section eyebrows and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
 
 # Layout
 
-- **Left sidebar** (224px): logo + grouped nav in ALL-CAPS groups — `MONITOR` (Dashboard, Activity, Live, History), `ORCHESTRATE` (Agents, Missions, Playbooks), `DELEGATE` (Integrations, Events), `ANALYTICS` (Reports, Cost, Usage). Active item = light-gray pill + primary text.
+- **Left sidebar** (224px), grouped by daily task, not by concept — `Control` (Overview,
+  Missions, Agents, Approvals), `Observe` (Activity, Ledger, Usage), `System` (Rules,
+  Connections, Settings). Every item carries an icon; counts sit right-aligned on the
+  items that have one. Group labels are sentence-case and legible, never micro-uppercase.
+  Active item = white surface pill with border + primary text and icon.
+  **Only render destinations that are built** — a nav of dead links reads as a template.
+  The full IA lives in the nav config behind a `built` flag; flip it when the view ships.
+- **Sidebar header:** wordmark + live runtime state (`● Runtime online`, driven by the SSE
+  connection). **Footer:** live readouts (missions 24h, pending approvals, last run) —
+  state, visually distinct from navigation.
 - **Top bar:** page title left; search + Filters + primary `+ New` / `+ Run Mission` right.
 - **Main:** KPI summary row (3–4 cards) → toolbar (view toggle grid/table, refresh) → content grid or table.
 - **Content density:** cards max 3-up on desktop, table for dense agent lists (JunoMind pattern).
@@ -152,7 +161,8 @@ Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inn
 
 # Components
 
-- **Sidebar nav group:** uppercase label + items; active = `surface` pill, primary text.
+- **Sidebar nav group:** sentence-case label + icon-led items with optional count; active =
+  `surface` pill with border, primary text and icon.
 - **Card:** white, `lg` radius, 20px padding, soft shadow. Header (title + optional status badge), body (stats / description), footer (Last Run / integrations / toggle).
 - **Stat:** label (muted, uppercase) + big number (h1 weight). Pairs laid out horizontally.
 - **Badge:** pill, color-coded (success/warning/error/running). Maps to closure states.

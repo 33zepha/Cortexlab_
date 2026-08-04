@@ -39,6 +39,11 @@ export function computeKpis(agents, events) {
     (e) => e.type === 'mission.closure' && e.data?.closure === 'LIVRAISON_AUTONOME'
   ).length
 
+  // INV-006: an escalated closure is exactly what awaits a human decision.
+  const approvals = events.filter(
+    (e) => e.type === 'mission.closure' && e.data?.closure === 'ESCALADE_HUMAINE'
+  ).length
+
   let lastRun = null
   for (const e of events) {
     const t = new Date(e.ts).getTime()
@@ -49,6 +54,8 @@ export function computeKpis(agents, events) {
     managers,
     missions24h,
     closuresAuto,
+    approvals,
+    agents: agents.length,
     lastRun: lastRun === null ? '—' : shortTs(new Date(lastRun).toISOString()),
   }
 }
