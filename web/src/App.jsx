@@ -5,6 +5,7 @@ import SystemHealth from './components/SystemHealth.jsx'
 import MissionTable from './components/MissionTable.jsx'
 import MissionInspector from './components/MissionInspector.jsx'
 import AgentTable from './components/AgentTable.jsx'
+import AgentInspector from './components/AgentInspector.jsx'
 import LiveActivity from './components/LiveActivity.jsx'
 import EventExplorer from './components/EventExplorer.jsx'
 import { relativeTime, useLedger, useNow } from './lib/ledger.js'
@@ -47,6 +48,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [attentionOnly, setAttentionOnly] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState(() => queryValue('mission'))
+  const [selectedAgentId, setSelectedAgentId] = useState(() => queryValue('agent'))
   const [ledgerOpen, setLedgerOpen] = useState(() => queryValue('ledger') === '1')
 
   const managers = useMemo(
@@ -60,6 +62,10 @@ export default function App() {
   const selectedMission = useMemo(
     () => missions.find((mission) => mission.id === selectedMissionId) || null,
     [missions, selectedMissionId]
+  )
+  const selectedAgent = useMemo(
+    () => agents.find((agent) => agent.id === selectedAgentId) || null,
+    [agents, selectedAgentId]
   )
   const missions24h = useMemo(() => {
     const limit = now - 24 * 60 * 60 * 1000
@@ -142,7 +148,10 @@ export default function App() {
                   query={query}
                   attentionOnly={attentionOnly}
                   selectedMissionId={selectedMissionId}
-                  onSelectMission={(mission) => setSelectedMissionId(mission.id)}
+                  onSelectMission={(mission) => {
+                    setSelectedAgentId(null)
+                    setSelectedMissionId(mission.id)
+                  }}
                 />
               </div>
               <div id="agents" className="anchor-section">
@@ -152,6 +161,11 @@ export default function App() {
                   missions={missions}
                   now={now}
                   globalQuery={query}
+                  selectedAgentId={selectedAgentId}
+                  onSelectAgent={(agent) => {
+                    setSelectedMissionId(null)
+                    setSelectedAgentId(agent.id)
+                  }}
                 />
               </div>
             </div>
@@ -172,6 +186,14 @@ export default function App() {
         mission={selectedMission}
         now={now}
         onClose={() => setSelectedMissionId(null)}
+      />
+      <AgentInspector
+        agent={selectedAgent}
+        events={events}
+        missions={missions}
+        system={system}
+        now={now}
+        onClose={() => setSelectedAgentId(null)}
       />
       <EventExplorer
         open={ledgerOpen}
