@@ -4,6 +4,7 @@ import App from './App.jsx'
 import './styles/index.css'
 import './styles/refinement.css'
 import './styles/explorer.css'
+import './styles/agent-inspector.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
