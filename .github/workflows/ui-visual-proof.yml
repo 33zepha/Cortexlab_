@@ -80,6 +80,15 @@ jobs:
             'http://127.0.0.1:4173/?demo=1&mission=m_018f2a1b' \
             artifacts/cortex-mission-inspector.png
 
+      - name: Capture agent inspector
+        working-directory: web
+        run: |
+          npx --yes playwright@1.48.2 screenshot \
+            --viewport-size='1536,1024' \
+            --wait-for-timeout=1200 \
+            'http://127.0.0.1:4173/?demo=1&agent=AG-HERMES' \
+            artifacts/cortex-agent-inspector.png
+
       - name: Capture ledger explorer
         working-directory: web
         run: |
