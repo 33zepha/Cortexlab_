@@ -1,13 +1,6 @@
 #!/usr/bin/env node
 /**
- * server/index.mjs — dashboard local Cortex (observabilite live).
- *
- * Lit le registry (annuaire des agents) + le ledger NDJSON (events en direct)
- * et les sert a l'UI via API REST + Server-Sent Events (SSE).
- * Le bouton "Run Mission" lance VRAIMENT le CoS sur un fixture ; les events
- * apparaissent en direct dans le feed.
- *
- * Usage: node server/index.mjs [--port 4173]
+ * Serveur local Cortex : API runtime, SSE et application React compilée.
  */
 import http from 'node:http'
 import fs from 'node:fs'
@@ -15,6 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runMission } from '../runtime/chief-of-staff.mjs'
 import { EventStore, readEvents } from '../runtime/event-store.mjs'
+import { buildMissionControl } from '../runtime/mission-projection.mjs'
 import { compile } from '../compile-bundle.mjs'
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
@@ -26,61 +20,91 @@ fs.mkdirSync(LEDGER_DIR, { recursive: true })
 
 const PORT = Number(process.argv.includes('--port') && process.argv[process.argv.indexOf('--port') + 1]) || 4173
 
-// --- lecteurs ---
 function getAgents() {
-  const reg = JSON.parse(fs.readFileSync(REGISTRY, 'utf8'))
-  return reg.entries.filter((e) => e.type === 'agent').map((a) => ({
-    id: a.id, name: a.name, tier: a.tier, provider: a.provider, model: a.model,
-    role: a.role, status: a.status, cost_index: a.cost_index, quality_index: a.quality_index,
-    strengths: a.strengths || [],
-  }))
+  const registry = JSON.parse(fs.readFileSync(REGISTRY, 'utf8'))
+  return registry.entries
+    .filter((entry) => entry.type === 'agent')
+    .map((agent) => ({
+      id: agent.id,
+      name: agent.name,
+      tier: agent.tier,
+      provider: agent.provider,
+      model: agent.model,
+      role: agent.role,
+      status: agent.status,
+      cost_index: agent.cost_index,
+      quality_index: agent.quality_index,
+      strengths: agent.strengths || [],
+    }))
 }
 
 function getEvents() {
   return readEvents(LEDGER_FILE)
 }
 
-// --- SSE : diffuse les nouvelles lignes du ledger ---
 const sseClients = new Set()
 function broadcast(event) {
   const data = `data: ${JSON.stringify(event)}\n\n`
-  for (const res of sseClients) res.write(data)
+  for (const response of sseClients) response.write(data)
 }
-// on surveille le fichier pour tout append externe (ex: CLI CoS direct)
+
 let lastSize = fs.existsSync(LEDGER_FILE) ? fs.statSync(LEDGER_FILE).size : 0
-let watchTimer = null
 function startWatch() {
-  watchTimer = setInterval(() => {
+  setInterval(() => {
     if (!fs.existsSync(LEDGER_FILE)) return
     const size = fs.statSync(LEDGER_FILE).size
-    if (size > lastSize) {
-      const buf = fs.readFileSync(LEDGER_FILE, 'utf8')
-      const lines = buf.slice(lastSize).split('\n').filter(Boolean)
-      for (const l of lines) {
-        try { broadcast(JSON.parse(l)) } catch {}
+    if (size < lastSize) lastSize = 0
+    if (size <= lastSize) return
+
+    const buffer = fs.readFileSync(LEDGER_FILE, 'utf8')
+    const lines = buffer.slice(lastSize).split('\n').filter(Boolean)
+    for (const line of lines) {
+      try {
+        broadcast(JSON.parse(line))
+      } catch {
+        // Une ligne partielle sera relue au prochain append.
       }
-      lastSize = size
     }
+    lastSize = size
   }, 500)
 }
 
-// --- router statique ---
-const MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json' }
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+}
+
 function serveStatic(req, res) {
   let url = req.url.split('?')[0]
   if (url === '/') url = '/index.html'
-  const file = path.join(PUBLIC, path.normalize(url))
-  if (!file.startsWith(PUBLIC) || !fs.existsSync(file)) {
-    res.writeHead(404); res.end('Not found'); return
+  let file = path.join(PUBLIC, path.normalize(url))
+
+  if (!file.startsWith(PUBLIC)) {
+    res.writeHead(403)
+    res.end('Forbidden')
+    return
   }
+
+  // Fallback SPA pour les futures routes React.
+  if (!fs.existsSync(file) && !path.extname(url)) file = path.join(PUBLIC, 'index.html')
+  if (!fs.existsSync(file)) {
+    res.writeHead(404)
+    res.end('Not found')
+    return
+  }
+
   res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' })
   fs.createReadStream(file).pipe(res)
 }
 
-// --- API ---
-function sendJson(res, obj, code = 200) {
-  res.writeHead(code, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify(obj))
+function sendJson(res, payload, code = 200) {
+  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' })
+  res.end(JSON.stringify(payload))
 }
 
 const server = http.createServer(async (req, res) => {
@@ -88,33 +112,40 @@ const server = http.createServer(async (req, res) => {
   try {
     if (url === '/api/agents') return sendJson(res, { agents: getAgents() })
     if (url === '/api/events') return sendJson(res, { events: getEvents() })
+    if (url === '/api/missions') return sendJson(res, buildMissionControl(getEvents()))
+
     if (url === '/api/stream') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache', 'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       })
       res.write('retry: 3000\n\n')
       sseClients.add(res)
       req.on('close', () => sseClients.delete(res))
       return
     }
+
     if (url === '/api/mission' && req.method === 'POST') {
       let body = ''
-      for await (const c of req) body += c
+      for await (const chunk of req) body += chunk
       const { domain = 'frontend', mission = 'manual', fixture = 'clean' } = JSON.parse(body || '{}')
-      // compile un bundle de la meme facon que le CLI
-      const { bundle, outPath } = compile({ mission, domain, level: 'standard' })
+      const { outPath } = compile({ mission, domain, level: 'standard' })
       const target = path.join(ROOT, 'test', 'fixtures', fixture)
       const store = new EventStore(LEDGER_FILE)
       const report = await runMission({ bundlePath: outPath, target, eventStore: store })
       store.close()
-      // le watch diffusera deja les lignes ; on renvoie aussi le rapport
-      return sendJson(res, { report, events: readEvents(LEDGER_FILE) })
+      return sendJson(res, {
+        report,
+        events: getEvents(),
+        missionControl: buildMissionControl(getEvents()),
+      })
     }
+
     if (url.startsWith('/api/')) return sendJson(res, { error: 'unknown endpoint' }, 404)
     return serveStatic(req, res)
-  } catch (e) {
-    return sendJson(res, { error: String(e?.message || e) }, 500)
+  } catch (error) {
+    return sendJson(res, { error: String(error?.message || error) }, 500)
   }
 })
 
