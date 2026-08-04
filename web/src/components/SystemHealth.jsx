@@ -44,12 +44,12 @@ function sourceDetail(source, system) {
 }
 
 function serviceDetail(service) {
-  if (!service.available) return service.error || 'Source indisponible'
+  if (service.available === false) return service.error || 'Source indisponible'
   if (!service.active) return `${service.active_state || 'inactive'} · ${service.sub_state || 'unknown'}`
   const parts = []
   if (service.pid) parts.push(`PID ${service.pid}`)
   if (Number.isFinite(service.restarts)) parts.push(`${service.restarts} redémarrage${service.restarts > 1 ? 's' : ''}`)
-  return parts.join(' · ') || `${service.active_state} · ${service.sub_state}`
+  return parts.join(' · ') || `${service.active_state || 'active'} · ${service.sub_state || 'running'}`
 }
 
 function healthLabel(system, streamConnected) {
