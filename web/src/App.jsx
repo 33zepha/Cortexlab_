@@ -46,7 +46,7 @@ export default function App() {
     [agents]
   )
   const activeManagers = useMemo(
-    () => managers.filter((agent) => ['running', 'online'].includes(agent.runtime_status || agent.status)).length,
+    () => managers.filter((agent) => ['running', 'online', 'active'].includes(agent.runtime_status || agent.status)).length,
     [managers]
   )
   const selectedMission = useMemo(
