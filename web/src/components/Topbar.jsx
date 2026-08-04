@@ -1,27 +1,55 @@
-export default function Topbar({ title, onRunMission, running }) {
+import Icon from './Icon.jsx'
+import { relativeTime } from '../lib/ledger.js'
+
+export default function Topbar({
+  connected,
+  lastSync,
+  now,
+  query,
+  onQueryChange,
+  attentionOnly,
+  onToggleFilters,
+  onRunMission,
+  running,
+}) {
   return (
-    <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-4">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      <div className="flex items-center gap-3">
-        <input
-          type="search"
-          placeholder="Rechercher un agent, une mission…"
-          aria-label="Rechercher"
-          className="w-64 rounded-sm border border-border bg-sub-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+    <header className="topbar-shell">
+      <div className="topbar-title-block">
+        <h1>Console</h1>
+        <span className={`runtime-state ${connected ? 'is-online' : ''}`}>
+          <i aria-hidden="true" />
+          {connected ? 'Runtime operational' : 'Runtime offline'}
+        </span>
+        <span className="last-sync">Last sync: {lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}</span>
+      </div>
+
+      <div className="topbar-actions">
+        <label className="global-search">
+          <Icon name="search" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search (⌘K)"
+            aria-label="Rechercher"
+          />
+        </label>
         <button
           type="button"
-          className="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text hover:border-border-strong hover:bg-sub-surface"
+          className={`secondary-button ${attentionOnly ? 'is-active' : ''}`}
+          onClick={onToggleFilters}
         >
+          <Icon name="filter" />
           Filters
         </button>
         <button
           type="button"
+          className="primary-button"
           onClick={onRunMission}
           disabled={running}
-          className="rounded-sm bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {running ? 'Exécution…' : '+ Run Mission'}
+          <Icon name="play" />
+          {running ? 'Running…' : 'Run Mission'}
         </button>
       </div>
     </header>
