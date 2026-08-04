@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
 import MissionTable from './components/MissionTable.jsx'
+import MissionInspector from './components/MissionInspector.jsx'
 import AgentTable from './components/AgentTable.jsx'
 import LiveActivity from './components/LiveActivity.jsx'
 import { relativeTime, useLedger, useNow } from './lib/ledger.js'
@@ -38,6 +39,7 @@ export default function App() {
   const [active, setActive] = useState('dashboard')
   const [query, setQuery] = useState('')
   const [attentionOnly, setAttentionOnly] = useState(false)
+  const [selectedMissionId, setSelectedMissionId] = useState(null)
 
   const managers = useMemo(
     () => agents.filter((agent) => agent.tier === 'manager'),
@@ -46,6 +48,10 @@ export default function App() {
   const activeManagers = useMemo(
     () => managers.filter((agent) => ['running', 'online'].includes(agent.runtime_status || agent.status)).length,
     [managers]
+  )
+  const selectedMission = useMemo(
+    () => missions.find((mission) => mission.id === selectedMissionId) || null,
+    [missions, selectedMissionId]
   )
   const missions24h = useMemo(() => {
     const limit = now - 24 * 60 * 60 * 1000
@@ -131,6 +137,8 @@ export default function App() {
                   now={now}
                   query={query}
                   attentionOnly={attentionOnly}
+                  selectedMissionId={selectedMissionId}
+                  onSelectMission={(mission) => setSelectedMissionId(mission.id)}
                 />
               </div>
               <div id="agents" className="anchor-section">
@@ -150,6 +158,12 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      <MissionInspector
+        mission={selectedMission}
+        now={now}
+        onClose={() => setSelectedMissionId(null)}
+      />
     </div>
   )
 }
