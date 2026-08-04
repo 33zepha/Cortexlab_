@@ -32,6 +32,7 @@ function getAgents() {
   return reg.entries.filter((e) => e.type === 'agent').map((a) => ({
     id: a.id, name: a.name, tier: a.tier, provider: a.provider, model: a.model,
     role: a.role, status: a.status, cost_index: a.cost_index, quality_index: a.quality_index,
+    strengths: a.strengths || [],
   }))
 }
 

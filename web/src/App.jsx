@@ -6,7 +6,14 @@ import KpiCard from './components/KpiCard.jsx'
 import AgentCard from './components/AgentCard.jsx'
 import AgentDrawer from './components/AgentDrawer.jsx'
 import ReasoningTrace from './components/ReasoningTrace.jsx'
-import { useLedger, useNow, relativeTime, budgetTone, describeEvent } from './lib/ledger.js'
+import {
+  useLedger,
+  useNow,
+  relativeTime,
+  budgetTone,
+  describeEvent,
+  agentActivity,
+} from './lib/ledger.js'
 
 const TITLES = { overview: 'Overview', agents: 'Agents' }
 
@@ -145,6 +152,8 @@ export default function App() {
                     <AgentCard
                       key={agent.id}
                       agent={agent}
+                      activity={agentActivity(agent.id, events)}
+                      now={now}
                       onClick={() => setSelectedAgentId(agent.id)}
                     />
                   ))}
@@ -158,6 +167,7 @@ export default function App() {
       <AgentDrawer
         agent={selectedAgent}
         events={events}
+        now={now}
         onClose={() => setSelectedAgentId(null)}
       />
     </div>

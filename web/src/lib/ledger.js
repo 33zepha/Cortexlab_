@@ -132,6 +132,62 @@ export function computeKpis(agents, events) {
   }
 }
 
+/**
+ * What an agent is actually doing, straight from its mandates in the ledger.
+ * A mandate is `agent.assigned`; its outcome is the matching `agent.result`.
+ * An assignment with no result yet is still running.
+ */
+export function agentActivity(agentId, events) {
+  let mission = null
+  let assigned = null
+  let result = null
+  let mandates = 0
+  let violations = 0
+  let cost = 0
+  let missionOfAssignment = null
+
+  for (const e of events) {
+    if (e.type === 'mission.start') mission = e.data?.mission || null
+
+    if (e.type === 'agent.assigned' && e.data?.agent === agentId) {
+      mandates += 1
+      cost += e.data.cost || 0
+      assigned = e
+      result = null
+      missionOfAssignment = mission
+    }
+
+    if (e.type === 'agent.result' && e.data?.agent === agentId) {
+      if (e.data.violation) violations += 1
+      result = e
+    }
+  }
+
+  const running = assigned != null && result == null
+
+  return {
+    hasHistory: mandates > 0,
+    running,
+    // rule under mandate right now, or the last one handled
+    rule: assigned?.data?.rule || null,
+    mission: missionOfAssignment,
+    since: assigned?.ts || null,
+    rationale: assigned?.data?.rationale || null,
+    lastResult: result
+      ? {
+          rule: result.data.rule,
+          violation: !!result.data.violation,
+          findings: result.data.findings ?? 0,
+          durationMs: result.data.duration_ms ?? null,
+          ts: result.ts,
+        }
+      : null,
+    mandates,
+    violations,
+    cost: Math.round(cost * 100) / 100,
+  }
+}
+
 /** Structured, renderer-agnostic description of a ledger event (no HTML strings). */
 export function describeEvent(e) {
   const d = e.data || {}
@@ -147,6 +203,19 @@ export function describeEvent(e) {
         icon: 'shield',
         title: `Check ${d.rule || '?'}`,
         detail: `${d.violation ? 'VIOLATION' : d.matched ? 'match' : 'ok'} · ${d.findings ?? 0} findings`,
+        variant: d.violation ? 'error' : undefined,
+      }
+    case 'agent.assigned':
+      return {
+        icon: 'users',
+        title: `Mandat → ${d.name || d.agent}`,
+        detail: `${d.rule} · coût ${d.cost}`,
+      }
+    case 'agent.result':
+      return {
+        icon: d.violation ? 'alert' : 'shield',
+        title: `${d.name || d.agent} — ${d.violation ? 'violation' : 'conforme'}`,
+        detail: `${d.rule} · ${d.findings ?? 0} finding(s)${d.duration_ms != null ? ` · ${d.duration_ms} ms` : ''}`,
         variant: d.violation ? 'error' : undefined,
       }
     case 'budget.eval':

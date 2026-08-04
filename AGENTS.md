@@ -64,4 +64,16 @@ Décision de closure (INV-006) :
 Checks supportés (`runtime/checks.mjs`) : `grep` (anti-slop CTRL-NO-LABEL-UPPERCASE).
 Un check non implémenté est traité comme non auto-vérifiable → `AVEC_INFORMATION`.
 
+## 8. Délégation (`runtime/router.mjs`)
+Chaque control vérifiable est confié à un agent, jamais exécuté « par le CoS »
+(INV-001). Le routeur choisit par **aptitude** (strengths vs domaine de la règle)
+puis par **rapport qualité/coût** (INV-011) ; le choix est déterministe et sa
+justification est écrite au ledger avec le mandat. Hermes (CEO) route, il ne reçoit
+jamais de mandat d'exécution.
+
+Événements émis : `agent.assigned` (agent, règle, coût, justification, alternatives)
+puis `agent.result` (violation, findings, durée). Le coût d'un mandat vaut
+`cost_index × DELEGATION_UNIT` et alimente le budget de mission (INV-010) —
+`cost_index` et `maxCost` sont des indices sans unité, pas une devise.
+
 Tests : `npm test` (node --test, voir `test/runtime.test.mjs`).
