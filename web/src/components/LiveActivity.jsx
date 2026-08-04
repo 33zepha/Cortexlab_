@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Icon from './Icon.jsx'
 import { describeEvent, relativeTime } from '../lib/ledger.js'
 
@@ -10,10 +11,11 @@ function actorFor(event) {
 }
 
 export default function LiveActivity({ events, now, connected }) {
-  const visible = [...events].slice(-9).reverse()
+  const [expanded, setExpanded] = useState(false)
+  const visible = [...events].slice(expanded ? -40 : -9).reverse()
 
   return (
-    <aside className="panel live-panel">
+    <aside className={`panel live-panel ${expanded ? 'is-expanded' : ''}`}>
       <div className="panel-heading live-heading">
         <div>
           <h2>Activité en direct</h2>
@@ -49,7 +51,16 @@ export default function LiveActivity({ events, now, connected }) {
         })}
       </div>
 
-      <button className="activity-footer-button" type="button">Ouvrir le ledger complet</button>
+      {events.length > 9 && (
+        <button
+          className="activity-footer-button"
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Réduire le ledger' : `Afficher tout le ledger (${Math.min(events.length, 40)})`}
+        </button>
+      )}
     </aside>
   )
 }
