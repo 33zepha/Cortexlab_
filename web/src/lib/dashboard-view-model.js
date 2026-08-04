@@ -48,16 +48,34 @@ function progressLabelFor(state) {
 }
 
 export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAULT_SELECTED_NODE_ID) {
-  const { agents = [], events = [], missions = [], summary = {}, connected = false, lastSync = null } = ledgerData || {}
+  const hasLedgerData = ledgerData != null
+  const { agents = [], events = [], missions = [], summary = {}, connected, lastSync } = ledgerData || {}
 
-  // LIVE: mission selection from ledger, DERIVED fallback to first entry
-  const mission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0]
+  // Determine provenance for each section
+  const isMissionLive = missions && missions.length > 0
+  const activeMission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0]
+
+  const hasNumericProgress = typeof activeMission?.progress === 'number'
+
+  const isBudgetCostLive = summary && summary.budget_cost != null
+  const isBudgetLimitLive = summary && summary.budget_limit != null
+  const isBudgetCompleteLive = isBudgetCostLive && isBudgetLimitLive
+  const isBudgetLimitZero = isBudgetLimitLive && summary.budget_limit === 0
+
+  const areEventsLive = events && events.length > 0
+  const areAgentsLive = agents && agents.length > 0
+
+  const isConnectedLive = hasLedgerData && Object.prototype.hasOwnProperty.call(ledgerData, 'connected')
+  const isLastSyncLive = lastSync != null
+
+  // LIVE: mission selection from ledger, undefined when no mission (Phase 1 behavior)
+  const mission = activeMission
 
   // LIVE: active agent count from ledger
   const activeAgentCount = agents.filter((a) => /active|running/i.test(a.status || '')).length
 
-  // DERIVED from mission, ESTIMATED fallback
-  const progress = clamp(mission?.progress || 62)
+  // LIVE if mission has a numeric progress, PLACEHOLDER fallback (Phase 1 value: 62)
+  const progress = clamp(hasNumericProgress ? activeMission.progress : 62)
 
   // Graph: DERIVED state per node from static topology + current selection
   const nodes = FLOW.map((item, index) => ({
@@ -75,13 +93,18 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || nodes[3]
 
-  // ESTIMATED/PLACEHOLDER: budget not yet fully exposed by backend
-  const budgetCost = summary.budget_cost || 12.45 // PLACEHOLDER if missing from ledger
-  const budgetLimit = summary.budget_limit || 25 // PLACEHOLDER if missing from ledger
-  const budgetPct = budgetLimit > 0 ? clamp((budgetCost / budgetLimit) * 100) : 49 // ESTIMATED fallback
+  // LIVE or PLACEHOLDER: budget from backend or Phase 1 fallback values
+  const budgetCost = isBudgetCostLive ? summary.budget_cost : 12.45
+  const budgetLimit = isBudgetLimitLive ? summary.budget_limit : 25
+  // No division when the live limit is explicitly zero; percent is a visual fallback in that case.
+  const budgetPct = isBudgetLimitZero
+    ? 0
+    : budgetLimit > 0
+      ? clamp((budgetCost / budgetLimit) * 100)
+      : 49
 
   return {
-    // Mission context (LIVE via useLedger/useNow)
+    // Mission context (LIVE via useLedger/useNow); undefined when no mission (Phase 1 behavior)
     mission,
     connected,
     lastSync,
@@ -90,23 +113,23 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
     // Summary rail
     summary: {
       mission,
-      progress, // DERIVED
+      progress, // LIVE if mission has numeric progress, PLACEHOLDER fallback otherwise
       budget: {
-        cost: `€${formatNumber(budgetCost)}`, // PLACEHOLDER if from fallback
-        limit: `€${formatNumber(budgetLimit)}`, // PLACEHOLDER if from fallback
-        percent: budgetPct, // ESTIMATED
+        cost: `€${formatNumber(budgetCost)}`,
+        limit: `€${formatNumber(budgetLimit)}`,
+        percent: budgetPct,
       },
       tokens: {
         used: '1.24M', // PLACEHOLDER
         limit: '3M', // PLACEHOLDER
         percent: 41, // PLACEHOLDER
       },
-      activeAgent: agents[0] || { name: 'Hermes', role: 'Chief of Staff' }, // LIVE with PLACEHOLDER fallback
+      activeAgent: agents[0] || { name: 'Hermes', role: 'Chief of Staff' },
     },
 
     // Execution graph
     graph: {
-      nodes, // DERIVED (topology PLACEHOLDER, state DERIVED)
+      nodes, // PLACEHOLDER (FLOW topology is hardcoded, states are simulated)
       edges, // PLACEHOLDER topology
       selectedNodeId,
       activeAgentCount, // LIVE
@@ -142,23 +165,145 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
     },
 
     // Events: LIVE from ledger, PLACEHOLDER fallback when empty
-    events: events.length > 0 ? events : [
+    events: areEventsLive ? events : [
       { ts: new Date().toISOString(), data: { agent: 'Frontend Agent' }, type: 'Démarrage de la génération des composants' },
       { ts: new Date().toISOString(), data: { agent: 'Planner' }, type: 'Mandat décomposé en 5 sous-tâches' },
       { ts: new Date().toISOString(), data: { agent: 'Hermes' }, type: 'Routage vers Frontend Agent (Claude 3.5 Sonnet)' },
       { ts: new Date().toISOString(), data: { agent: 'Researcher' }, type: 'Recherche utilisateur terminée' },
       { ts: new Date().toISOString(), data: { agent: 'Hermes' }, type: 'Mission démarrée par commande externe' },
-    ], // PLACEHOLDER fallback events
+    ],
 
     // Terminal output — PLACEHOLDER until runtime exposes a real stream
     terminal: `> cortex mission status MIS-2024-05-24-001\n\nMission: Refonte plateforme RH multi-agent\nStatus: Running\nProgress: 62%\nActive Agents: 7\nBudget: €12.45 / €25.00\nTokens: 1,243,672 / 3,000,000\nStart Time: 2024-05-24 12:47:33\nUptime: 2h 47m 12s\n\n>`,
 
     // Health panel — PLACEHOLDER until runtime exposes real health metrics
     health: {
-      status: 'Tout est opérationnel', // PLACEHOLDER
-      agents: { online: 12, total: 12 }, // PLACEHOLDER
-      services: { online: 8, total: 8 }, // PLACEHOLDER
-      memory: 78, // PLACEHOLDER
+      status: 'Tout est opérationnel',
+      agents: { online: 12, total: 12 },
+      services: { online: 8, total: 8 },
+      memory: 78,
+    },
+
+    // Provenance metadata: tracks the source and confidence of each section
+    provenance: {
+      mission: {
+        kind: isMissionLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isMissionLive ? 'ledger.missions[0] via /api/missions' : 'fallback (no active mission)',
+        updatedAt: isMissionLive ? lastSync : null,
+        confidence: isMissionLive ? 1 : 0,
+      },
+
+      'summary.progress': {
+        kind: hasNumericProgress ? 'LIVE' : 'PLACEHOLDER',
+        source: hasNumericProgress ? 'mission.progress from runtime' : 'fallback (62)',
+        updatedAt: hasNumericProgress ? lastSync : null,
+        confidence: hasNumericProgress ? 1 : 0,
+      },
+
+      'summary.budget.cost': {
+        kind: isBudgetCostLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isBudgetCostLive ? 'ledger.summary.budget_cost via /api/missions' : 'fallback (12.45)',
+        updatedAt: isBudgetCostLive ? lastSync : null,
+        confidence: isBudgetCostLive ? 1 : 0,
+      },
+
+      'summary.budget.limit': {
+        kind: isBudgetLimitLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isBudgetLimitLive ? 'ledger.summary.budget_limit via /api/missions' : 'fallback (25)',
+        updatedAt: isBudgetLimitLive ? lastSync : null,
+        confidence: isBudgetLimitLive ? 1 : 0,
+      },
+
+      'summary.budget.percent': isBudgetLimitZero
+        ? {
+            kind: 'PLACEHOLDER',
+            source: 'visual fallback because live budget limit is zero',
+            updatedAt: null,
+            confidence: 0,
+          }
+        : isBudgetCompleteLive
+          ? {
+              kind: 'DERIVED',
+              source: '(budget_cost / budget_limit) * 100, both LIVE',
+              updatedAt: lastSync,
+              confidence: 1,
+            }
+          : isBudgetCostLive || isBudgetLimitLive
+            ? {
+                kind: 'ESTIMATED',
+                source: 'partial budget: only one of cost/limit is LIVE',
+                updatedAt: lastSync,
+                confidence: 0.5,
+              }
+            : {
+                kind: 'PLACEHOLDER',
+                source: 'fallback (49)',
+                updatedAt: null,
+                confidence: 0,
+              },
+
+      'summary.tokens': {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded (no runtime source yet)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      'summary.activeAgent': {
+        kind: areAgentsLive ? 'LIVE' : 'PLACEHOLDER',
+        source: areAgentsLive ? 'ledger.agents[0] via /api/agents' : 'fallback',
+        updatedAt: areAgentsLive ? lastSync : null,
+        confidence: areAgentsLive ? 1 : 0,
+      },
+
+      graph: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded FLOW/CONNECTIONS arrays + statusFor simulation',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      inspector: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded values in view-model (no per-node runtime data)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      events: {
+        kind: areEventsLive ? 'LIVE' : 'PLACEHOLDER',
+        source: areEventsLive ? 'ledger.events via /api/events + /api/stream SSE' : 'demo fallback array',
+        updatedAt: areEventsLive ? lastSync : null,
+        confidence: areEventsLive ? 1 : 0,
+      },
+
+      terminal: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded template (no runtime logs)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      health: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded values (no runtime health metrics)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      connected: {
+        kind: isConnectedLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isConnectedLive ? 'EventSource /api/stream connection state' : 'fallback (no ledgerData.connected key)',
+        updatedAt: isConnectedLive ? lastSync ?? null : null,
+        confidence: isConnectedLive ? 1 : 0,
+      },
+
+      lastSync: {
+        kind: isLastSyncLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isLastSyncLive ? 'latest event timestamp from ledger' : 'fallback (no sync recorded)',
+        updatedAt: isLastSyncLive ? lastSync : null,
+        confidence: isLastSyncLive ? 1 : 0,
+      },
     },
   }
 }
