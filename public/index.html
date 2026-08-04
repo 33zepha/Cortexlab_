@@ -6,19 +6,23 @@
   <title>Cortex Console</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div class="layout">
-    <!-- ============ SIDEBAR ============ -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="brand-mark">◈</span>
+        <span class="brand-mark" aria-hidden="true">◈</span>
         <span class="brand-name">Cortex</span>
       </div>
 
-      <nav class="sidebar-nav">
+      <div class="runtime-state" aria-label="État du runtime">
+        <span class="runtime-dot" aria-hidden="true"></span>
+        <span>Runtime online</span>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navigation principale">
         <div class="nav-group">
           <span class="nav-group-label">Monitor</span>
           <a class="nav-item active" href="#dashboard">Dashboard</a>
@@ -57,61 +61,92 @@
       </div>
     </aside>
 
-    <!-- ============ MAIN ============ -->
-    <main class="main">
-      <!-- ----- TOP BAR ----- -->
+    <main class="main" id="dashboard">
       <header class="topbar">
-        <h1 class="page-title">Console</h1>
+        <div class="page-heading">
+          <h1 class="page-title">Console</h1>
+          <p class="page-subtitle">Agents, missions et décisions du runtime.</p>
+        </div>
         <div class="topbar-actions">
-          <input class="search-input" type="search" placeholder="Rechercher un agent, une mission…" aria-label="Rechercher" />
-          <button class="button-ghost" type="button">Filters</button>
-          <button class="button-primary" id="run-mission-btn" type="button">+ Run Mission</button>
+          <label class="search-control">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="agent-search" class="search-input" type="search" placeholder="Rechercher un agent…" autocomplete="off" />
+          </label>
+          <button class="button-ghost" id="agent-filter-btn" type="button" aria-label="Filtrer les agents">Tous</button>
+          <button class="button-primary" id="run-mission-btn" type="button">Run Mission</button>
         </div>
       </header>
 
-      <!-- ----- KPI ROW ----- -->
-      <section class="kpi-row" aria-label="Indicateurs clés">
-        <div class="card kpi-card">
-          <span class="kpi-label">Active Managers</span>
-          <span class="kpi-value" id="kpi-managers">—</span>
-        </div>
-        <div class="card kpi-card">
-          <span class="kpi-label">Missions (24h)</span>
-          <span class="kpi-value" id="kpi-missions">—</span>
-        </div>
-        <div class="card kpi-card">
-          <span class="kpi-label">Closures autonomes</span>
-          <span class="kpi-value" id="kpi-closures">—</span>
-        </div>
-        <div class="card kpi-card">
-          <span class="kpi-label">Dernier run</span>
-          <span class="kpi-value" id="kpi-last-run">—</span>
-        </div>
-      </section>
+      <div class="content">
+        <section class="kpi-row" aria-label="Indicateurs clés">
+          <article class="kpi-card">
+            <span class="kpi-label">Active managers</span>
+            <strong class="kpi-value" id="kpi-managers">—</strong>
+            <span class="kpi-context">disponibles maintenant</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Missions · 24 h</span>
+            <strong class="kpi-value" id="kpi-missions">—</strong>
+            <span class="kpi-context">lancées par Cortex</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Closures autonomes</span>
+            <strong class="kpi-value" id="kpi-closures">—</strong>
+            <span class="kpi-context">sans intervention humaine</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Dernière activité</span>
+            <strong class="kpi-value kpi-value-time" id="kpi-last-run">—</strong>
+            <span class="kpi-context">heure locale</span>
+          </article>
+        </section>
 
-      <!-- ----- AGENTS GRID ----- -->
-      <section class="section" aria-label="Agents">
-        <div class="section-head">
-          <h2 class="section-title">Agents</h2>
-          <span class="section-sub" id="agents-count"></span>
-        </div>
-        <div class="agents-grid" id="agents-grid">
-          <!-- les cartes agents sont injectées par app.js -->
-        </div>
-      </section>
-
-      <!-- ----- LIVE FEED ----- -->
-      <section class="section" aria-label="Activity">
-        <div class="section-head">
-          <h2 class="section-title">Activity</h2>
-          <span class="badge-running live-dot">Live</span>
-        </div>
-        <div class="card feed-card">
-          <div class="feed" id="feed">
-            <!-- les lignes d'activité sont injectées par app.js via SSE -->
+        <section class="section" id="agents" aria-labelledby="agents-title">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title" id="agents-title">Agents</h2>
+              <p class="section-description">Annuaire opérationnel du runtime, sans cartes décoratives.</p>
+            </div>
+            <span class="section-count" id="agents-count" aria-live="polite"></span>
           </div>
-        </div>
-      </section>
+
+          <div class="agents-table-shell">
+            <div class="table-scroll">
+              <table class="agents-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Agent</th>
+                    <th scope="col">Fonction</th>
+                    <th scope="col">Modèle</th>
+                    <th scope="col">Niveau</th>
+                    <th scope="col">Coût relatif</th>
+                    <th scope="col">Qualité</th>
+                    <th scope="col">Statut</th>
+                  </tr>
+                </thead>
+                <tbody id="agents-table-body">
+                  <tr class="table-loading-row">
+                    <td colspan="7">Chargement des agents…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="activity" aria-labelledby="activity-title">
+          <div class="section-head section-head-inline">
+            <div>
+              <h2 class="section-title" id="activity-title">Activity</h2>
+              <p class="section-description">Événements récents du ledger Cortex.</p>
+            </div>
+            <span class="live-indicator"><span aria-hidden="true"></span>Live</span>
+          </div>
+          <div class="feed-card">
+            <div class="feed" id="feed" aria-live="polite"></div>
+          </div>
+        </section>
+      </div>
     </main>
   </div>
 
