@@ -107,9 +107,9 @@ export default function Sidebar({ active, onNavigate, counts, connected }) {
 
         {/* Live runtime readouts — state, not navigation. */}
         <div className="mx-3 rounded-md border border-border bg-sub-surface py-1">
-          <StatusRow label="Missions 24h" value={counts?.missions24h ?? '—'} />
+          <StatusRow label="Missions actives" value={counts?.missionsActive ?? '—'} />
           <StatusRow
-            label="Approbations"
+            label="Intervention"
             value={counts?.approvals ?? '—'}
             accent={counts?.approvals > 0 ? 'text-error' : undefined}
           />

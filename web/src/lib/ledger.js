@@ -6,6 +6,37 @@ import { useCallback, useEffect, useState } from 'react'
 
 const DAY = 24 * 60 * 60 * 1000
 
+/** Ticking clock so relative timestamps stay honest without a reload. */
+export function useNow(intervalMs = 1000) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs)
+    return () => clearInterval(id)
+  }, [intervalMs])
+  return now
+}
+
+export function relativeTime(ts, now = Date.now()) {
+  if (!ts) return '—'
+  const t = new Date(ts).getTime()
+  if (Number.isNaN(t)) return '—'
+  const s = Math.max(0, Math.round((now - t) / 1000))
+  if (s < 60) return `il y a ${s} s`
+  const m = Math.round(s / 60)
+  if (m < 60) return `il y a ${m} min`
+  const h = Math.round(m / 60)
+  if (h < 24) return `il y a ${h} h`
+  return `il y a ${Math.round(h / 24)} j`
+}
+
+/** Budget thresholds from ui/DESIGN.md: <60% green, 60–85% amber, >85% red. */
+export function budgetTone(pct) {
+  if (pct == null) return 'neutral'
+  if (pct > 85) return 'error'
+  if (pct >= 60) return 'warning'
+  return 'success'
+}
+
 export function closureVariant(closure) {
   switch (closure) {
     case 'LIVRAISON_AUTONOME':
@@ -27,36 +58,77 @@ export function shortTs(ts) {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
 }
 
+/**
+ * Decision-oriented metrics, split between *health* (is anything wrong, what
+ * does it cost, is autonomy holding) and *activity* (what is moving right now).
+ *
+ * Every figure below is derived from data the runtime actually emits. Notably
+ * `budget.eval.cost` is a unitless index bounded by `limits.maxCost` — it is
+ * NOT a currency, so it is reported as consumption against its limit.
+ */
 export function computeKpis(agents, events) {
   const now = Date.now()
-  const managers = agents.filter((a) => a.tier === 'manager' && a.status === 'active').length
-
-  const missions24h = events.filter(
-    (e) => e.type === 'mission.start' && new Date(e.ts).getTime() > now - DAY
-  ).length
-
-  const closuresAuto = events.filter(
-    (e) => e.type === 'mission.closure' && e.data?.closure === 'LIVRAISON_AUTONOME'
-  ).length
-
-  // INV-006: an escalated closure is exactly what awaits a human decision.
-  const approvals = events.filter(
-    (e) => e.type === 'mission.closure' && e.data?.closure === 'ESCALADE_HUMAINE'
-  ).length
-
-  let lastRun = null
-  for (const e of events) {
+  const within = (e, from, to = 0) => {
     const t = new Date(e.ts).getTime()
-    if (!Number.isNaN(t) && (lastRun === null || t > lastRun)) lastRun = t
+    return t > now - from && t <= now - to
   }
 
+  const starts = events.filter((e) => e.type === 'mission.start')
+  const closures = events.filter((e) => e.type === 'mission.closure')
+
+  // Missions are closed in order, so anything started past the last closure is live.
+  const missionsActive = Math.max(0, starts.length - closures.length)
+  const missions24h = starts.filter((e) => within(e, DAY)).length
+
+  const closuresAuto = closures.filter((e) => e.data?.closure === 'LIVRAISON_AUTONOME').length
+
+  // INV-006: an escalated closure is exactly what awaits a human decision.
+  const approvals = closures.filter((e) => e.data?.closure === 'ESCALADE_HUMAINE').length
+
+  // Autonomy rate today vs the 24h before — no previous data means no delta,
+  // rather than a fabricated trend.
+  const rateOf = (list) =>
+    list.length
+      ? Math.round(
+          (100 * list.filter((e) => e.data?.closure === 'LIVRAISON_AUTONOME').length) / list.length
+        )
+      : null
+  const autonomyRate = rateOf(closures.filter((e) => within(e, DAY)))
+  const autonomyPrev = rateOf(closures.filter((e) => within(e, 2 * DAY, DAY)))
+  const autonomyDelta =
+    autonomyRate != null && autonomyPrev != null ? autonomyRate - autonomyPrev : null
+
+  // Budget consumed today against the limits the missions declared.
+  const budgets = events.filter((e) => e.type === 'budget.eval' && within(e, DAY))
+  const budgetCost = budgets.reduce((s, e) => s + (e.data?.cost || 0), 0)
+  const budgetLimit = budgets.reduce((s, e) => s + (e.data?.limits?.maxCost || 0), 0)
+  const budgetPct = budgetLimit > 0 ? Math.round((100 * budgetCost) / budgetLimit) : null
+  const budgetOver = budgets.some((e) => e.data?.over?.length > 0)
+
+  const agentsTotal = agents.length
+  const agentsAvailable = agents.filter((a) => a.status === 'active').length
+
+  const lastEvent = events.length ? events[events.length - 1] : null
+
   return {
-    managers,
+    // health
+    approvals,
+    autonomyRate,
+    autonomyDelta,
+    budgetCost,
+    budgetLimit,
+    budgetPct,
+    budgetOver,
+    // activity
+    missionsActive,
     missions24h,
     closuresAuto,
-    approvals,
-    agents: agents.length,
-    lastRun: lastRun === null ? '—' : shortTs(new Date(lastRun).toISOString()),
+    agentsAvailable,
+    agentsTotal,
+    lastEvent,
+    // sidebar readouts
+    agents: agentsTotal,
+    lastRun: lastEvent ? shortTs(lastEvent.ts) : '—',
   }
 }
 

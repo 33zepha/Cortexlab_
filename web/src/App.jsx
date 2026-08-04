@@ -6,12 +6,13 @@ import KpiCard from './components/KpiCard.jsx'
 import AgentCard from './components/AgentCard.jsx'
 import AgentDrawer from './components/AgentDrawer.jsx'
 import ReasoningTrace from './components/ReasoningTrace.jsx'
-import { useLedger } from './lib/ledger.js'
+import { useLedger, useNow, relativeTime, budgetTone, describeEvent } from './lib/ledger.js'
 
 const TITLES = { overview: 'Overview', agents: 'Agents' }
 
 export default function App() {
   const { agents, events, connected, kpis, runMission } = useLedger()
+  const now = useNow()
   const [view, setView] = useState('overview')
   const [selectedAgentId, setSelectedAgentId] = useState(null)
   const [running, setRunning] = useState(false)
@@ -47,11 +48,78 @@ export default function App() {
 
           {view === 'overview' && (
             <>
-              <section className="grid grid-cols-4 gap-4" aria-label="Indicateurs clés">
-                <KpiCard label="Active Managers" value={kpis.managers} />
-                <KpiCard label="Missions (24h)" value={kpis.missions24h} />
-                <KpiCard label="Closures autonomes" value={kpis.closuresAuto} />
-                <KpiCard label="Dernier run" value={kpis.lastRun} />
+              <section aria-label="Santé">
+                <h2 className="mb-3 text-lg font-semibold">Santé</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  <KpiCard
+                    label="Intervention requise"
+                    icon="alert"
+                    tone={kpis.approvals > 0 ? 'error' : 'neutral'}
+                    value={kpis.approvals}
+                    sub={
+                      kpis.approvals > 0
+                        ? 'validation humaine · escalade INV-006'
+                        : 'aucune escalade en attente'
+                    }
+                  />
+                  <KpiCard
+                    label="Taux autonome"
+                    icon="shield"
+                    value={kpis.autonomyRate == null ? '—' : `${kpis.autonomyRate} %`}
+                    delta={kpis.autonomyDelta}
+                    sub={
+                      kpis.autonomyRate == null
+                        ? 'aucune closure sur 24 h'
+                        : kpis.autonomyDelta == null
+                          ? 'pas de période précédente à comparer'
+                          : 'vs 24 h précédentes'
+                    }
+                  />
+                  <KpiCard
+                    label="Budget aujourd'hui"
+                    icon="gauge"
+                    tone={kpis.budgetOver ? 'error' : 'neutral'}
+                    value={
+                      kpis.budgetLimit > 0
+                        ? `${kpis.budgetCost} / ${kpis.budgetLimit}`
+                        : '—'
+                    }
+                    progress={kpis.budgetPct}
+                    progressTone={budgetTone(kpis.budgetPct)}
+                    sub={
+                      kpis.budgetPct == null
+                        ? 'aucun budget déclaré sur 24 h'
+                        : `${kpis.budgetPct} % de la limite${kpis.budgetOver ? ' · dépassement' : ''}`
+                    }
+                  />
+                </div>
+              </section>
+
+              <section aria-label="Activité">
+                <h2 className="mb-3 text-lg font-semibold">Activité</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  <KpiCard
+                    compact
+                    label="Missions actives"
+                    icon="target"
+                    value={kpis.missionsActive}
+                    sub={`${kpis.missions24h} lancée(s) sur 24 h`}
+                  />
+                  <KpiCard
+                    compact
+                    label="Agents disponibles"
+                    icon="users"
+                    value={`${kpis.agentsAvailable} / ${kpis.agentsTotal}`}
+                    sub={`${kpis.closuresAuto} closure(s) autonome(s) au total`}
+                  />
+                  <KpiCard
+                    compact
+                    label="Dernière activité"
+                    icon="pulse"
+                    value={kpis.lastEvent ? relativeTime(kpis.lastEvent.ts, now) : '—'}
+                    sub={kpis.lastEvent ? describeEvent(kpis.lastEvent).title : 'aucun événement'}
+                  />
+                </div>
               </section>
 
               <section aria-label="Activité récente">
