@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
+import SystemHealth from './components/SystemHealth.jsx'
 import MissionTable from './components/MissionTable.jsx'
 import MissionInspector from './components/MissionInspector.jsx'
 import AgentTable from './components/AgentTable.jsx'
@@ -91,14 +92,6 @@ export default function App() {
 
         <main className="dashboard-canvas" id="dashboard">
           {demo && <div className="demo-chip">Jeu de données de démonstration</div>}
-          {!demo && system.issues?.length > 0 && (
-            <div className="system-banner" role="status">
-              <strong>{system.issues.length} signalement{system.issues.length > 1 ? 's' : ''}</strong>
-              <span>
-                {system.issues.slice(0, 3).map((issue) => `${issue.source} : ${issue.message}`).join(' · ')}
-              </span>
-            </div>
-          )}
 
           <section className="kpi-grid" aria-label="Indicateurs clés">
             <KpiCard
@@ -128,6 +121,10 @@ export default function App() {
               progress={summary.budget_limit > 0 ? budgetPct : null}
             />
           </section>
+
+          <div id="system" className="anchor-section system-anchor">
+            <SystemHealth system={system} streamConnected={connected} now={now} />
+          </div>
 
           <div className="workspace-grid">
             <div className="workspace-primary">
