@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Icon from './Icon.jsx'
 import { describeEvent, relativeTime } from '../lib/ledger.js'
 
@@ -6,20 +5,21 @@ function actorFor(event) {
   const data = event.data || {}
   if (data.name) return data.name
   if (data.agent) return String(data.agent).replace(/^AG-/, '').toLowerCase().replace(/^./, (c) => c.toUpperCase())
+  if (data.service) return data.service.replace('.service', '')
+  if (event.type.startsWith('hermes.')) return 'Hermes'
   if (event.type.startsWith('mission.') || event.type === 'budget.eval') return 'Hermes'
   return 'Cortex'
 }
 
-export default function LiveActivity({ events, now, connected }) {
-  const [expanded, setExpanded] = useState(false)
-  const visible = [...events].slice(expanded ? -40 : -9).reverse()
+export default function LiveActivity({ events, now, connected, onOpenLedger = () => {} }) {
+  const visible = [...events].slice(-9).reverse()
 
   return (
-    <aside className={`panel live-panel ${expanded ? 'is-expanded' : ''}`}>
+    <aside className="panel live-panel">
       <div className="panel-heading live-heading">
         <div>
           <h2>Activité en direct</h2>
-          <p>Derniers événements enregistrés dans le ledger.</p>
+          <p>Derniers événements observés.</p>
         </div>
         <span className={`live-status ${connected ? 'is-online' : ''}`}>
           <i aria-hidden="true" />{connected ? 'En direct' : 'Hors ligne'}
@@ -51,16 +51,14 @@ export default function LiveActivity({ events, now, connected }) {
         })}
       </div>
 
-      {events.length > 9 && (
-        <button
-          className="activity-footer-button"
-          type="button"
-          onClick={() => setExpanded((value) => !value)}
-          aria-expanded={expanded}
-        >
-          {expanded ? 'Réduire le ledger' : `Afficher tout le ledger (${Math.min(events.length, 40)})`}
-        </button>
-      )}
+      <button
+        className="activity-footer-button"
+        type="button"
+        onClick={onOpenLedger}
+      >
+        <Icon name="list" />
+        Explorer le ledger{events.length ? ` · ${events.length}` : ''}
+      </button>
     </aside>
   )
 }
