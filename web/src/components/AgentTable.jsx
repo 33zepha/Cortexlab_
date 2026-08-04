@@ -11,40 +11,75 @@ const PHASE_LABELS = {
   closed: 'Terminée',
 }
 
+const STATUS = {
+  running: { label: 'En cours', tone: 'success' },
+  online: { label: 'En ligne', tone: 'success' },
+  available: { label: 'Disponible', tone: 'warning' },
+  offline: { label: 'Hors ligne', tone: 'neutral' },
+  active: { label: 'En ligne', tone: 'success' },
+}
+
 function percent(value) {
   if (!Number.isFinite(Number(value))) return 0
   const normalized = Number(value) <= 1 ? Number(value) * 100 : Number(value)
   return Math.max(0, Math.min(100, Math.round(normalized)))
 }
 
-function currentMissionFor(agentId, missions) {
-  return missions.find((mission) => mission.agents?.some((agent) => agent.id === agentId)) || null
+function currentMissionFor(agent, missions) {
+  if (agent.current_mission_id) {
+    const direct = missions.find((mission) => mission.id === agent.current_mission_id)
+    if (direct) return direct
+  }
+  return missions.find((mission) => (
+    mission.manager?.id === agent.id
+    || mission.manager?.name === agent.name
+    || mission.agents?.some((item) => item.id === agent.id || item.name === agent.name)
+  )) || null
 }
 
-function lastEventLabel(activity) {
+function runtimeStatus(agent, activity) {
+  if (activity.running) return 'running'
+  return agent.runtime_status || (agent.status === 'active' ? 'online' : 'offline')
+}
+
+function lastEventLabel(activity, status) {
   if (activity.lastResult?.violation) return 'Violation détectée'
   if (activity.lastResult) return 'Contrôle validé'
   if (activity.running) return 'Tâche lancée'
-  return 'Disponible'
+  if (status === 'online') return 'Présence détectée'
+  if (status === 'available') return 'Configuré, sans activité récente'
+  return 'Aucune présence détectée'
 }
 
-export default function AgentTable({ agents, events, missions, now, globalQuery = '' }) {
+export default function AgentTable({
+  agents,
+  events,
+  missions,
+  now,
+  globalQuery = '',
+  selectedAgentId = null,
+  onSelectAgent = () => {},
+}) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const effectiveQuery = `${globalQuery} ${query}`.trim().toLocaleLowerCase('fr-FR')
 
-  const rows = useMemo(() => agents.map((agent) => ({
-    agent,
-    activity: agentActivity(agent.id, events),
-    mission: currentMissionFor(agent.id, missions),
-  })), [agents, events, missions])
+  const rows = useMemo(() => agents.map((agent) => {
+    const activity = agentActivity(agent.id, events)
+    return {
+      agent,
+      activity,
+      status: runtimeStatus(agent, activity),
+      mission: currentMissionFor(agent, missions),
+    }
+  }), [agents, events, missions])
 
-  const visible = rows.filter(({ agent, activity, mission }) => {
-    const active = activity.running || agent.status === 'active'
-    if (filter === 'active' && !active) return false
-    if (filter === 'paused' && active) return false
+  const visible = rows.filter(({ agent, status, mission }) => {
+    const live = ['running', 'online'].includes(status)
+    if (filter === 'live' && !live) return false
+    if (filter === 'offline' && status !== 'offline') return false
     if (!effectiveQuery) return true
-    return [agent.name, agent.role, agent.model, agent.provider, mission?.name]
+    return [agent.name, agent.role, agent.model, agent.provider, mission?.name, status]
       .filter(Boolean)
       .join(' ')
       .toLocaleLowerCase('fr-FR')
@@ -56,7 +91,7 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
       <div className="panel-heading agent-heading">
         <div>
           <h2>Agents</h2>
-          <p>Travail en cours, coût, qualité et dernière preuve.</p>
+          <p>Cliquer sur une ligne pour inspecter la présence runtime et l’activité.</p>
         </div>
         <div className="agent-tools">
           <label className="inline-search">
@@ -71,8 +106,8 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
           <div className="segmented-control" aria-label="Filtrer les agents">
             {[
               ['all', 'Tous'],
-              ['active', 'Actifs'],
-              ['paused', 'En pause'],
+              ['live', 'En ligne'],
+              ['offline', 'Hors ligne'],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -94,22 +129,35 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
               <th>Agent</th>
               <th>Rôle</th>
               <th>Modèle</th>
-              <th>Statut</th>
+              <th>Statut réel</th>
               <th>Mission actuelle</th>
               <th>Coût</th>
               <th>Qualité</th>
-              <th>Dernier événement</th>
+              <th>Dernière présence</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr><td colSpan="8" className="empty-cell">Aucun agent ne correspond aux filtres.</td></tr>
-            ) : visible.map(({ agent, activity, mission }) => {
+            ) : visible.map(({ agent, activity, mission, status }) => {
               const quality = percent(agent.quality_index)
-              const active = activity.running || agent.status === 'active'
+              const statusMeta = STATUS[status] || STATUS.offline
               const lastEvent = activity.lastResult
+              const seenAt = lastEvent?.ts || activity.since || agent.last_seen_at
               return (
-                <tr key={agent.id}>
+                <tr
+                  key={agent.id}
+                  className={`agent-row ${selectedAgentId === agent.id ? 'is-selected' : ''}`}
+                  tabIndex="0"
+                  aria-selected={selectedAgentId === agent.id}
+                  onClick={() => onSelectAgent(agent)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onSelectAgent(agent)
+                    }
+                  }}
+                >
                   <td>
                     <div className="agent-identity-cell">
                       <span className={`agent-avatar avatar-${agent.name?.toLowerCase()}`}>{agent.name?.slice(0, 1) || 'A'}</span>
@@ -121,14 +169,14 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
                     <div className="model-cell"><strong>{agent.model || '—'}</strong><small>{agent.provider || '—'}</small></div>
                   </td>
                   <td>
-                    <span className={`status-pill ${active ? 'status-success' : 'status-neutral'}`}>
-                      {activity.running ? 'En cours' : active ? 'Actif' : 'Inactif'}<i aria-hidden="true" />
+                    <span className={`status-pill status-${statusMeta.tone}`}>
+                      {statusMeta.label}<i aria-hidden="true" />
                     </span>
                   </td>
                   <td>
                     <div className="mission-agent-cell">
                       <strong>{mission?.name || '—'}</strong>
-                      <small>{activity.rule || (mission ? `${PHASE_LABELS[mission.phase] || 'En cours'} · ${mission.progress}%` : 'Disponible')}</small>
+                      <small>{activity.rule || (mission ? `${PHASE_LABELS[mission.phase] || 'En cours'} · ${mission.progress}%` : 'Aucune mission détectée')}</small>
                     </div>
                   </td>
                   <td><strong className="mono-number">{activity.cost.toFixed(2).replace('.', ',')}</strong></td>
@@ -140,8 +188,8 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
                   </td>
                   <td>
                     <div className="event-cell">
-                      <strong>{lastEventLabel(activity)}</strong>
-                      <small>{relativeTime(lastEvent?.ts || activity.since, now)}</small>
+                      <strong>{lastEventLabel(activity, status)}</strong>
+                      <small>{relativeTime(seenAt, now)}</small>
                     </div>
                   </td>
                 </tr>

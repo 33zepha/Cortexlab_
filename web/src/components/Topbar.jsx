@@ -2,27 +2,34 @@ import Icon from './Icon.jsx'
 import { relativeTime } from '../lib/ledger.js'
 
 export default function Topbar({
-  connected,
+  hermesOnline,
+  streamConnected,
+  hermesUrl,
   lastSync,
   now,
   query,
   onQueryChange,
   attentionOnly,
   onToggleFilters,
-  onRunMission,
-  running,
 }) {
   return (
     <header className="topbar-shell">
       <div className="topbar-title-block">
-        <h1>Console</h1>
-        <span className={`runtime-state ${connected ? 'is-online' : ''}`}>
-          <i aria-hidden="true" />
-          {connected ? 'Runtime opérationnel' : 'Runtime hors ligne'}
-        </span>
-        <span className="last-sync">
-          Dernière synchro : {lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}
-        </span>
+        <div className="console-identity">
+          <span className="console-kicker">Cortex / Observatory</span>
+          <h1>Mission Control</h1>
+        </div>
+        <div className="runtime-cluster">
+          <span className={`runtime-state ${hermesOnline ? 'is-online' : ''}`}>
+            <i aria-hidden="true" />
+            {hermesOnline ? 'HERMES ONLINE' : 'HERMES OFFLINE'}
+          </span>
+          <span className="last-sync">
+            {streamConnected ? 'SSE CONNECTÉ' : 'SSE INTERROMPU'}
+            {' / '}
+            {lastSync ? relativeTime(lastSync, now) : 'AUCUNE ACTIVITÉ'}
+          </span>
+        </div>
       </div>
 
       <div className="topbar-actions">
@@ -32,7 +39,7 @@ export default function Topbar({
             type="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Rechercher (⌘K)"
+            placeholder="Rechercher dans le système"
             aria-label="Rechercher"
           />
         </label>
@@ -42,17 +49,22 @@ export default function Topbar({
           onClick={onToggleFilters}
         >
           <Icon name="filter" />
-          Filtres
+          Signaux
         </button>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={onRunMission}
-          disabled={running}
+        <a
+          className={`primary-button ${hermesUrl ? '' : 'is-disabled'}`}
+          href={hermesUrl || undefined}
+          target="_blank"
+          rel="noreferrer"
+          aria-disabled={!hermesUrl}
+          title={hermesUrl ? 'Ouvrir l’interface Hermes' : 'Configurer HERMES_URL sur le serveur'}
+          onClick={(event) => {
+            if (!hermesUrl) event.preventDefault()
+          }}
         >
-          <Icon name="play" />
-          {running ? 'Exécution…' : 'Lancer une mission'}
-        </button>
+          <Icon name="link" />
+          Ouvrir Hermes
+        </a>
       </div>
     </header>
   )

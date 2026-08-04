@@ -1,6 +1,32 @@
 import { useCallback, useEffect, useState } from 'react'
 import { demoAgents, demoEvents, demoMissions, demoSummary } from './demo.js'
 
+const demoSystem = {
+  generated_at: new Date().toISOString(),
+  read_only: true,
+  hermes: {
+    online: true,
+    url: 'https://example.invalid/hermes',
+    cli: { available: true, version: 'Hermes demo' },
+  },
+  services: [
+    { name: 'hermes-gateway.service', active: true, active_state: 'active', sub_state: 'running', restarts: 0 },
+    { name: 'hermes-serve.service', active: true, active_state: 'active', sub_state: 'running', restarts: 0 },
+  ],
+  processes: { available: true, items: [] },
+  tailscale: { available: true, backend_state: 'Running' },
+  database: { available: true, exists: true, tables: ['sessions'], record_counts: { sessions: 4 } },
+  issues: [],
+  sources: [
+    { id: 'systemd', available: true },
+    { id: 'journalctl', available: true },
+    { id: 'hermes-cli', available: true },
+    { id: 'state-db', available: true },
+    { id: 'processes', available: true },
+    { id: 'tailscale', available: true },
+  ],
+}
+
 export function useNow(intervalMs = 1000) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -96,26 +122,26 @@ export function describeEvent(event) {
       return {
         icon: 'target',
         title: 'Mission démarrée',
-        detail: `${data.mission || 'Mission'} · ${data.domain || 'all'}`,
+        detail: `${data.mission || 'Mission'} · ${data.domain || 'tous domaines'}`,
       }
     case 'agent.assigned':
       return {
         icon: 'users',
-        title: `Mandat confié à ${data.name || data.agent || 'agent'}`,
+        title: `Mandat confié à ${data.name || data.agent || 'un agent'}`,
         detail: data.rule || 'nouveau mandat',
       }
     case 'agent.result':
       return {
         icon: data.violation ? 'alert' : 'check',
         title: data.violation ? 'Violation détectée' : 'Résultat validé',
-        detail: `${data.rule || 'check'} · ${data.findings ?? 0} finding(s)`,
+        detail: `${data.rule || 'contrôle'} · ${data.findings ?? 0} résultat(s)`,
         variant: data.violation ? 'error' : 'success',
       }
     case 'check.run':
       return {
         icon: 'shield',
-        title: `Check ${data.rule || '?'}`,
-        detail: `${data.violation ? 'violation' : 'conforme'} · ${data.findings ?? 0} finding(s)`,
+        title: `Contrôle ${data.rule || '?'}`,
+        detail: `${data.violation ? 'violation' : 'conforme'} · ${data.findings ?? 0} résultat(s)`,
         variant: data.violation ? 'error' : 'success',
       }
     case 'budget.eval':
@@ -132,6 +158,17 @@ export function describeEvent(event) {
         detail: data.closure || 'closure',
         variant: closureVariant(data.closure),
       }
+    case 'hermes.gateway.connected':
+      return { icon: 'link', title: 'Gateway Hermes connectée', detail: data.note || data.service, variant: 'success' }
+    case 'hermes.thread.created':
+      return { icon: 'target', title: 'Thread Hermes créé', detail: data.note || data.service, variant: 'success' }
+    case 'hermes.gateway.warning':
+    case 'hermes.log.warning':
+      return { icon: 'alert', title: 'Avertissement Hermes', detail: data.note || data.service, variant: 'warning' }
+    case 'hermes.log.error':
+      return { icon: 'alert', title: 'Erreur Hermes', detail: data.note || data.service, variant: 'error' }
+    case 'hermes.log':
+      return { icon: 'activity', title: 'Journal Hermes', detail: data.note || data.service }
     default:
       return {
         icon: 'activity',
@@ -157,8 +194,15 @@ export function useLedger() {
   const [events, setEvents] = useState(() => (demo ? demoEvents : []))
   const [missions, setMissions] = useState(() => (demo ? demoMissions : []))
   const [summary, setSummary] = useState(() => (demo ? demoSummary : {}))
+  const [system, setSystem] = useState(() => (demo ? demoSystem : { hermes: {}, issues: [], sources: [] }))
   const [connected, setConnected] = useState(demo)
   const [lastSync, setLastSync] = useState(() => (demo ? demoSummary.latest_activity : null))
+
+  const loadSystem = useCallback(async () => {
+    if (demo) return
+    const payload = await fetchJson('/api/system')
+    setSystem(payload)
+  }, [demo])
 
   const loadAgents = useCallback(async () => {
     if (demo) return
@@ -169,7 +213,10 @@ export function useLedger() {
   const loadEvents = useCallback(async () => {
     if (demo) return
     const payload = await fetchJson('/api/events')
-    setEvents(payload.events || [])
+    const nextEvents = payload.events || []
+    setEvents(nextEvents)
+    const latest = nextEvents.at(-1)?.ts
+    if (latest) setLastSync(latest)
   }, [demo])
 
   const loadMissions = useCallback(async () => {
@@ -177,17 +224,21 @@ export function useLedger() {
     const payload = await fetchJson('/api/missions')
     setMissions(payload.missions || [])
     setSummary(payload.summary || {})
-    setLastSync(payload.summary?.latest_activity || new Date().toISOString())
+    if (payload.summary?.latest_activity) setLastSync(payload.summary.latest_activity)
   }, [demo])
 
   const reload = useCallback(async () => {
     if (demo) return
-    await Promise.all([loadAgents(), loadEvents(), loadMissions()])
-  }, [demo, loadAgents, loadEvents, loadMissions])
+    await Promise.all([loadSystem(), loadAgents(), loadEvents(), loadMissions()])
+  }, [demo, loadSystem, loadAgents, loadEvents, loadMissions])
 
   useEffect(() => {
     if (demo) return undefined
     reload().catch(() => setConnected(false))
+
+    const poll = setInterval(() => {
+      Promise.all([loadSystem(), loadAgents(), loadMissions()]).catch(() => {})
+    }, 10_000)
 
     const source = new EventSource('/api/stream')
     source.onopen = () => setConnected(true)
@@ -199,42 +250,34 @@ export function useLedger() {
         return
       }
       if (!event?.type) return
+      if (event.type === 'system.snapshot') {
+        reload().catch(() => {})
+        return
+      }
       setEvents((current) => (
         event.hash && current.some((item) => item.hash === event.hash)
           ? current
           : [...current, event]
       ))
       setLastSync(event.ts || new Date().toISOString())
-      loadMissions().catch(() => {})
+      Promise.all([loadAgents(), loadMissions()]).catch(() => {})
     }
     source.onerror = () => setConnected(false)
-    return () => source.close()
-  }, [demo, loadMissions, reload])
 
-  const runMission = useCallback(async () => {
-    if (demo) {
-      await new Promise((resolve) => setTimeout(resolve, 650))
-      return { demo: true }
+    return () => {
+      clearInterval(poll)
+      source.close()
     }
-    const response = await fetch('/api/mission', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain: 'frontend', mission: 'manual', fixture: 'clean' }),
-    })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const payload = await response.json()
-    await reload()
-    return payload
-  }, [demo, reload])
+  }, [demo, loadAgents, loadMissions, loadSystem, reload])
 
   return {
     agents,
     events,
     missions,
     summary,
+    system,
     connected,
     lastSync,
-    runMission,
     reload,
     demo,
   }

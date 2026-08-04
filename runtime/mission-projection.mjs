@@ -148,6 +148,7 @@ function finalizeMission(mission, { incomplete = false } = {}) {
 
   return {
     id: mission.id,
+    source: 'cortex-ledger',
     name: mission.name,
     domain: mission.domain,
     target: mission.target,
@@ -165,6 +166,7 @@ function finalizeMission(mission, { incomplete = false } = {}) {
     finished_at: mission.closure_event?.ts || null,
     duration_ms: startedMs != null && finishedMs != null ? Math.max(0, finishedMs - startedMs) : null,
     closure,
+    closure_data: { ...closureData },
     escalations: Number.isFinite(closureData.escalations) ? closureData.escalations : 0,
     checks: {
       total: mission.checks.length,
@@ -178,6 +180,7 @@ function finalizeMission(mission, { incomplete = false } = {}) {
     manager: agents[0] || null,
     event_count: mission.events.length,
     latest_event: eventDescriptor(latest),
+    timeline: mission.events.map(eventDescriptor),
   }
 }
 

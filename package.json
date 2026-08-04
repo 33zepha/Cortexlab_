@@ -6,7 +6,8 @@
   "scripts": {
     "generate": "node generate-registry.mjs",
     "test": "node --test test/*.test.mjs",
-    "runtime": "node runtime/chief-of-staff.mjs"
+    "runtime": "node runtime/chief-of-staff.mjs",
+    "observe:check": "node scripts/check-hermes-observability.mjs"
   },
   "keywords": [],
   "author": "",

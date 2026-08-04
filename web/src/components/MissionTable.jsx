@@ -7,7 +7,8 @@ const STATUS = {
   information: { label: 'Information', tone: 'warning' },
   escalated: { label: 'Attention', tone: 'error' },
   incomplete: { label: 'Incomplète', tone: 'warning' },
-  closed: { label: 'Fermée', tone: 'neutral' },
+  closed: { label: 'Terminée', tone: 'neutral' },
+  unknown: { label: 'Indéterminée', tone: 'neutral' },
 }
 
 const PHASE = {
@@ -17,7 +18,7 @@ const PHASE = {
   checking: 'Vérification',
   budget: 'Budget',
   closed: 'Terminée',
-  unknown: 'En cours',
+  unknown: 'État observé',
 }
 
 const EVENT_LABELS = {
@@ -31,9 +32,14 @@ const EVENT_LABELS = {
   'check.run': 'Contrôle exécuté',
   'budget.eval': 'Budget évalué',
   'mission.closure': 'Mission clôturée',
+  'hermes.state.running': 'Session Hermes active',
+  'hermes.state.closed': 'Session Hermes terminée',
+  'hermes.state.incomplete': 'Session Hermes interrompue',
+  'hermes.state.unknown': 'État Hermes détecté',
 }
 
 function formatDuration(ms, startedAt, now) {
+  if (!startedAt && ms == null) return '—'
   const duration = ms ?? Math.max(0, now - new Date(startedAt).getTime())
   if (!Number.isFinite(duration)) return '—'
   const seconds = Math.floor(duration / 1000)
@@ -48,7 +54,7 @@ function formatCost(value) {
 }
 
 function ManagerCell({ manager }) {
-  if (!manager) return <span className="muted-cell">Non assigné</span>
+  if (!manager) return <span className="muted-cell">Non détecté</span>
   const initials = manager.name?.slice(0, 1).toUpperCase() || 'A'
   return (
     <div className="manager-cell">
@@ -71,7 +77,14 @@ function CheckStack({ checks }) {
   )
 }
 
-export default function MissionTable({ missions, now, query = '', attentionOnly = false }) {
+export default function MissionTable({
+  missions,
+  now,
+  query = '',
+  attentionOnly = false,
+  selectedMissionId = null,
+  onSelectMission = () => {},
+}) {
   const normalized = query.trim().toLocaleLowerCase('fr-FR')
   const visible = missions.filter((mission) => {
     if (attentionOnly && !['running', 'escalated', 'incomplete'].includes(mission.status)) return false
@@ -83,6 +96,7 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
       mission.manager?.name,
       mission.manager?.model,
       mission.latest_event?.type,
+      mission.source,
     ].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR')
     return text.includes(normalized)
   })
@@ -92,7 +106,7 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
       <div className="panel-heading">
         <div>
           <h2>Missions</h2>
-          <p>Progression, budget, preuves et dernier événement.</p>
+          <p>Cliquer sur une ligne pour inspecter la chronologie et les preuves.</p>
         </div>
         <span className="panel-count">{visible.length} visible{visible.length > 1 ? 's' : ''}</span>
       </div>
@@ -114,16 +128,28 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
             {visible.length === 0 ? (
               <tr><td colSpan="7" className="empty-cell">Aucune mission ne correspond à cette vue.</td></tr>
             ) : visible.map((mission) => {
-              const status = STATUS[mission.status] || STATUS.closed
+              const status = STATUS[mission.status] || STATUS.unknown
               const budget = mission.budget || { cost: 0, limits: {}, percentage: null }
               const rawEvent = mission.latest_event?.type || '—'
               return (
-                <tr key={mission.id}>
+                <tr
+                  key={mission.id}
+                  className={`mission-row ${selectedMissionId === mission.id ? 'is-selected' : ''}`}
+                  tabIndex="0"
+                  aria-selected={selectedMissionId === mission.id}
+                  onClick={() => onSelectMission(mission)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onSelectMission(mission)
+                    }
+                  }}
+                >
                   <td>
                     <div className="primary-cell mission-name-cell">
                       <strong>{mission.name}</strong>
                       <small>#{mission.id}</small>
-                      <span>{mission.domain || 'Mission Cortex'}</span>
+                      <span>{mission.source === 'hermes-state' ? `Hermes · ${mission.domain || 'session'}` : mission.domain || 'Mission Cortex'}</span>
                     </div>
                   </td>
                   <td><ManagerCell manager={mission.manager} /></td>
