@@ -14,10 +14,10 @@ export default function ReasoningTrace({ events }) {
         return (
           <li key={e.hash || i} className="flex gap-3">
             <div className="flex flex-col items-center">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg text-text-muted">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-sub-surface text-text-muted">
                 <Icon name={icon} />
               </span>
-              {i < events.length - 1 && <span className="mt-1 w-px flex-1 bg-border" />}
+              {i < events.length - 1 && <span className="mt-1 w-px flex-1 bg-border-strong" />}
             </div>
             <div className="pb-1">
               <div className="flex items-center gap-2">

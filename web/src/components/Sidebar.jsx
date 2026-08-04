@@ -7,9 +7,9 @@ const NAV_GROUPS = [
 
 export default function Sidebar({ active = 'Dashboard' }) {
   return (
-    <aside className="flex h-screen w-56 shrink-0 flex-col justify-between border-r border-border bg-surface">
+    <aside className="flex h-screen w-56 shrink-0 flex-col justify-between border-r border-border bg-sidebar">
       <div>
-        <div className="flex items-center gap-2 px-5 py-5">
+        <div className="mb-4 flex items-center gap-2 border-b border-border px-5 py-4">
           <span className="text-xl text-primary">◈</span>
           <span className="text-lg font-bold">Cortex</span>
         </div>
@@ -17,7 +17,7 @@ export default function Sidebar({ active = 'Dashboard' }) {
         <nav className="flex flex-col gap-5 px-3">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
-              <span className="mb-1 block px-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+              <span className="mb-1.5 block px-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 {group.label}
               </span>
               <div className="flex flex-col gap-0.5">
@@ -25,10 +25,10 @@ export default function Sidebar({ active = 'Dashboard' }) {
                   <a
                     key={item}
                     href={`#${item.toLowerCase()}`}
-                    className={`rounded-sm px-2 py-1.5 text-sm ${
+                    className={`rounded-sm border px-2 py-1.5 text-sm ${
                       item === active
-                        ? 'bg-bg font-medium text-primary'
-                        : 'text-text-muted hover:bg-bg hover:text-text'
+                        ? 'border-border bg-surface font-semibold text-primary shadow-card'
+                        : 'border-transparent text-text-muted hover:border-border hover:bg-sub-surface hover:text-text'
                     }`}
                   >
                     {item}

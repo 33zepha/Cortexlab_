@@ -7,11 +7,11 @@ export default function Topbar({ title, onRunMission, running }) {
           type="search"
           placeholder="Rechercher un agent, une mission…"
           aria-label="Rechercher"
-          className="w-64 rounded-sm border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-64 rounded-sm border border-border bg-sub-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
         />
         <button
           type="button"
-          className="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text hover:bg-bg"
+          className="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text hover:border-border-strong hover:bg-sub-surface"
         >
           Filters
         </button>

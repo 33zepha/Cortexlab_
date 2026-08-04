@@ -16,11 +16,11 @@ export default function AgentDrawer({ agent, events, onClose }) {
         type="button"
         aria-label="Fermer"
         onClick={onClose}
-        className="absolute inset-0 bg-black/20"
+        className="absolute inset-0 bg-[#17191C]/35"
       />
 
-      <aside className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-border bg-surface p-6 shadow-overlay">
-        <div className="flex items-start justify-between">
+      <aside className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-border-strong bg-surface shadow-overlay">
+        <div className="flex items-start justify-between border-b border-border p-6">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">{agent.name || agent.id}</h2>
@@ -34,17 +34,17 @@ export default function AgentDrawer({ agent, events, onClose }) {
             type="button"
             onClick={onClose}
             aria-label="Fermer le panneau"
-            className="rounded-sm px-2 py-1 text-text-muted hover:bg-bg"
+            className="rounded-sm border border-transparent px-2 py-1 text-text-muted hover:border-border hover:bg-sub-surface hover:text-text"
           >
             ✕
           </button>
         </div>
 
-        <section className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+        <section className="border-b border-border p-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
             Task Overview
           </h3>
-          <dl className="mt-2 grid grid-cols-2 gap-3 text-sm">
+          <dl className="mt-3 grid grid-cols-2 gap-3 rounded-md border border-border bg-sub-surface p-4 text-sm">
             <div>
               <dt className="text-text-muted">Rôle</dt>
               <dd>{agent.role || '—'}</dd>
@@ -64,8 +64,8 @@ export default function AgentDrawer({ agent, events, onClose }) {
           </dl>
         </section>
 
-        <section className="mt-6 flex-1">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+        <section className="flex-1 p-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
             Reasoning Trace
           </h3>
           {!isCeo && (

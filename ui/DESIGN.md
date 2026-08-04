@@ -10,11 +10,14 @@ colors:
   error: "#DC2626"
   info: "#2563EB"
   running: "#0EA5E9"
-  bg: "#F5F6F8"
+  bg: "#F6F7F8"
+  sidebar: "#FBFBFC"
   surface: "#FFFFFF"
-  border: "#E5E7EB"
-  text: "#111827"
-  text-muted: "#6B7280"
+  sub-surface: "#F8F9FA"
+  border: "#DFE2E6"
+  border-strong: "#CDD2D8"
+  text: "#17191C"
+  text-muted: "#70757D"
 typography:
   h1:
     fontFamily: Inter
@@ -79,11 +82,13 @@ components:
     rounded: "{rounded.sm}"
   card:
     backgroundColor: "{colors.surface}"
+    borderColor: "{colors.border}"
     textColor: "{colors.text}"
     rounded: "{rounded.lg}"
     padding: 20px
   sidebar:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.sidebar}"
+    borderColor: "{colors.border}"
     textColor: "{colors.text-muted}"
   toggle-on:
     backgroundColor: "{colors.success}"
@@ -115,7 +120,11 @@ Real-time data is fed by the existing NDJSON ledger (`runtime/event-store.mjs`) 
 - **Warning (#D97706):** needs human information, threshold 60–85%.
 - **Error (#DC2626):** escalation required, failed, threshold >85%.
 - **Info / Running (#2563EB / #0EA5E9):** navigation accents, in-progress states.
-- **Neutrals:** bg `#F5F6F8` (light gray canvas), surface `#FFFFFF` (cards), border `#E5E7EB`, text `#111827`, muted `#6B7280`.
+- **Neutrals — a layered stack, not one flat wash.** Four surface values that must stay
+  distinguishable: canvas `#F6F7F8` → sidebar `#FBFBFC` → surface `#FFFFFF` (cards) →
+  sub-surface `#F8F9FA` (blocks nested *inside* a card). Borders carry the separation:
+  `#DFE2E6` default, `#CDD2D8` for emphasis (hover, selected, dividers that must read).
+  Text `#17191C`, muted `#70757D` — muted stays legible, never a pale gray.
 
 # Typography
 
@@ -130,7 +139,12 @@ Inter for everything (matches all 10 references). JetBrains Mono for ledger hash
 
 # Elevation & Depth
 
-Single soft shadow language: `0 1px 3px rgba(17,24,39,0.08)` on cards; `0 4px 12px rgba(17,24,39,0.10)` on hover/overlays. No heavy drop shadows — flat, calm, "floating white cards on gray" (Agentic UI / Synqra look).
+**Borders do the work, not shadows.** Every card, panel and nested block carries a
+1px `border` — that is what creates the cut. Shadows stay tight and local
+(`0 1px 2px rgba(23,25,28,0.05)` on cards), never a diffuse halo, or the whole UI
+reads as if covered in tracing paper. Only true overlays (drawer, popover) lift off
+the page: `0 8px 24px rgba(23,25,28,0.12)` plus a border. Hover raises the *border*
+to `border-strong` rather than growing the shadow.
 
 # Shapes
 
@@ -156,6 +170,8 @@ Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inn
 - Map every status to the INV-006 closure color (green/amber/red) — never invent a 4th meaning.
 - Use the ledger (`events.ndjson`) as the single live data source for Activity / History / Live.
 - Keep cards white-on-gray, flat, rounded. Calm > busy.
+- Give every card, panel and nested block a visible 1px border — separation comes from
+  edges, not from haze.
 - Show "Last Run" / live timestamps everywhere an agent is listed.
 
 **Don't**
@@ -163,3 +179,5 @@ Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inn
 - Don't overload a card: 1 status badge + 2 stat columns + 1 footer line max.
 - Don't break the grid/table view toggle — dense lists need the table.
 - Don't hardcode colors in components; always reference tokens so the palette stays single-source.
+- Don't lean on diffuse shadows to separate surfaces, and don't let canvas / sidebar /
+  surface collapse into the same value — that flattens the whole console.
