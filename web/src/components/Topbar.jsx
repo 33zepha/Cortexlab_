@@ -2,26 +2,28 @@ import Icon from './Icon.jsx'
 import { relativeTime } from '../lib/ledger.js'
 
 export default function Topbar({
-  connected,
+  hermesOnline,
+  streamConnected,
+  hermesUrl,
   lastSync,
   now,
   query,
   onQueryChange,
   attentionOnly,
   onToggleFilters,
-  onRunMission,
-  running,
 }) {
   return (
     <header className="topbar-shell">
       <div className="topbar-title-block">
         <h1>Console</h1>
-        <span className={`runtime-state ${connected ? 'is-online' : ''}`}>
+        <span className={`runtime-state ${hermesOnline ? 'is-online' : ''}`}>
           <i aria-hidden="true" />
-          {connected ? 'Runtime opérationnel' : 'Runtime hors ligne'}
+          {hermesOnline ? 'Hermes opérationnel' : 'Hermes hors ligne'}
         </span>
         <span className="last-sync">
-          Dernière synchro : {lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}
+          {streamConnected ? 'Flux connecté' : 'Flux interrompu'}
+          {' · '}
+          {lastSync ? relativeTime(lastSync, now) : 'aucune activité'}
         </span>
       </div>
 
@@ -44,15 +46,20 @@ export default function Topbar({
           <Icon name="filter" />
           Filtres
         </button>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={onRunMission}
-          disabled={running}
+        <a
+          className={`primary-button ${hermesUrl ? '' : 'is-disabled'}`}
+          href={hermesUrl || undefined}
+          target="_blank"
+          rel="noreferrer"
+          aria-disabled={!hermesUrl}
+          title={hermesUrl ? 'Ouvrir l’interface Hermes' : 'Configurer HERMES_URL sur le serveur'}
+          onClick={(event) => {
+            if (!hermesUrl) event.preventDefault()
+          }}
         >
-          <Icon name="play" />
-          {running ? 'Exécution…' : 'Lancer une mission'}
-        </button>
+          <Icon name="link" />
+          Ouvrir Hermes
+        </a>
       </div>
     </header>
   )
