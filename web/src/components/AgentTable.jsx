@@ -2,6 +2,15 @@ import { useMemo, useState } from 'react'
 import Icon from './Icon.jsx'
 import { agentActivity, relativeTime } from '../lib/ledger.js'
 
+const PHASE_LABELS = {
+  starting: 'Initialisation',
+  delegating: 'Délégation',
+  executing: 'Exécution',
+  checking: 'Vérification',
+  budget: 'Budget',
+  closed: 'Terminée',
+}
+
 function percent(value) {
   if (!Number.isFinite(Number(value))) return 0
   const normalized = Number(value) <= 1 ? Number(value) * 100 : Number(value)
@@ -10,6 +19,13 @@ function percent(value) {
 
 function currentMissionFor(agentId, missions) {
   return missions.find((mission) => mission.agents?.some((agent) => agent.id === agentId)) || null
+}
+
+function lastEventLabel(activity) {
+  if (activity.lastResult?.violation) return 'Violation détectée'
+  if (activity.lastResult) return 'Contrôle validé'
+  if (activity.running) return 'Tâche lancée'
+  return 'Disponible'
 }
 
 export default function AgentTable({ agents, events, missions, now, globalQuery = '' }) {
@@ -112,7 +128,7 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
                   <td>
                     <div className="mission-agent-cell">
                       <strong>{mission?.name || '—'}</strong>
-                      <small>{activity.rule || (mission ? `${mission.phase} · ${mission.progress}%` : 'Disponible')}</small>
+                      <small>{activity.rule || (mission ? `${PHASE_LABELS[mission.phase] || 'En cours'} · ${mission.progress}%` : 'Disponible')}</small>
                     </div>
                   </td>
                   <td><strong className="mono-number">{activity.cost.toFixed(2).replace('.', ',')}</strong></td>
@@ -124,7 +140,7 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
                   </td>
                   <td>
                     <div className="event-cell">
-                      <strong>{lastEvent ? (lastEvent.violation ? 'violation' : 'check_passed') : activity.running ? 'task_started' : 'idle'}</strong>
+                      <strong>{lastEventLabel(activity)}</strong>
                       <small>{relativeTime(lastEvent?.ts || activity.since, now)}</small>
                     </div>
                   </td>
