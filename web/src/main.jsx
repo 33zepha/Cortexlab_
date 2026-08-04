@@ -5,6 +5,7 @@ import './styles/index.css'
 import './styles/refinement.css'
 import './styles/explorer.css'
 import './styles/agent-inspector.css'
+import './styles/cortex-v3.css'
 import './styles/mobile.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
