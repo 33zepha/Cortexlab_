@@ -8,6 +8,7 @@ on:
       - 'runtime/mission-projection.mjs'
       - 'server/index.mjs'
       - '.github/workflows/ui-visual-proof.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
