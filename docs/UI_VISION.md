@@ -76,6 +76,14 @@ Persistante, mais volontairement discrète : pas de gros logo, pas de bannière,
 
 Cette section couvre uniquement les sept espaces métier. `System` et `Settings` (zone utilitaire) seront définis dans une section ultérieure.
 
+**Note de correction (2026-08-04)** : Cette section intègre les corrections suivantes :
+- **Constitution/Invariants/Contrôles** (INV-001 à INV-011, `CTRL-*`, autorité) appartiennent à `System` (zone utilitaire), pas aux espaces métier. Ils sont des fondations du système, pas du contenu opérationnel à superviser.
+- **Memory** est redéfinie comme mémoire opérationnelle : ce qui s'est passé (episodic), ce qu'on en a tiré (semantic), comment on le fait maintenant (procedural). Pas de constitution ici.
+- **Skills** est le catalogue des capacités exécutables et permissions du système, pas un mélange de contrôles et strengths.
+- **Results** sont les artefacts concrets générés (code, docs, rapports), pas les données administratives de closure.
+- **Evaluations** est une évaluation holistique de la qualité et de la fiabilité (rubrics, scores, tendances, diagnostics post-erreur), pas une simple synthèse de contrôles.
+- **Automations** a un modèle objet clairement défini (trigger/action), en attente d'une décision produit préalable.
+
 Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, panneaux secondaires, données principales, actions autorisées, états (vide/loading/offline/erreur/PLACEHOLDER), ce qui existe déjà dans le repo, et ce qui dépend des phases suivantes.
 
 ---
@@ -144,164 +152,219 @@ Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, pannea
 
 #### 2.3 — Memory
 
-**Objectif** — Donner accès à la mémoire institutionnelle de Cortex : invariants, politiques, apprentissages visuels gradués par domaine.
+**Objectif** — Accéder à la mémoire opérationnelle du système : expérience accumulée (ce qui s'est passé), apprentissages tirés (ce qu'on en a appris), procédures établies (comment on le fait maintenant).
 
-**Vue par défaut** — Liste des invariants actifs (INV-001 à INV-011), groupés par domaine (orchestration, autonomy, communication, verification, closure, learning, post-error, versioning, budget).
+**Vue par défaut** — Trois onglets : **Historique** (episodic), **Apprentissages** (semantic), **Procédures** (procedural), avec filtres optionnels par domaine et niveau de confiance.
 
 **Sous-vues**
-- Invariants (règles constitutionnelles).
-- Apprentissages (confiance graduée par domaine — faible/intermédiaire/élevée/établie, selon INV-007).
+- **Historique** (episodic) : log structuré des événements importants du système, groupés par domaine/mission, avec contexte.
+- **Apprentissages** (semantic) : ce qu'on a tiré des événements — patterns identifiés, confiance progressive (faible/intermédiaire/élevée/établie selon INV-007), cas limites documentés, tendances.
+- **Procédures** (procedural) : comment on exécute maintenant, en fonction de ce qu'on a appris — étapes, conditions, domaines applicables, taux de succès historique.
 
-**Objet central** — La liste des invariants/politiques actifs.
+**Objet central** — Le tab actif (Historique / Apprentissages / Procédures).
 
-**Panneaux secondaires** — Détail d'un invariant sélectionné (statement complet, source, contrôles associés).
+**Panneaux secondaires** — Détail d'un événement historique (mission, agent, outcome, impact), d'un apprentissage (evidence), ou d'une procédure (conditions, linked_events).
 
-**Données principales** — id, type, authority, domain, status, version, source, statement, controls associés.
+**Données principales** — Par onglet :
+- **Historique** : ts, event_type, domain, mission_id, outcome, agent_involved, cost_impact.
+- **Apprentissages** : domain, pattern_description, confidence_level (faible/intermédiaire/élevée/établie), supporting_events_count, trend_indicator (↑↓→), linked_procedures.
+- **Procédures** : procedure_id, description, applicable_domains (list), conditions (when/how to trigger), steps, success_rate (%), last_used_ts.
 
-**Actions autorisées** — Consulter. Aucune action d'écriture prévue : la mémoire constitutionnelle n'est pas éditable depuis l'UI (source canonique = YAML dans `constitution/`, conformément à INV-009).
+**Actions autorisées** — Consulter uniquement. Aucune édition manuelle : l'expérience et les apprentissages se construisent par l'exécution réelle, jamais par saisie UI.
 
 **États**
-- Vide : n'existe pas en pratique (les invariants sont statiques et toujours présents), mais à prévoir si le registry est vide/corrompu.
-- Loading : chargement du registry.
-- Offline : n/a si servi statiquement, à clarifier selon l'implémentation retenue.
-- Erreur : registry.json illisible ou invalide.
-- PLACEHOLDER : la totalité de cet espace est PLACEHOLDER à ce stade — aucun endpoint API ne sert `registry.json` ou `constitution/` au frontend aujourd'hui.
+- Vide : système neuf, aucun historique accumulé.
+- Loading : agrégation de l'historique et des apprentissages en cours.
+- Offline : mêmes règles que Missions.
+- Erreur : échec d'agrégation ou de lecture du ledger.
+- PLACEHOLDER : Entièrement PLACEHOLDER à ce stade. Aucun endpoint n'expose ce concept (`/api/memory`, `/api/learning`, `/api/procedures` n'existent pas). Les concepts "apprentissages" et "procédures" n'ont aucune donnée structurée existante. Seuls les événements bruts du ledger (via `/api/events`) pourraient alimenter l'onglet Historique.
 
-**Existe déjà dans le repo** — `registry/registry.json` (11 invariants, 2 controls, 4 agents, classes d'autorité définies), `constitution/core.yaml`, `constitution/agents.yaml`, `manifests/invariants.json`. Tout ceci est lu côté serveur (`server/index.mjs` ne l'expose pas encore) ou en fichiers statiques, jamais via une route `/api/*` dédiée.
+**Existe déjà dans le repo** — Événements bruts du ledger (via `/api/events`), `agentActivity()` dans `web/src/lib/ledger.js` (pour l'historique par agent). Rien d'autre.
 
-**Dépend des phases suivantes** — Création d'un endpoint `/api/memory` ou `/api/registry` (nouveau travail backend, hors périmètre UI). Définition de la vue "Apprentissages" (INV-007) qui n'a aucune donnée structurée existante à ce jour — à spécifier entièrement.
+**Dépend des phases suivantes** — Nouveaux endpoints `/api/memory/history`, `/api/memory/learning`, `/api/memory/procedures`. Nouvelle logique d'agrégation et d'inférence pour transformer l'historique brut en apprentissages (probablement un nouveau module runtime). Notion de "confiance" des apprentissages et lien avec INV-007. Données statiques/gérées pour les procédures canoniques. Vue détail + drill-down entre onglets.
 
 ---
 
 #### 2.4 — Skills
 
-**Objectif** — Voir quels contrôles/compétences vérifiables sont actifs dans le système, et quels agents savent faire quoi.
+**Objectif** — Voir le catalogue des capacités opérationnelles exécutables du système : qui peut faire quoi, avec quelles permissions, et quel niveau de maîtrise.
 
-**Vue par défaut** — Liste des contrôles actifs (`CTRL-*`), avec leur domaine d'application et leur statut.
+**Vue par défaut** — Registre des compétences par agent : matrice ou liste montrant chaque agent et ses `strengths` (tags de capacité : "code", "orchestration-agents", "raisonnement", etc.), avec le niveau associé.
 
 **Sous-vues**
-- Contrôles (checks automatisés, ex. `CTRL-NO-DEBUG-LOG`, `CTRL-NO-LABEL-UPPERCASE`).
-- Compétences par agent (les tags `strengths` du registry — ex. "code", "orchestration-agents", "raisonnement").
+- **Compétences par agent** : qui possède quelle capacité, niveau de maîtrise, contrôles associés.
+- **Matrice des permissions** : qui a le droit de faire quoi, associé aux levels d'autorité (ceo/manager/worker selon `registry.json`).
+- **Capacités par domaine** : quelles opérations sont disponibles dans chaque domaine (frontend, backend, etc.), qui peut les exécuter.
 
-**Objet central** — Liste des contrôles en vue par défaut.
+**Objet central** — La matrice compétences × agents en vue par défaut.
 
-**Panneaux secondaires** — Détail d'un contrôle (pattern, cible, message de blocage), liste des agents possédant une compétence donnée.
+**Panneaux secondaires** — Détail d'une capacité (qui peut l'exécuter, au quel niveau d'autorité, contrôles appliqués), détail d'un agent (ses capacités, ses restrictions de permission par domaine).
 
-**Données principales** — id, domain, source (fichier yaml), applies_when, check.type/target/pattern/on_match/message.
+**Données principales** — Registre :
+- **Capacité** : id, name, domain, description, agents_capable (list with levels), controls_apply (list).
+- **Agent skills** : agent_id, agent_name, agent_tier (ceo/manager/worker), capabilities (list), permissions_by_domain (dict with restrictions).
 
-**Actions autorisées** — Consulter uniquement. Aucune édition de contrôle depuis l'UI (source canonique = `schemas/*.yaml`, INV-009).
+**Actions autorisées** — Consulter uniquement. Aucune édition (source canonique = `registry/registry.json`, INV-009). À terme : historique d'utilisation d'une compétence (stats de succès/échec).
 
 **États**
-- Vide : aucun contrôle actif (cas anormal).
-- Loading : chargement du registry/manifests.
+- Vide : registry vide/corrompu (cas anormal, à signaler).
+- Loading : chargement du registry et matrice de permissions.
 - Offline : n/a si statique.
-- Erreur : fichier de contrôle illisible.
-- PLACEHOLDER : totalité de l'espace, même raison que Memory — pas d'endpoint API existant.
+- Erreur : registry illisible.
+- PLACEHOLDER : aucun placeholder connu — le registre et ses données sont complètement LIVE une fois chargés.
 
-**Existe déjà dans le repo** — `manifests/controls.json` (2 contrôles), `schemas/ctrl-no-debug-log.yaml`, `schemas/ctrl-no-label-uppercase.yaml`, tags `strengths` dans `registry/registry.json`.
+**Existe déjà dans le repo** — `registry/registry.json` (4 agents + tags `strengths` + tiers ceo/manager/worker), `manifests/controls.json` (2 contrôles, pas encore croisés avec les compétences). Pas d'endpoint `/api/skills`.
 
-**Dépend des phases suivantes** — Endpoint `/api/skills` ou `/api/controls` (nouveau travail backend). Lien entre contrôles et résultats de `check.run` réels du ledger (les événements `check.run` existent déjà mais ne sont pas croisés avec la définition du contrôle dans l'UI actuelle).
+**Dépend des phases suivantes** — Endpoint `/api/skills` ou `/api/capabilities` pour servir le registre complet. Concept et donnée pour la "matrice des permissions" (levels d'autorité croisés avec domaines et capacités) — actuellement inexistant structurellement. Lien explicite entre contrôles et capacités (qui s'applique à quelle opération). Historique et stats d'utilisation par compétence.
+
+**Note** : Les **contrôles vérifiables** (`CTRL-*`) n'appartiennent pas à cet espace ; ils font partie de la zone utilitaire `System` avec le reste de la Constitution.
 
 ---
 
 #### 2.5 — Automations
 
-**Objectif** — Voir les règles ou déclencheurs qui lancent des actions sans intervention humaine directe (hors périmètre "lancement de mission").
+**Objectif** — Catalogue des automatisations et templates de workflow : règles de déclenchement et actions qui s'exécutent sans intervention humaine directe, restant conformes au principe directeur (pas d'exécution arbitraire, actions de gouvernance contrôlées et auditables).
 
-**Vue par défaut** — À définir : aucune automatisation n'existe dans le repo actuellement.
+**Vue par défaut** — Liste des automatisations actives, avec état (enabled/disabled), dernier déclenchement, résultat (success/failure/pending).
 
-**Sous-vues** — Aucune connue à ce jour.
+**Sous-vues**
+- **Catalogue des automatisations** : liste des rules/templates disponibles, groupées par type (event-based, scheduled, condition-based).
+- **Détail d'une automatisation** : définition complète (trigger, actions, conditions), historique d'exécution, taux de succès, audit trail.
 
-**Objet central** — À définir.
+**Objet central** — La liste des automatisations en vue par défaut.
 
-**Panneaux secondaires** — À définir.
+**Panneaux secondaires** — Détail d'une automatisation sélectionnée (trigger + actions développées, logs d'exécution récents, performance metrics).
 
-**Données principales** — Aucune donnée réelle disponible.
+**Données principales** — Modèle Automation :
+- **Identification** : id, name, description, enabled (boolean), created_at, created_by, owner.
+- **Trigger** : type (event / schedule / condition), specification (ex: "on check.run with violation", ou "every 6h", ou "when budget exceeds 80%").
+- **Actions** (ordered list) :
+  - action_type (notify, log, escalate, retry_mission, pause_mission, other).
+  - target (qui/quoi reçoit l'action : agent, user, system, mission_id).
+  - parameters (dict spécifique à l'action).
+  - condition (optionnel : si l'action ne s'exécute que sous certaines conditions).
+- **Governance** :
+  - requires_approval (boolean : l'action a-t-elle besoin d'une approbation avant exécution ?)
+  - approval_authority (ceo / manager / admin, ou absent si auto-approval).
+  - audit_enabled (boolean : action auditée ?).
+- **Performance** : success_rate (%), last_execution_ts, execution_count, failure_count.
 
-**Actions autorisées** — À définir. Probablement : activer/désactiver une automatisation (action de gouvernance), jamais en créer librement depuis Cortex Lab (cohérent avec le principe directeur : pas d'exécution arbitraire).
+**Actions autorisées** — Consulter, activer/désactiver une automatisation existante. À terme (gouvernance) : créer une nouvelle automatisation (probablement via un builder de workflow avec templates pré-approuvés, jamais librement). Jamais exécuter une action arbitraire — cohérent avec INV-005 et le principe directeur.
 
-**États** — À définir une fois le concept backend clarifié. Par défaut, cet espace devrait afficher un état "vide structurel" assumé (pas de fausse donnée), avec un message clair du type "Aucune automatisation configurée" plutôt qu'un PLACEHOLDER trompeur.
+**États**
+- Vide : aucune automatisation configurée (état normal d'un système sans besoins d'automatisation, pas une erreur).
+- Loading : chargement du catalogue.
+- Offline : n/a si triggers sont locaux au ledger.
+- Erreur : échec du catalogue ou du ledger.
+- PLACEHOLDER : Structure entièrement PLACEHOLDER. Aucun concept, aucune donnée backend n'existe. Les conteneurs à définir sont : ce qui constitue un trigger valide, ce qui constitue une action valide, qui approuve quoi.
 
-**Existe déjà dans le repo** — Rien. Aucun fichier, endpoint, ou concept d'automatisation n'existe dans le codebase actuel (ni `server/`, ni `runtime/`, ni `registry/`).
+**Existe déjà dans le repo** — Rien. Aucun concept d'automatisation n'existe (ni `server/`, ni `runtime/`, ni `registry/`).
 
-**Dépend des phases suivantes** — Cet espace dépend d'une décision produit non encore prise : qu'est-ce qu'une "automatisation" dans Cortex (déclencheur sur événement ? règle de routing automatique ? autre) ? Cette définition doit être clarifiée avec vous avant toute maquette, au-delà des phases 2c/2d de traçabilité des données.
+**Dépend des phases suivantes** — **Décision produit préalable requise** (à documenter dans `UI_DECISIONS.md`) :
+- Quels types de triggers sont permis ? (événements du ledger, horaires cron, conditions manuelles, autre ?)
+- Quels types d'actions ? (notify, log, escalate, retry, pause, créer une mission ?, autre ?)
+- Qui crée/gère les automatisations ? (admin only, utilisateurs autorisés, système auto-créé ?)
+- Comment l'approbation fonctionne-t-elle pour les actions sensibles ? (INV-005)
+- Quel est le cycle de vie d'une automatisation ? (draft, active, disabled, archived ?)
+
+Une fois cette décision prise : nouveau module runtime pour l'exécution des triggers + actions. Nouveaux endpoints `/api/automations`. Éventuellement un builder UI (future phase), ou saisie manuelle de définitions YAML/JSON avec validation stricte.
 
 ---
 
 #### 2.6 — Results
 
-**Objectif** — Consulter les livrables et verdicts de clôture des missions terminées, indépendamment du suivi temps réel (qui reste dans Missions).
+**Objectif** — Consulter les livrables et artefacts concrets générés par les missions : ce qui a été créé, produit, généré (code, documentation, rapports, décisions, réalisables), indépendamment de la métadonnée administrative de clôture.
 
-**Vue par défaut** — Liste des missions closes, avec leur closure (`LIVRAISON_AUTONOME` / `AVEC_INFORMATION` / `ESCALADE_HUMAINE`), triée par date de clôture.
+**Vue par défaut** — Galerie/catalogue des artefacts générés, groupé par mission (ou par type : code/doc/report/decision/deliverable), trié par date de création, avec filtres (domaine, agent créateur, type).
 
 **Sous-vues**
-- Liste des résultats.
-- Détail d'un résultat : rapport de mission complet (rationale de closure, controls appliqués, escalation reasons le cas échéant).
+- **Catalogue des artefacts** : vue par défaut, explorable par mission ou par type.
+- **Détail d'un artefact** : contenu prévisualisé (ou lecteur natif pour le type), métadonnées complètes, version history le cas échéant, liens vers les événements qui l'ont produit, lien vers la mission parent.
 
-**Objet central** — Le rapport de closure de la mission sélectionnée.
+**Objet central** — La galerie/liste des artefacts en vue par défaut.
 
-**Panneaux secondaires** — Liste des checks passés/violations associés, budget final consommé.
+**Panneaux secondaires** — Détail d'un artefact sélectionné (preview + metadata), possibilité d'ouvrir, télécharger, visionner l'historique des versions.
 
-**Données principales** — closure, rationale, budget final (`{ explorations, reworks, cost, limits }`), controls (liste complète avec verifiable/violation/findings/message), escalations, ruled_count.
+**Données principales** — Modèle Artifact :
+- **Identification** : artifact_id, mission_id, type (code / doc / report / decision / deliverable / other), title, description.
+- **Metadata** : created_at, created_by (agent_id + agent_name), size (bytes), format (extension).
+- **Content** : content_preview (résumé ou aperçu du contenu), external_link (si stocké ailleurs : repo, Figma, GDoc, Slack thread, etc.).
+- **Traceability** : event_ids (les événements qui ont produit cet artefact), mission_phase (ou étape du graphe).
+- **Versioning** (optionnel) : version (ex. 1.0, 1.1), version_history (list of { version, created_at, changes_summary }).
 
-**Actions autorisées** — Consulter, ouvrir un artefact lié. À terme : demander une nouvelle preuve, escalader vers un humain (actions de gouvernance sur un résultat déjà clos, ex. contester une clôture autonome).
+**Actions autorisées** — Consulter, ouvrir/télécharger un artefact, explorer les versions antérieures. À terme (gouvernance) : demander une révision d'un artefact, ajouter des annotations/approbations, archiver/dépublier un artefact.
 
 **États**
-- Vide : aucune mission encore close.
-- Loading : chargement des missions terminées.
+- Vide : aucun artefact généré (mission trop jeune, ou aucune mission complétée).
+- Loading : chargement du catalogue d'artefacts.
 - Offline : mêmes règles que Missions.
-- Erreur : échec de récupération.
-- PLACEHOLDER : aucun connu — les données de closure sont entièrement dérivées du ledger réel (`runtime/chief-of-staff.mjs`, `finalizeMission()` dans `mission-projection.mjs`).
+- Erreur : échec de récupération du catalogue.
+- PLACEHOLDER : Aucun placeholder connu si les artefacts sont tracés dans le ledger. Les données seraient entièrement LIVE dès que l'événement `artifact.created` (ou équivalent) passe par le ledger.
 
-**Existe déjà dans le repo** — La donnée existe intégralement : `runtime/chief-of-staff.mjs` produit le rapport de closure (`closure`, `rationale`, `budget`, `controls`, `escalations`), `runtime/mission-projection.mjs` le projette dans `finalizeMission()`. Servi par `/api/missions` (chaque mission fermée porte déjà `closure`, `checks`, `budget`). **Aucune vue dédiée "Results" n'existe côté frontend** — c'est un nouvel espace à construire sur une donnée déjà disponible.
+**Existe déjà dans le repo** — À clarifier : le ledger trace-t-il les artefacts ? Y a-t-il un événement `artifact.created` ? Actuellement, `/api/missions` sert la clôture et le budget, pas un endpoint `/api/artifacts`. Aucun frontend n'explore les artefacts aujourd'hui.
 
-**Dépend des phases suivantes** — Aucune dépendance backend nouvelle : c'est le premier espace candidat à être entièrement LIVE dès sa construction, la donnée existe déjà de bout en bout.
+**Dépend des phases suivantes** — Clarification : comment les artefacts sont-ils tracés dans le ledger ? Formats ? Métadonnées minimales ? Endpoint `/api/artifacts` ou extension de `/api/missions/{id}` avec une section `artifacts`. Logique de preview/visionning par type (syntax highlight pour code, rendu pour markdown, etc.). Possible intégration avec des stockages externes (repos, Figma, Docs). Version history et diffing optionnel.
 
 ---
 
 #### 2.7 — Evaluations
 
-**Objectif** — Donner une vue agrégée de la qualité et de la fiabilité du système : taux de violation, tendances par contrôle, niveaux d'escalade (N1/N2/N3 selon INV-008).
+**Objectif** — Évaluation holistique de la qualité, de la fiabilité et de la confiance du système : synthèse de conformité (contrôles), scores de qualité multi-rubrique, tendances historiques, et diagnostics post-erreur.
 
-**Vue par défaut** — Tableau de synthèse par contrôle (`CTRL-*`) : nombre d'exécutions, taux de violation, dernière violation.
+**Vue par défaut** — Tableau de bord d'évaluation avec trois sections principales :
+1. **Synthèse de conformité** : par contrôle (`CTRL-*`), nombre d'exécutions, taux de respect, tendance (↑↓→), dernière violation.
+2. **Scores de qualité** : par domaine (code, orchestration, communication, etc.), note agrégée (ex. 8/10), rubrique justifiant chaque score, domaines en régression.
+3. **Diagnostics post-erreur** : distribution des niveaux N1/N2/N3 (INV-008), causes récurrentes, recommandations résultantes.
 
 **Sous-vues**
-- Synthèse par contrôle.
-- Historique des diagnostics post-erreur (niveaux N1/N2/N3, selon INV-008).
+- **Conformité détaillée** : liste complète des contrôles avec stats (executions, violations, trend), drill-down dans les `check.run` associés.
+- **Scores de qualité** : détail par rubrique, evidence (quelles exécutions soutiennent ce score), historique du score dans le temps.
+- **Diagnostics post-erreur** : historique des incidents par niveau N1/N2/N3, causes groupées, actions correctives proposées/appliquées.
 
-**Objet central** — Le tableau de synthèse par contrôle en vue par défaut.
+**Objet central** — Le tableau de synthèse en vue par défaut (les trois sections visibles ou en onglets).
 
-**Panneaux secondaires** — Détail d'un contrôle : historique des `check.run` associés, tendance dans le temps.
+**Panneaux secondaires** — Détail d'un contrôle sélectionné, d'une rubrique qualité, ou d'un diagnostic ; drill-down dans les événements sous-jacents.
 
-**Données principales** — Agrégations calculées à partir des événements `check.run` du ledger (rule, violation, findings) — actuellement disponibles événement par événement, jamais agrégées.
+**Données principales** — Agrégations (à calculer) :
+- **Par contrôle** : control_id, executions_count, violations_count, violation_rate (%), last_violation_ts, trend_indicator (↑↓→), linked_check_runs (IDs).
+- **Par domaine** : domain, quality_score (0–100), rubric_scores (dict de sous-scores avec poids), evidence_count (nombre d'exécutions soutenant le score), regression_indicator (boolean).
+- **Diagnostics N1/N2/N3** : level (1/2/3 per INV-008), count_per_level, causes_by_frequency (top 5), linked_controls (quels contrôles ont échoué), recommended_actions (list).
 
-**Actions autorisées** — Consulter uniquement dans un premier temps.
+**Actions autorisées** — Consulter uniquement dans un premier temps. À terme (gouvernance) : demander une ré-évaluation manuelle d'un domaine (ex. révision humaine du score de "code"), explorer les actions correctives proposées, marquer une action comme appliquée (audit).
 
 **États**
-- Vide : aucun `check.run` dans le ledger.
-- Loading : agrégation en cours.
+- Vide : aucun `check.run` ou donnée de qualité accumulée (système neuf).
+- Loading : agrégation des contrôles et calcul des scores de qualité.
 - Offline : mêmes règles que Missions.
-- Erreur : échec d'agrégation ou de lecture ledger.
-- PLACEHOLDER : la totalité des agrégations (taux, tendances) est PLACEHOLDER tant qu'aucune fonction d'agrégation n'existe.
+- Erreur : échec de l'agrégation ou de la lecture du ledger.
+- PLACEHOLDER : Les agrégations (taux, scores, tendances, niveaux N1/N2/N3) sont PLACEHOLDER tant qu'aucune logique d'agrégation n'existe. Les événements bruts `check.run` sont LIVE. Le concept de "rubrique qualité" n'a aucune donnée ou définition structurée.
 
-**Existe déjà dans le repo** — Les événements bruts `check.run` existent dans le ledger (`{ rule, matched, violation, findings }`) et sont lisibles via `/api/events`. **Aucune agrégation, aucun calcul de taux, aucune vue "Evaluations" n'existe.**
+**Existe déjà dans le repo** — Événements bruts `check.run` dans le ledger (via `/api/events`), contenant `rule`, `matched`, `violation`, `findings`. Aucune logique d'agrégation. INV-008 (niveaux de diagnostic post-erreur) existe mais n'a aucune trace structurée dans le ledger : seuls `check.run` et `agent.result` existent, sans champs pour "niveau d'escalade du diagnostic". Aucune notion de "rubrique qualité" ou de "score de qualité" n'existe.
 
-**Dépend des phases suivantes** — Nouvelle logique d'agrégation (probablement un nouveau module runtime, similaire à `mission-projection.mjs` mais pour les contrôles plutôt que les missions). Définition du lien avec INV-008 (niveaux de diagnostic post-erreur) qui n'a aujourd'hui aucune trace structurée dans le ledger — seuls `check.run` et `agent.result` existent, sans notion de "niveau d'escalade du diagnostic".
+**Dépend des phases suivantes** — Nouveau module runtime pour l'agrégation des `check.run` et le calcul des rates/tendances (similaire à `mission-projection.mjs`). Définition d'une **carte des rubriques de qualité** : quels domaines évaluer, critères, poids, comment scorer chacun (probablement hors du ledger, dans une configuration ou schema canonique). Liaison entre `check.run` du ledger et les niveaux de diagnostic N1/N2/N3 (INV-008) — actuellement, aucun événement ne marque son niveau. Éventuellement, des données externes (human feedback, post-mortems annotés) pour enrichir les scores.
 
 ---
 
 ### Résumé — maturité des données par espace
 
-| Espace | Donnée LIVE existante | Vue frontend existante | Travail restant |
-|---|---|---|---|
-| Missions | Oui (complète) | Oui (cockpit Phase 1/2b) | Généraliser en liste + détail, gouvernance |
-| Agents | Oui (complète) | Non (aucun composant dédié) | Construire liste + détail |
-| Results | Oui (complète, non exploitée) | Non | Construire — candidat le plus rapide à livrer en LIVE |
-| Skills | Partielle (2 contrôles, pas d'API) | Non | Endpoint API + vue |
-| Memory | Partielle (fichiers statiques, pas d'API) | Non | Endpoint API + vue + concept "apprentissages" à spécifier |
-| Evaluations | Partielle (événements bruts, pas d'agrégation) | Non | Nouveau module d'agrégation + vue |
-| Automations | Aucune | Non | Décision produit préalable requise |
+| Espace | Donnée LIVE existante | Vue frontend existante | Travail restant | Priorité candidat |
+|---|---|---|---|---|
+| Missions | Oui (complète) | Oui (cockpit Phase 1/2b) | Généraliser en liste + détail, gouvernance | Généraliser Phase 2d |
+| Agents | Oui (complète) | Non (aucun composant dédié) | Construire liste + détail | Rapide (données prêtes) |
+| Results | Oui (complète, non exploitée) | Non | Construire vue des artefacts | **Plus rapide** (données existantes) |
+| Skills | Partielle (registry + tags, pas d'API) | Non | Endpoint API + matrice permissions + vue | Moyen (données prêtes, API manquante) |
+| Memory | Aucune structure | Non | Endpoints `/api/memory/*`, agrégation episodic/semantic/procedural | Long (invention data + agrégation) |
+| Evaluations | Partielle (check.run brutes, pas d'agrégation) | Non | Module agrégation + carte rubriques qualité + vue | Long (agrégation + concept rubriques) |
+| Automations | Aucune | Non | Décision produit (qu'est-ce qu'une automation ?) + runtime | **Bloqué** (décision requise) |
 
 ---
 
-*Fin de la Section 2. En attente de validation avant de poursuivre avec la Section 3 (Navigation) ou la Section 4 (Hiérarchie de l'information), selon votre choix.*
+*Fin de la Section 2. En attente de validation avant de poursuivre avec la Section 3 (Navigation).*
+
+*Notes de maturité* :
+- **Missions** : Les données et cockpit Phase 1/2b existent. Travail : généraliser en liste + détail, intégrer gouvernance.
+- **Results** : Données (artefacts) vraisemblablement tracées, candidate la plus rapide si tracé clarifié (pas d'API existante, construire UI uniquement).
+- **Skills** : Données registry complètes. Travail : endpoint API + concept matrice des permissions (non existant) + UI.
+- **Memory** : Aucune data structure. À inventer entièrement : episodic (historique agrégé), semantic (apprentissages inférés), procedural (procédures canoniques).
+- **Evaluations** : Briques exists (`check.run` raw) mais aucune agrégation ni concept de "rubrique qualité". Travail backend significant.
+- **Automations** : Aucune donnée, aucun concept. Bloqué par décision produit (qu'est-ce qu'une automation Cortex ?). À formaliser dans `UI_DECISIONS.md` avant tout travail.
