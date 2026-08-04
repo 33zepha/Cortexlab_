@@ -2,6 +2,7 @@ import Icon from './Icon.jsx'
 
 const NAVIGATION = [
   ['dashboard', 'Vue d’ensemble', 'grid'],
+  ['system', 'Santé système', 'gear'],
   ['missions', 'Missions', 'target'],
   ['agents', 'Agents', 'users'],
   ['activity', 'Activité', 'pulse'],
@@ -17,7 +18,7 @@ export default function Sidebar({ active = 'dashboard', onNavigate = () => {} })
 
       <nav className="sidebar-nav" aria-label="Navigation principale">
         <div className="sidebar-group">
-          <span className="sidebar-group-label">Pilotage</span>
+          <span className="sidebar-group-label">Observation</span>
           {NAVIGATION.map(([id, label, icon]) => (
             <button
               key={id}
