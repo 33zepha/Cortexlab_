@@ -18,9 +18,11 @@ export default function Topbar({
         <h1>Console</h1>
         <span className={`runtime-state ${connected ? 'is-online' : ''}`}>
           <i aria-hidden="true" />
-          {connected ? 'Runtime operational' : 'Runtime offline'}
+          {connected ? 'Runtime opérationnel' : 'Runtime hors ligne'}
         </span>
-        <span className="last-sync">Last sync: {lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}</span>
+        <span className="last-sync">
+          Dernière synchro : {lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}
+        </span>
       </div>
 
       <div className="topbar-actions">
@@ -30,7 +32,7 @@ export default function Topbar({
             type="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Search (⌘K)"
+            placeholder="Rechercher (⌘K)"
             aria-label="Rechercher"
           />
         </label>
@@ -40,7 +42,7 @@ export default function Topbar({
           onClick={onToggleFilters}
         >
           <Icon name="filter" />
-          Filters
+          Filtres
         </button>
         <button
           type="button"
@@ -49,7 +51,7 @@ export default function Topbar({
           disabled={running}
         >
           <Icon name="play" />
-          {running ? 'Running…' : 'Run Mission'}
+          {running ? 'Exécution…' : 'Lancer une mission'}
         </button>
       </div>
     </header>
