@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths:
       - 'web/**'
-      - 'runtime/mission-projection.mjs'
-      - 'server/index.mjs'
+      - 'runtime/**'
+      - 'server/**'
+      - 'test/**'
+      - 'package.json'
       - '.github/workflows/ui-visual-proof.yml'
   workflow_dispatch:
 
@@ -17,9 +19,6 @@ jobs:
   capture:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: web
 
     steps:
       - name: Checkout
@@ -29,19 +28,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: web/package.json
+
+      - name: Install runtime dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run runtime and observability tests
+        run: npm test
 
       - name: Install web dependencies
+        working-directory: web
         run: npm install --no-audit --no-fund
 
       - name: Build React application
+        working-directory: web
         run: npm run build
 
       - name: Install Chromium capture tool
+        working-directory: web
         run: npx --yes playwright@1.48.2 install --with-deps chromium
 
       - name: Start preview server
+        working-directory: web
         run: |
           npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cortex-vite.log 2>&1 &
           for attempt in {1..30}; do
@@ -54,6 +61,7 @@ jobs:
           exit 1
 
       - name: Capture real browser screenshot
+        working-directory: web
         run: |
           mkdir -p artifacts
           npx --yes playwright@1.48.2 screenshot \
