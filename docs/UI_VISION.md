@@ -92,13 +92,13 @@ Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, pannea
 
 **Objectif** — Superviser l'exécution des missions en cours et consulter l'historique des missions terminées.
 
-**Vue par défaut** — Liste des missions (running en premier, puis triées par activité récente), avec sélection d'une mission ouvrant le cockpit détail.
+**Vue par défaut** — Détail d'une mission (le cockpit : résumé, graphe, inspecteur, dock — c'est l'écran déjà construit en Phase 1/2b).
 
 **Sous-vues**
-- Liste des missions (vue actuelle du dashboard, généralisée).
-- Détail d'une mission (le cockpit : résumé, graphe, inspecteur, dock — c'est l'écran déjà construit en Phase 1/2b).
+- Détail d'une mission (vue actuelle, existante).
+- Liste des missions (vue à construire : running en premier, puis triées par activité récente, avec sélection ouvrant le détail).
 
-**Objet central** — Le graphe d'exécution de la mission sélectionnée (en vue détail) ; la liste des missions elle-même (en vue liste).
+**Objet central** — Le graphe d'exécution de la mission sélectionnée (en vue détail) ; la liste des missions elle-même (en vue liste, à construire).
 
 **Panneaux secondaires** — Résumé mission (budget, progression, agent actif), inspecteur du nœud sélectionné, dock inférieur (événements, terminal, ledger, artefacts, décisions), panneau santé système.
 
@@ -113,9 +113,9 @@ Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, pannea
 - Erreur : échec d'appel `/api/missions` → message d'erreur explicite, pas de fallback silencieux.
 - PLACEHOLDER : toutes les valeurs listées dans `docs/DATA_PROVENANCE.md` comme PLACEHOLDER (graph topology, inspector metrics, terminal, health) restent visuellement identifiables comme non opérationnelles.
 
-**Existe déjà dans le repo** — `/api/missions`, `/api/events`, `/api/agents`, `/api/stream` (SSE), `runtime/mission-projection.mjs`, `useLedger()`, tout le cockpit Phase 1/2b (`dashboard-view-model.js` et composants associés).
+**Existe déjà dans le repo** — Cockpit détail complet (Phase 1/2b) : `/api/missions`, `/api/events`, `/api/agents`, `/api/stream` (SSE), `runtime/mission-projection.mjs`, `useLedger()`, `dashboard-view-model.js` et composants associés. Données LIVE partielles : mission, événements, agents et budget partiellement disponibles. Données encore PLACEHOLDER : topologie du graphe, états réels par nœud, métriques par nœud (durée/coût/tokens), inspector (logs, métadonnées détaillées), terminal, health panel. **Liste des missions n'existe pas** — seul le cockpit détail existe.
 
-**Dépend des phases suivantes** — Topologie réelle du graphe (Phase 2d : `/api/missions/{id}/topology`), états réels par nœud, métriques par nœud (durée/coût/tokens), actions de gouvernance (nouveau, hors Phase 2, à spécifier).
+**Dépend des phases suivantes** — Construire la vue liste des missions. Topologie réelle du graphe (Phase 2d : `/api/missions/{id}/topology`), états réels et métriques par nœud. Actions de gouvernance (nouveau, hors Phase 2).
 
 ---
 
@@ -133,20 +133,20 @@ Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, pannea
 
 **Panneaux secondaires** — Historique des mandats de l'agent (via `agentActivity()` déjà présent dans `web/src/lib/ledger.js`), coûts, indices qualité/coût.
 
-**Données principales** — id, name, tier (ceo/manager), provider, model, role, status, cost_index, quality_index, strengths.
+**Données principales** — id, name, tier (ceo/manager), provider, model, role, status (configuration LIVE), cost_index, quality_index, strengths, activité récente (DERIVED du ledger), charge/disponibilité runtime (partielle ou absente), performance historique (partielle).
 
 **Actions autorisées** — Consulter le détail d'un agent. À terme : changer d'agent/modèle pour une étape (déjà listé comme action bornée possible dans `UI_HANDOFF_CLAUDE.md`).
 
 **États**
-- Vide : registry sans agents (cas anormal, à signaler comme erreur de configuration plutôt qu'état vide neutre).
+- Vide : registry sans agents (cas anormal, à signaler comme erreur de configuration).
 - Loading : premier appel `/api/agents` en cours.
 - Offline : mêmes règles que Missions.
 - Erreur : échec `/api/agents`.
-- PLACEHOLDER : aucun placeholder connu actuellement — les données agents sont LIVE dès que le registry est chargé.
+- PLACEHOLDER : charge runtime, disponibilité, performance historique — données absentes ou non structurées.
 
-**Existe déjà dans le repo** — `/api/agents`, `registry/registry.json` (4 agents actifs), `agentActivity()` dans `web/src/lib/ledger.js` (calcule mandats, violations, coût par agent depuis les événements).
+**Existe déjà dans le repo** — Configuration LIVE : `/api/agents`, `registry/registry.json` (4 agents, 4 tiers, fournisseurs/modèles, rôles). Activité DERIVED : `agentActivity()` dans `web/src/lib/ledger.js` (calcule mandats, violations, coût par agent depuis les événements). Charge/performance : non structurées dans le ledger aujourd'hui.
 
-**Dépend des phases suivantes** — Action "changer d'agent/modèle" (gouvernance, non spécifiée). Vue détail agent (aujourd'hui aucun composant dédié n'existe, seule la fonction de calcul existe).
+**Dépend des phases suivantes** — Vue détail agent (aucun composant dédié n'existe actuellement). Métriques runtime (charge, disponibilité, latence). Performance historique (score, tendance). Action "changer d'agent/modèle" (gouvernance).
 
 ---
 
@@ -187,37 +187,39 @@ Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, pannea
 
 #### 2.4 — Skills
 
-**Objectif** — Voir le catalogue des capacités opérationnelles exécutables du système : qui peut faire quoi, avec quelles permissions, et quel niveau de maîtrise.
+**Objectif** — Voir le catalogue des capacités exécutables, outils, connecteurs, adapters et procédures du système : qui peut faire quoi, avec quelles permissions.
 
-**Vue par défaut** — Registre des compétences par agent : matrice ou liste montrant chaque agent et ses `strengths` (tags de capacité : "code", "orchestration-agents", "raisonnement", etc.), avec le niveau associé.
+**Vue par défaut** — Registre des skills disponibles : liste des capacités exécutables, outils et connecteurs, avec agents et modèles compatibles, permissions, historique d'usage.
 
 **Sous-vues**
-- **Compétences par agent** : qui possède quelle capacité, niveau de maîtrise, contrôles associés.
-- **Matrice des permissions** : qui a le droit de faire quoi, associé aux levels d'autorité (ceo/manager/worker selon `registry.json`).
-- **Capacités par domaine** : quelles opérations sont disponibles dans chaque domaine (frontend, backend, etc.), qui peut les exécuter.
+- **Skills exécutables** : capacités, outils, connecteurs, adapters disponibles.
+- **Compatibilité agent** : pour chaque skill, agents/modèles qui peuvent l'exécuter.
+- **Historique d'usage** : taux de réussite, coût, durée, tendance d'utilisation par skill.
+- **Procédures versionnées** : procédures opérationnelles, conditions d'exécution, modifié par (audit trail).
 
-**Objet central** — La matrice compétences × agents en vue par défaut.
+**Objet central** — Le registre des skills en vue par défaut.
 
-**Panneaux secondaires** — Détail d'une capacité (qui peut l'exécuter, au quel niveau d'autorité, contrôles appliqués), détail d'un agent (ses capacités, ses restrictions de permission par domaine).
+**Panneaux secondaires** — Détail d'un skill (description, agents compatibles, historique d'usage, coût moyen), détail d'une procédure versionnée.
 
-**Données principales** — Registre :
-- **Capacité** : id, name, domain, description, agents_capable (list with levels), controls_apply (list).
-- **Agent skills** : agent_id, agent_name, agent_tier (ceo/manager/worker), capabilities (list), permissions_by_domain (dict with restrictions).
+**Données principales** — Skills et Procédures :
+- **Skill** : id, name, category (tool/connector/adapter/capability), description, agents_capable (list), models_compatible (list), permissions_required (list), executable.
+- **Usage history** : success_rate (%), calls_count, avg_duration, avg_cost, trend (↑↓→), failures_recent.
+- **Procédure versionnée** : procedure_id, version, description, conditions, steps (ordered), updated_at, updated_by (audit).
 
-**Actions autorisées** — Consulter uniquement. Aucune édition (source canonique = `registry/registry.json`, INV-009). À terme : historique d'utilisation d'une compétence (stats de succès/échec).
+**Actions autorisées** — Consulter uniquement. Aucune édition (source canonique = `registry/registry.json` et mises à jour via CI/CD, INV-009). À terme : historique de versioning, audit trail des modifications.
 
 **États**
-- Vide : registry vide/corrompu (cas anormal, à signaler).
-- Loading : chargement du registry et matrice de permissions.
+- Vide : registry vide/corrompu (cas anormal).
+- Loading : chargement du registre.
 - Offline : n/a si statique.
 - Erreur : registry illisible.
-- PLACEHOLDER : aucun placeholder connu — le registre et ses données sont complètement LIVE une fois chargés.
+- PLACEHOLDER : véritables skills, permissions détaillées, historique d'usage, procédures versionnées — données non structurées ou absentes.
 
-**Existe déjà dans le repo** — `registry/registry.json` (4 agents + tags `strengths` + tiers ceo/manager/worker), `manifests/controls.json` (2 contrôles, pas encore croisés avec les compétences). Pas d'endpoint `/api/skills`.
+**Existe déjà dans le repo** — Configuration : `registry/registry.json` (4 agents + tags `strengths`, tiers). Identité et configuration LIVE. Historique d'usage, permissions détaillées, procédures versionnées : non structurés. Aucun endpoint `/api/skills`.
 
-**Dépend des phases suivantes** — Endpoint `/api/skills` ou `/api/capabilities` pour servir le registre complet. Concept et donnée pour la "matrice des permissions" (levels d'autorité croisés avec domaines et capacités) — actuellement inexistant structurellement. Lien explicite entre contrôles et capacités (qui s'applique à quelle opération). Historique et stats d'utilisation par compétence.
+**Dépend des phases suivantes** — Endpoint `/api/skills` pour servir le registre. Structuration de "véritables skills" (au-delà des `strengths` tags) avec descriptions, permissions, agents/modèles compatibles. Historique et stats d'utilisation calculées depuis le ledger. Procédures versionnées et leur audit trail. Matrice des permissions (qui peut faire quoi sous quelles conditions).
 
-**Note** : Les **contrôles vérifiables** (`CTRL-*`) n'appartiennent pas à cet espace ; ils font partie de la zone utilitaire `System` avec le reste de la Constitution.
+**Note** : Les **contrôles vérifiables** (`CTRL-*`) n'appartiennent pas à cet espace. Ils font partie de la zone utilitaire `System` (Governance / Controls). Les contrôles peuvent être référencés comme **politiques applicables** à un skill, mais ne définissent pas une compétence.
 
 ---
 
@@ -252,22 +254,22 @@ Pour chaque espace : objectif, vue par défaut, sous-vues, objet central, pannea
 **Actions autorisées** — Consulter, activer/désactiver une automatisation existante. À terme (gouvernance) : créer une nouvelle automatisation (probablement via un builder de workflow avec templates pré-approuvés, jamais librement). Jamais exécuter une action arbitraire — cohérent avec INV-005 et le principe directeur.
 
 **États**
-- Vide : aucune automatisation configurée (état normal d'un système sans besoins d'automatisation, pas une erreur).
+- Vide : aucune automatisation configurée (état normal d'un système sans besoins d'automatisation).
 - Loading : chargement du catalogue.
 - Offline : n/a si triggers sont locaux au ledger.
 - Erreur : échec du catalogue ou du ledger.
-- PLACEHOLDER : Structure entièrement PLACEHOLDER. Aucun concept, aucune donnée backend n'existe. Les conteneurs à définir sont : ce qui constitue un trigger valide, ce qui constitue une action valide, qui approuve quoi.
+- PLACEHOLDER : Aucune implémentation existante — le concept et le modèle sont définis (voir ci-dessus), mais aucun backend ne l'expose.
 
 **Existe déjà dans le repo** — Rien. Aucun concept d'automatisation n'existe (ni `server/`, ni `runtime/`, ni `registry/`).
 
-**Dépend des phases suivantes** — **Décision produit préalable requise** (à documenter dans `UI_DECISIONS.md`) :
+**Dépend des phases suivantes** — **Implémentation bloquée par les décisions techniques suivantes** (à documenter dans `UI_DECISIONS.md`) :
 - Quels types de triggers sont permis ? (événements du ledger, horaires cron, conditions manuelles, autre ?)
 - Quels types d'actions ? (notify, log, escalate, retry, pause, créer une mission ?, autre ?)
 - Qui crée/gère les automatisations ? (admin only, utilisateurs autorisés, système auto-créé ?)
 - Comment l'approbation fonctionne-t-elle pour les actions sensibles ? (INV-005)
 - Quel est le cycle de vie d'une automatisation ? (draft, active, disabled, archived ?)
 
-Une fois cette décision prise : nouveau module runtime pour l'exécution des triggers + actions. Nouveaux endpoints `/api/automations`. Éventuellement un builder UI (future phase), ou saisie manuelle de définitions YAML/JSON avec validation stricte.
+Une fois ces décisions prises : nouveau module runtime pour l'exécution des triggers + actions. Nouveaux endpoints `/api/automations`. Éventuellement un builder UI (future phase), ou saisie manuelle de définitions YAML/JSON avec validation stricte.
 
 ---
 
@@ -301,9 +303,9 @@ Une fois cette décision prise : nouveau module runtime pour l'exécution des tr
 - Erreur : échec de récupération du catalogue.
 - PLACEHOLDER : Aucun placeholder connu si les artefacts sont tracés dans le ledger. Les données seraient entièrement LIVE dès que l'événement `artifact.created` (ou équivalent) passe par le ledger.
 
-**Existe déjà dans le repo** — À clarifier : le ledger trace-t-il les artefacts ? Y a-t-il un événement `artifact.created` ? Actuellement, `/api/missions` sert la clôture et le budget, pas un endpoint `/api/artifacts`. Aucun frontend n'explore les artefacts aujourd'hui.
+**Existe déjà dans le repo** — Closure/rapport de mission : données partiellement disponibles via `/api/missions`. Artefacts structurés (Artifact model) : **aucune structure confirmée**. Événement `artifact.created` : **non confirmé**. Endpoint `/api/artifacts` : **n'existe pas**. Le ledger trace les événements mission mais ne catégorise pas les artefacts comme catalogue distinct.
 
-**Dépend des phases suivantes** — Clarification : comment les artefacts sont-ils tracés dans le ledger ? Formats ? Métadonnées minimales ? Endpoint `/api/artifacts` ou extension de `/api/missions/{id}` avec une section `artifacts`. Logique de preview/visionning par type (syntax highlight pour code, rendu pour markdown, etc.). Possible intégration avec des stockages externes (repos, Figma, Docs). Version history et diffing optionnel.
+**Dépend des phases suivantes** — Clarification critique : quels artefacts génère le système ? Comment sont-ils tracés/stockés ? Contrat Artifact à définir (structure, métadonnées, format). Aucune donnée ne confirme que les artefacts sont actuellement produits et tracés. Hypothèse : closure et résultats de mission existent, mais pas un catalogue d'artefacts distinct. À confirmer avant de construire cette vue.
 
 ---
 
@@ -347,24 +349,384 @@ Une fois cette décision prise : nouveau module runtime pour l'exécution des tr
 
 ### Résumé — maturité des données par espace
 
-| Espace | Donnée LIVE existante | Vue frontend existante | Travail restant | Priorité candidat |
+| Espace | Statut maturité | Vue frontend | Travail UI restant | Travail backend |
 |---|---|---|---|---|
-| Missions | Oui (complète) | Oui (cockpit Phase 1/2b) | Généraliser en liste + détail, gouvernance | Généraliser Phase 2d |
-| Agents | Oui (complète) | Non (aucun composant dédié) | Construire liste + détail | Rapide (données prêtes) |
-| Results | Oui (complète, non exploitée) | Non | Construire vue des artefacts | **Plus rapide** (données existantes) |
-| Skills | Partielle (registry + tags, pas d'API) | Non | Endpoint API + matrice permissions + vue | Moyen (données prêtes, API manquante) |
-| Memory | Aucune structure | Non | Endpoints `/api/memory/*`, agrégation episodic/semantic/procedural | Long (invention data + agrégation) |
-| Evaluations | Partielle (check.run brutes, pas d'agrégation) | Non | Module agrégation + carte rubriques qualité + vue | Long (agrégation + concept rubriques) |
-| Automations | Aucune | Non | Décision produit (qu'est-ce qu'une automation ?) + runtime | **Bloqué** (décision requise) |
+| Missions | Partielle : cockpit détail existant, liste absente | Oui (cockpit Phase 1/2b) | Construire liste des missions | Topologie réelle, états nœuds, métriques |
+| Agents | Partielle : configuration LIVE, runtime incomplet | Non | Construire liste + détail | Métriques runtime, performance historique |
+| Skills | Partielle : tags disponibles, skills réels non structurés | Non | Construire registre + historique | Endpoint `/api/skills`, matrice permissions, historique usage |
+| Memory | Faible : historique brut seulement | Non | À inventer (episodic/semantic/procedural) | Endpoints `/api/memory/*`, agrégation, inférence |
+| Results | Faible/non confirmée : closure existe, artefacts absents | Non | À clarifier (contrat Artifact ?) | Définir traçage des artefacts, `/api/artifacts` ? |
+| Evaluations | Partielle : événements bruts, pas d'agrégation | Non | Construire synthèse + diagnostics | Module d'agrégation, scores, rubriques qualité |
+| Automations | Aucune implémentation : vision définie, backend absent | Non | (design attend backend) | Triggers, actions, approbations, cycle de vie |
 
 ---
 
 *Fin de la Section 2. En attente de validation avant de poursuivre avec la Section 3 (Navigation).*
 
 *Notes de maturité* :
-- **Missions** : Les données et cockpit Phase 1/2b existent. Travail : généraliser en liste + détail, intégrer gouvernance.
-- **Results** : Données (artefacts) vraisemblablement tracées, candidate la plus rapide si tracé clarifié (pas d'API existante, construire UI uniquement).
-- **Skills** : Données registry complètes. Travail : endpoint API + concept matrice des permissions (non existant) + UI.
-- **Memory** : Aucune data structure. À inventer entièrement : episodic (historique agrégé), semantic (apprentissages inférés), procedural (procédures canoniques).
-- **Evaluations** : Briques exists (`check.run` raw) mais aucune agrégation ni concept de "rubrique qualité". Travail backend significant.
-- **Automations** : Aucune donnée, aucun concept. Bloqué par décision produit (qu'est-ce qu'une automation Cortex ?). À formaliser dans `UI_DECISIONS.md` avant tout travail.
+- **Missions** : Cockpit détail (Phase 1/2b) complètement existant. Données LIVE partielles (mission, événements, agents, budget). Données PLACEHOLDER (topologie, états nœuds, inspector, terminal, health). Liste de missions n'existe pas.
+- **Agents** : Configuration LIVE (registry.json). Activité DERIVED (via ledger). Charge/performance : partielles ou absentes. Candidat rapide pour une liste + détail.
+- **Skills** : Tags `strengths` LIVE. Véritables skills, permissions, historique d'usage : non structurés. Pas d'endpoint.
+- **Memory** : Aucune structure. À inventer entièrement.
+- **Results** : Structure Artifact non confirmée. Pas d'`artifact.created` confirmé. Clarification requise avant de construire cette vue.
+- **Evaluations** : Événements `check.run` LIVE. Agrégations, scores, rubriques : non existants.
+- **Automations** : Vision complètement définie (modèle Automation, trigger/actions, governance). Implémentation bloquée par décisions techniques sur ce qui constitue un trigger/action valide et les processus d'approbation.
+
+---
+
+## UI-0 — Section 3 : Navigation
+
+Cette section couvre les modèles et règles de navigation dans Cortex Lab, traversant les sept espaces métier et les deux zones utilitaires. Aucun style, couleur, typographie détaillée n'est défini ici — seules structures, routes, hiérarchies et comportements.
+
+### 3.1 — Navigation globale entre espaces
+
+**Structure de la sidebar**
+
+La sidebar persiste sur tous les écrans. Elle contient deux blocs distincts, visuellement séparés :
+
+**Bloc métier** (7 espaces, toujours disponibles, dans cet ordre) :
+1. Missions
+2. Agents
+3. Memory
+4. Skills
+5. Automations
+6. Results
+7. Evaluations
+
+**Bloc utilitaire** (2 espaces, en bas de sidebar, visuellement séparé du bloc métier) :
+- System (connexion, services, gateways, santé, quotas, constitution/invariants, contrôles)
+- Settings (préférences utilisateur, apparence, configuration non opérationnelle)
+
+**Interaction avec la sidebar**
+
+- Cliquer sur un élément de la sidebar change d'espace et affiche sa vue par défaut.
+- L'élément actif est marqué (visual indicator : contraste, marker, ou autre, définition typographique en UI-1).
+- Survoler un élément (desktop) ou maintenir appuyé (mobile) ne doit pas changer d'espace.
+- La sidebar ne doit jamais afficher de badge de notification ou de compteur opérationnel (elle est une navigation structurelle, pas un tableau de bord).
+
+### 3.2 — Bloc System vs bloc métier : séparation comportementale
+
+**Bloc métier** — Espaces dédiés à la supervision de missions et à l'observation des agents, skills, memory. L'utilisateur y explore des données opérationnelles, des missions en cours ou terminées, de l'historique.
+
+**Bloc System** — Espace dédiée à la configuration, la constitution, la governanc et le suivi technique du système lui-même. La séparation visuelle (espacement, bordure optionnelle, position en bas) signale à l'utilisateur : "ce que je fais ici affecte comment le système fonctionne, pas une mission spécifique."
+
+Règle : Une mission active (si elle existe) **ne persiste pas** en traversant de bloc métier vers bloc System. Entrée dans System réinitialise le contexte de mission actuelle. Sortie de System restaure la mission active précédente (si elle existait).
+
+### 3.3 — Persistance de la mission active
+
+**Concept de mission active**
+
+Une mission "active" est un contexte partagé entre les espaces métier. Elle représente la mission ou l'objet que l'utilisateur est en train d'explorer prioritairement.
+
+**Règles de persistance**
+
+- Naviguer entre Missions → Agents → Memory → Skills → Automations → Results → Evaluations : la mission active persiste.
+- La mission active n'est affichée que si elle est pertinente à l'espace actuel (ex. dans Agents, on peut voir "agents assignés à la mission active", mais ce n'est pas obligatoire).
+- Entrée dans System : mission active est **temporairement suspendue** (pas oubliée).
+- Sortie de System : mission active est restaurée si elle existait.
+- Fermeture de la mission (clôture, annulation, ou expiration) : mission active est réinitialisée ; si elle était affichée dans le cockpit Missions, l'utilisateur revient à la liste des missions.
+- Sélection d'une nouvelle mission (depuis liste Missions, ou deep link) : nouvelle mission devient la mission active.
+
+**Indicateur visuel de mission active**
+
+La topbar contient le nom de la mission active et son statut (si mission active existe). Ceci permet à l'utilisateur de toujours savoir quel est le contexte partagé, sans le chercher dans le workspace.
+
+### 3.4 — Trois niveaux de navigation UI : changer d'espace vs ouvrir un objet vs ouvrir un panneau
+
+**Niveau 1 : Changer d'espace**
+
+Cliquer sur un élément sidebar = changer d'espace, afficher la vue par défaut de cet espace (ex. liste Agents, tableau Evaluations, etc.). Ceci est la navigation à plus gros grain.
+
+**Niveau 2 : Ouvrir un objet**
+
+Depuis une vue liste ou tableau, sélectionner une ligne, une card, ou cliquer sur un lien d'objet = ouvrir le détail de cet objet dans le même espace. Le workspace change de contenu, passant de liste/tableau à détail, mais on reste dans le même espace. Exemple :
+- Liste Agents → cliquer sur "Claude" → Détail de Claude, même espace Agents.
+- Tableau Evaluations → cliquer sur "CTRL-NO-DEBUG-LOG" → Historique complet de ce contrôle.
+
+**Niveau 3 : Ouvrir un panneau contextuel**
+
+Depuis un détail ou une vue liste, ouvrir un panneau secondaire **sans quitter l'objet/espace actuel** :
+- Panneau d'infobulle (hover, clic d'info), panneau de détail enrichi (sidebar ou overlay modal léger).
+- Panneau d'actions (ex. "approuver cette étape" depuis le cockpit Missions).
+- Panneau de relations (ex. "agents impliqués dans cette mission").
+
+Règle clé : Un panneau doit **toujours** pouvoir se fermer avec un escape key ou un X button, sans perte de contexte. Fermer le panneau restaure la vue antérieure.
+
+**Navigation croisée : de l'objet A à l'objet B**
+
+Si un utilisateur est en détail Agent et veut voir les Résultats produits par cet agent (Résultats de missions où Agent a participé) :
+- Soit : cliquer sur un lien "Voir les résultats" depuis le détail Agent. Ceci ouvre la vue Results **ET change d'espace** (Agents → Results). La mission active peut être préservée si pertinente.
+- Soit : ouvrir un panneau "Résultats de cet agent" depuis le détail Agent, restant dans l'espace Agents.
+
+Le choix (panneau vs changement d'espace) dépend du volume de données et de l'importance du lien. À décider au cas par cas en phase UI-3 (détails des compositions).
+
+### 3.5 — Routes et deep links proposés
+
+Cortex Lab fonctionne sur une application React/SPA. Les routes suivantes sont proposées pour permettre des deep links et de la navigation directe :
+
+```
+/                                    → Missions, liste (vue par défaut si aucune mission active)
+/missions                            → Missions, liste
+/missions/:id                        → Missions, détail du cockpit pour mission :id
+/missions/:id/graph/:nodeId          → Missions, détail du cockpit, nœud :nodeId sélectionné
+
+/agents                              → Agents, liste
+/agents/:id                          → Agents, détail de l'agent :id
+
+/memory                              → Memory, onglet Historique
+/memory/history                      → Memory, onglet Historique (explicite)
+/memory/learning                     → Memory, onglet Apprentissages
+/memory/procedures                   → Memory, onglet Procédures
+
+/skills                              → Skills, registre (liste)
+/skills/:id                          → Skills, détail du skill :id
+
+/automations                         → Automations, liste
+/automations/:id                     → Automations, détail de l'automatisation :id
+
+/results                             → Results, catalogue (liste)
+/results/:artifactId                 → Results, détail de l'artefact :artifactId
+
+/evaluations                         → Evaluations, tableau synthèse (vue par défaut)
+/evaluations/conformity              → Evaluations, synthèse de conformité
+/evaluations/quality                 → Evaluations, scores de qualité
+/evaluations/diagnostics             → Evaluations, diagnostics post-erreur
+
+/system                              → System, vue par défaut (connexion/santé)
+/system/constitution                 → System, invariants/contrôles
+/system/health                       → System, santé du système
+
+/settings                            → Settings, préférences utilisateur
+```
+
+**Paramètres query optionnels** (pour filtres et persistance) :
+
+```
+?filter=:fieldName::value            → Filtre appliqué à la liste/tableau actuel
+?sort=:fieldName                     → Tri appliqué
+?page=:n                             → Pagination (si applicable)
+?view=:viewName                      → Vue alternative dans l'espace (ex. ?view=compact)
+?highlightId=:objectId               → Mettre en évidence un objet dans la liste (pour retour arrière)
+```
+
+Exemples :
+- `/agents?filter=status:active&sort=name` → Liste agents, filtrés par statut actif, triés par nom.
+- `/missions/:id?view=timeline` → Cockpit mission avec vue timeline (si existe).
+- `/results?filter=type:code&highlightId=artifact-123` → Catalogue résultats, filtrés, artifact-123 mis en évidence.
+
+### 3.6 — Breadcrumbs
+
+**Affichage des breadcrumbs**
+
+Les breadcrumbs apparaissent dans la topbar, juste en dessous du titre de la mission active (si elle existe).
+
+Modèle : `[Espace] > [Objet sélectionné] > [Sous-objet optionnel]`
+
+Exemples :
+- Missions > Mission-001 > Nœud "Frontend Agent"
+- Agents > Claude > Activité récente
+- Memory > Apprentissages > Domaine: Orchestration
+- Results > Artifact-2024-001
+
+**Comportement des breadcrumbs**
+
+- Cliquer sur un élément breadcrumb navigue vers cet objet/niveau.
+- Le dernier élément (objet actuel) n'est pas cliquable (il représente la position actuelle).
+- Si on est à la vue liste (ex. liste Agents), les breadcrumbs affichent seulement `[Espace]`, non cliquable.
+- Naviguer via breadcrumb ne ferme pas les panneaux ouverts, mais peut changer le contenu principal du workspace.
+
+### 3.7 — Navigation chaîne : Mission → Agent → Result → Evaluation → Memory
+
+L'une des tâches communes en supervision est de suivre une chaîne de causalité/responsabilité : "cette mission a eu ce problème, qui a impliqué cet agent, qui a produit ce résultat, dont l'évaluation de qualité montre cet apprentissage."
+
+**Routes de liaison proposées**
+
+- **Depuis Missions détail** : lien vers les agents assignés (ouvre détail Agent ou panneau d'agents).
+- **Depuis Agents détail** : lien vers les résultats produits par cet agent (ouvre Results, filtrés par agent).
+- **Depuis Results détail** : lien vers la mission qui a produit l'artefact (ouvre Missions détail).
+- **Depuis Results détail** : lien vers l'évaluation de qualité associée (ouvre Evaluations, filtrée par artifact/mission).
+- **Depuis Evaluations détail** : lien vers les apprentissages associés (ouvre Memory, filtré par domaine/pattern).
+
+Ces liens apparaissent comme :
+- Texte cliquable inline dans le contenu détail.
+- Boutons "voir en détail" dans les panneaux secondaires.
+- Relations listées dans un panneau "Connexions" ou similaire.
+
+**Pas de navigation forcée** : l'utilisateur ne doit jamais être forcé de quitter un détail pour en explorer un autre. Il clique sur un lien si ça l'intéresse, sinon il reste où il est.
+
+### 3.8 — Retour arrière et conservation du contexte
+
+**Bouton retour du navigateur**
+
+Le bouton retour du navigateur doit restaurer la route précédente **ET** tous les filtres, tris, sélections, et état des panneaux qui existaient avant.
+
+Pour cela, l'état de l'UI (filtres appliqués, objet sélectionné, onglet actif) doit être codifié dans l'URL (via params query) chaque fois qu'il change, afin que le retour arrière soit exact.
+
+**Historique de navigation côté application**
+
+Un historique application-level local (non le historique HTML natif) peut aussi être maintenu pour proposer une navigation "retour" plus intelligente (ex. "Retour à la liste d'agents" quand on est en détail agent, plutôt que "retour à la page précédente du navigateur").
+
+**Règle de conservation du contexte**
+
+Quand l'utilisateur navigue vers Agents, puis vers Memory, puis revient à Agents (via breadcrumb, sidebar, ou retour), il devrait retrouver :
+- La même liste (même filtres/tris/pagination).
+- L'agent précédemment sélectionné mis en évidence (paramètre `?highlightId=`).
+- Les panneaux ouverts dans la vue Agents antérieure restaurés.
+
+### 3.9 — Persistance des filtres et sélection
+
+**Filtres**
+
+Les filtres appliqués à une liste/tableau (ex. "statut: active" dans Agents, "domaine: code" dans Results) doivent **persister** quand on quitte et revient à cet espace. Ceci est réalisé par :
+- Encodage des filtres en paramètres query (`?filter=...`).
+- Restauration des filtres depuis l'URL au chargement de la page ou du retour à l'espace.
+
+**Sélection et tri**
+
+Le tri appliqué (ascendant/descendant) doit aussi persister (`?sort=fieldName:asc/desc`).
+
+La sélection d'une ligne ou card dans une liste persiste aussi (`?highlightId=objectId`), plaçant à sa position lors du retour.
+
+**Remise à zéro**
+
+Un bouton "Réinitialiser les filtres" dans la vue liste restaure la configuration par défaut (pas de filtres, tri par défaut, première page).
+
+### 3.10 — Recherche globale
+
+**Champ de recherche**
+
+Un champ de recherche global apparaît dans la topbar (disponible depuis tout écran). Il offre une recherche cross-space rapide.
+
+Interaction :
+- Cliquer sur le champ ou commencer à taper active la recherche.
+- Une liste de résultats suggérés apparaît (dropdown ou overlay), groupée par type d'objet : Missions, Agents, Skills, Memory terms, Results, etc.
+- Taper continue de filtrer les résultats.
+- Cliquer sur un résultat navigue vers le détail de cet objet (changement d'espace si nécessaire) ou ouvre un panneau détail.
+- Appuyer sur Entrée navigue vers le premier résultat ou ouvre une page de résultats de recherche complets (si plusieurs résultats).
+
+**Portée de la recherche**
+
+Par défaut, la recherche explore :
+- Noms de missions, domaines, statuts.
+- Noms et rôles d'agents.
+- Noms de skills et capacités.
+- Termes de Memory (historique, apprentissages, procédures).
+- Artefacts par titre ou description.
+- Scores d'Evaluations et domaines.
+
+**Paramétrage optionnel**
+
+Une option "Affiner la recherche" peut permettre de filtrer par type d'objet (ex. "Agents seulement") ou domaine.
+
+### 3.11 — Command palette (optionnel, UI-2+)
+
+**Concept**
+
+Un command palette global (activé par Ctrl+K ou Cmd+K, ou via un bouton dans la topbar) permet une navigation par commande textuelle :
+
+Exemples de commandes :
+- "Ouvrir la mission MIS-2024-001"
+- "Aller aux agents"
+- "Voir l'historique de X"
+- "Réinitialiser les filtres"
+- "Basculer hors ligne" (mode offline simulé, si applicable)
+
+Le palette fonctionne comme une barre de commande : l'utilisateur tape une requête, voit des suggestions, et sélectionne.
+
+**Note** : Cette fonctionnalité est optionnelle pour UI-0. Elle peut être ajoutée en UI-2 ou plus tard si elle apporte une vraie valeur par rapport à la navigation sidebar + recherche globale.
+
+### 3.12 — Liens vers un nœud précis du graphe d'exécution
+
+**Deep link vers un nœud**
+
+Depuis une autre partie de l'application (Results, Memory, Evaluations) ou un lien externe, on peut créer un lien vers une mission + un nœud spécifique du graphe.
+
+Route : `/missions/:missionId/graph/:nodeId`
+
+Comportement :
+- Navigation vers le cockpit Missions pour la mission `:missionId`.
+- Nœud `:nodeId` est automatiquement sélectionné (its highlighted/marked).
+- L'inspecteur affiche les détails du nœud sélectionné.
+- Optionnellement, la vue peut scroller/zoom vers le nœud dans le graphe.
+
+**Exemple** : Un lien depuis Results vers "le nœud qui a produit cet artefact" navigue vers `/missions/MIS-001/graph/nodeId-frontend`, mettant en évidence automatiquement le nœud Frontend Agent dans le cockpit.
+
+### 3.13 — États offline et données obsolètes
+
+**Détection de l'état offline**
+
+Cortex Lab surveille la connexion via `/api/stream` (SSE) ou un heartbeat HTTP. Quand la connexion se perd, un indicateur s'affiche dans la topbar : "Offline — dernière synchro : 14h47" (ou heure du dernier update succès).
+
+**Comportement offline**
+
+- Les listes et détails affichent les **dernières données connues** (cachetées en local).
+- Les données non actualisées sont marquées visuellement comme "stales" ou "à jour à [timestamp]".
+- Aucune action d'écriture (approuver, escalader, etc.) n'est permise offline. Si l'utilisateur tente, un message explique pourquoi.
+- Les filtres continuent de fonctionner (ils filtrent les données locales cachetées).
+- Dès que la connexion revient, un refresh automatique met à jour les données, et l'indicateur offline disparaît.
+
+**Rétention des données**
+
+Les données en cache local persisten à travers les changements d'onglet et de navigateur (localStorage ou sessionStorage), pour permettre une consultation même après une déconnexion prolongée (bien que les données soient évidemment stale).
+
+### 3.14 — Adaptation desktop, tablette, mobile
+
+**Desktop (≥1024px de largeur)**
+
+- Sidebar persiste à gauche (ou peut être réduite à icônes seulement si choix utilisateur).
+- Topbar reste en haut.
+- Workspace occupe le reste, ≥3 colonnes possibles (ex. résumé, contenu, inspecteur dans Missions).
+- Panneaux secondaires s'ouvrent en overlay ou en sous-colonnes (layout flexible).
+- Recherche et command palette visibles dans topbar.
+
+**Tablette (768px–1024px)**
+
+- Sidebar peut être en vue compactée (icônes seulement, ou togglable via hamburger).
+- Topbar reste en haut.
+- Workspace adapté à 2 colonnes max.
+- Panneaux secondaires en overlay modal léger (plutôt qu'en sous-colonne).
+- Recherche toujours accessible (champ compact ou bouton recherche dans topbar).
+
+**Mobile (<768px)**
+
+- Sidebar en hamburger menu (caché par défaut, ouvert au tap).
+- Topbar restante compacte : titre mission (1 ligne) + bouton hamburger + bouton recherche.
+- Workspace full-width, contenu stacké verticalement (1 colonne).
+- Panneaux secondaires en modal fullscreen ou drawer depuis le bas (swipe down pour fermer).
+- Breadcrumbs simplifiés : seulement l'espace + objet, pas de sous-détails.
+- Command palette : déclenchable via bouton search ou Ctrl+K (mobile n'a pas Ctrl+K natif, donc via bouton).
+- Listes à scroll vertical, recherche en champ collant en haut.
+
+**Règles générales responsive**
+
+- Aucun contenu ne doit jamais exiger un scroll horizontal.
+- Les panneaux doivent se réadapter fluidement quand on rotate un appareil (landscape/portrait).
+- Les interactions au survol (desktop) deviennent des interactions au tap/appui long (mobile).
+
+### 3.15 — Règles de non-perte d'utilisateur dans les panneaux imbriqués
+
+**Prévention de l'enfouissement**
+
+Cortex Lab peut avoir plusieurs niveaux de panneaux ouverts (ex. cockpit Missions + panneau "agents de cette mission" + panneau "détails d'un agent" + panneau "résultats de cet agent"). L'utilisateur doit **jamais se sentir "perdu"** dans cette imbrication.
+
+**Règles appliquées**
+
+1. **Fermeture en cascade** : Fermer le panneau le plus interne (via Escape ou X button) ferme seulement ce panneau, restaurant le panneau précédent. On peut revenir niveau par niveau.
+
+2. **Breadcrumbs visuels** : La topbar affiche la chaîne complète d'emboîtement (ex. "Missions > Mission-001 > Agents > Claude > Activité"), permettant de sauter à n'importe quel niveau.
+
+3. **Fermeture complète** : Un bouton "Fermer tous les panneaux" dans la topbar ramène directement à la vue principale.
+
+4. **Limite de profondeur** : Les panneaux imbriqués ne doivent jamais dépasser 3 niveaux d'imbrication (ex. vue principale + 2 panneaux max). Si un 4e niveau est nécessaire, il remplace le panneau le plus superficiel au lieu de s'empiler (ou s'ouvre en full-screen modal).
+
+5. **Largeur des panneaux** : Sur desktop, chaque panneau occupe une zone clairement délimitée (sidebar ou colonne). Sur mobile, chaque panneau remplace le précédent (pile linéaire), avec possibilité de retour via breadcrumb ou bouton retour.
+
+6. **Contraste et hiérarchie** : Les panneaux imbriqués sont visuellement graduées en profondeur (ex. contraste, teinte de fond légèrement différente), pour que l'utilisateur sache toujours "à quel niveau je suis".
+
+7. **Sauvegarde du contexte** : Quand on ferme un panneau d'imbrication profonde, le contexte du panneau précédent (scroll position, sélection, contenu) est restauré automatiquement.
+
+8. **Bouton "En arrière" intelligent** : Un bouton "← Retour" dans chaque panneau (si pas au niveau racine) remet en avant le panneau précédent. Ce n'est pas un retour arrière navigateur global, mais une navigation au sein de la pile de panneaux de l'espace actuel.
+
+---
+
+*Fin de la Section 3. En attente de validation avant de poursuivre.*
