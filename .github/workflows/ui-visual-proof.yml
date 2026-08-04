@@ -1,0 +1,71 @@
+name: UI visual proof
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'runtime/mission-projection.mjs'
+      - 'server/index.mjs'
+      - '.github/workflows/ui-visual-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package.json
+
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build React application
+        run: npm run build
+
+      - name: Install Chromium capture tool
+        run: npx --yes playwright@1.48.2 install --with-deps chromium
+
+      - name: Start preview server
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cortex-vite.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent 'http://127.0.0.1:4173/?demo=1' > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/cortex-vite.log
+          exit 1
+
+      - name: Capture real browser screenshot
+        run: |
+          mkdir -p artifacts
+          npx --yes playwright@1.48.2 screenshot \
+            --viewport-size='1536,1024' \
+            --wait-for-timeout=1500 \
+            --full-page \
+            'http://127.0.0.1:4173/?demo=1' \
+            artifacts/cortex-mission-control.png
+
+      - name: Upload visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: cortex-mission-control-proof
+          path: web/artifacts/cortex-mission-control.png
+          if-no-files-found: error
+          retention-days: 14
