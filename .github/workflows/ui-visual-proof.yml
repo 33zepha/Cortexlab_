@@ -98,6 +98,25 @@ jobs:
             'http://127.0.0.1:4173/?demo=1&ledger=1' \
             artifacts/cortex-ledger-explorer.png
 
+      - name: Capture mobile dashboard
+        working-directory: web
+        run: |
+          npx --yes playwright@1.48.2 screenshot \
+            --viewport-size='390,844' \
+            --wait-for-timeout=1200 \
+            --full-page \
+            'http://127.0.0.1:4173/?demo=1' \
+            artifacts/cortex-mobile-dashboard.png
+
+      - name: Capture mobile agent inspector
+        working-directory: web
+        run: |
+          npx --yes playwright@1.48.2 screenshot \
+            --viewport-size='390,844' \
+            --wait-for-timeout=1200 \
+            'http://127.0.0.1:4173/?demo=1&agent=AG-HERMES' \
+            artifacts/cortex-mobile-agent-inspector.png
+
       - name: Upload visual proofs
         uses: actions/upload-artifact@v4
         with:
