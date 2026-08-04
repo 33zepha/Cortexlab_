@@ -21,6 +21,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { executeCheck } from './checks.mjs'
 import { EventStore } from './event-store.mjs'
+import { loadAgents, selectAgent } from './router.mjs'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 
@@ -62,6 +63,7 @@ export async function runMission({ bundlePath, target, budget = {}, eventStore =
   const startAt = new Date().toISOString()
   const escalationReasons = []
   const budgetState = { explorations: 0, reworks: 0, cost: 0 }
+  const agents = loadAgents()
 
   store?.emit('mission.start', { mission: bundle.manifest.mission, domain: bundle.manifest.domain || null, target, rules: bundle.rules.length })
 
@@ -89,8 +91,37 @@ export async function runMission({ bundlePath, target, budget = {}, eventStore =
       continue
     }
     budgetState.explorations += 1
+
+    // INV-001 : le CoS ne s'exécute pas lui-même, il confie un mandat.
+    // Le choix de l'agent est justifié et écrit au ledger (INV-011).
+    const routing = selectAgent(rule, agents)
+    if (routing) {
+      budgetState.cost = Math.round((budgetState.cost + routing.cost) * 100) / 100
+      store?.emit('agent.assigned', {
+        agent: routing.agent.id,
+        name: routing.agent.name,
+        model: routing.agent.model,
+        rule: rule.id,
+        cost: routing.cost,
+        rationale: routing.rationale,
+        alternatives: routing.alternatives,
+      })
+    }
+
+    const startedAt = Date.now()
     const result = await executeCheck(rule.check, target, rule.id)
     const isViolation = result.matched && result.on_match === 'block'
+
+    if (routing) {
+      store?.emit('agent.result', {
+        agent: routing.agent.id,
+        name: routing.agent.name,
+        rule: rule.id,
+        violation: isViolation,
+        findings: result.findings.length,
+        duration_ms: Date.now() - startedAt,
+      })
+    }
     if (isViolation) {
       escalationReasons.push(
         `VIOLATION control ${rule.id} : ${result.message || 'check=block déclenché'} ` +
@@ -102,6 +133,8 @@ export async function runMission({ bundlePath, target, budget = {}, eventStore =
       id: rule.id,
       type: rule.type,
       verifiable: true,
+      agent: routing ? routing.agent.id : null,
+      agent_rationale: routing ? routing.rationale : null,
       matched: result.matched,
       on_match: result.on_match,
       violation: isViolation,

@@ -7,6 +7,9 @@
 node_modules/
 package-lock.json
 
+# Frontend build output
+web/dist/
+
 # Generated bundles (artefacts immutables par mission)
 bundles/*.json
 
