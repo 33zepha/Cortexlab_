@@ -60,21 +60,39 @@ jobs:
           cat /tmp/cortex-vite.log
           exit 1
 
-      - name: Capture real browser screenshot
+      - name: Capture dashboard
         working-directory: web
         run: |
           mkdir -p artifacts
           npx --yes playwright@1.48.2 screenshot \
             --viewport-size='1536,1024' \
-            --wait-for-timeout=1500 \
+            --wait-for-timeout=1200 \
             --full-page \
             'http://127.0.0.1:4173/?demo=1' \
-            artifacts/cortex-mission-control.png
+            artifacts/cortex-dashboard.png
 
-      - name: Upload visual proof
+      - name: Capture mission inspector
+        working-directory: web
+        run: |
+          npx --yes playwright@1.48.2 screenshot \
+            --viewport-size='1536,1024' \
+            --wait-for-timeout=1200 \
+            'http://127.0.0.1:4173/?demo=1&mission=m_018f2a1b' \
+            artifacts/cortex-mission-inspector.png
+
+      - name: Capture ledger explorer
+        working-directory: web
+        run: |
+          npx --yes playwright@1.48.2 screenshot \
+            --viewport-size='1536,1024' \
+            --wait-for-timeout=1200 \
+            'http://127.0.0.1:4173/?demo=1&ledger=1' \
+            artifacts/cortex-ledger-explorer.png
+
+      - name: Upload visual proofs
         uses: actions/upload-artifact@v4
         with:
           name: cortex-mission-control-proof
-          path: web/artifacts/cortex-mission-control.png
+          path: web/artifacts/*.png
           if-no-files-found: error
           retention-days: 14
