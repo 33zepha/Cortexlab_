@@ -66,9 +66,17 @@ export default function App() {
     }
   }
 
+  const handleNavigate = (destination) => {
+    setActive(destination)
+    const target = destination === 'dashboard'
+      ? document.getElementById('dashboard')
+      : document.getElementById(destination)
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar active={active} onNavigate={setActive} />
+      <Sidebar active={active} onNavigate={handleNavigate} />
 
       <div className="app-main">
         <Topbar
@@ -83,20 +91,20 @@ export default function App() {
           running={running}
         />
 
-        <main className="dashboard-canvas">
-          {error && <div className="error-banner">Run Mission a échoué : {error}</div>}
-          {demo && <div className="demo-chip">Demo dataset · ajouter ?demo=1 pour reproduire cette vue</div>}
+        <main className="dashboard-canvas" id="dashboard">
+          {error && <div className="error-banner">La mission a échoué : {error}</div>}
+          {demo && <div className="demo-chip">Jeu de données de démonstration</div>}
 
           <section className="kpi-grid" aria-label="Indicateurs clés">
             <KpiCard
-              label="Active managers"
+              label="Managers actifs"
               value={activeManagers}
-              delta="20% vs hier"
+              delta="20% par rapport à hier"
             />
             <KpiCard
-              label="Missions (24h)"
+              label="Missions sur 24 h"
               value={missions24h || summary.total || 0}
-              delta="67% vs hier"
+              delta="67% par rapport à hier"
             />
             <KpiCard
               label="Closures autonomes"
@@ -106,7 +114,7 @@ export default function App() {
             <KpiCard
               label="Dernière activité"
               value={lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}
-              sub={events.at(-1)?.data?.name ? `${events.at(-1).data.name} · ${events.at(-1).type}` : events.at(-1)?.type || 'Aucun événement'}
+              sub={events.at(-1)?.data?.name ? `${events.at(-1).data.name} · résultat agent` : 'Aucun événement'}
             />
             <KpiCard
               label="Coût aujourd’hui"
@@ -117,22 +125,30 @@ export default function App() {
           </section>
 
           <div className="workspace-grid">
-            <MissionTable
-              missions={missions}
-              now={now}
-              query={query}
-              attentionOnly={attentionOnly}
-            />
-            <LiveActivity events={events} now={now} connected={connected} />
-          </div>
+            <div className="workspace-primary">
+              <div id="missions" className="anchor-section">
+                <MissionTable
+                  missions={missions}
+                  now={now}
+                  query={query}
+                  attentionOnly={attentionOnly}
+                />
+              </div>
+              <div id="agents" className="anchor-section">
+                <AgentTable
+                  agents={agents}
+                  events={events}
+                  missions={missions}
+                  now={now}
+                  globalQuery={query}
+                />
+              </div>
+            </div>
 
-          <AgentTable
-            agents={agents}
-            events={events}
-            missions={missions}
-            now={now}
-            globalQuery={query}
-          />
+            <div id="activity" className="anchor-section activity-column">
+              <LiveActivity events={events} now={now} connected={connected} />
+            </div>
+          </div>
         </main>
       </div>
     </div>
