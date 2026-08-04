@@ -1,6 +1,6 @@
 // Dashboard view-model: pure data transformation layer
-// Separates operational data from presentation concerns
-// Explicitly marks placeholder, estimated, and derived values
+// Single source of truth for dashboard presentation data.
+// Explicitly marks LIVE, DERIVED, ESTIMATED and PLACEHOLDER values.
 
 function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Number(value) || 0))
@@ -10,7 +10,7 @@ function formatNumber(value, digits = 2) {
   return Number(value || 0).toFixed(digits).replace('.', ',')
 }
 
-// Static graph structure (source of truth for topology)
+// Static graph structure (source of truth for topology) // PLACEHOLDER topology
 const FLOW = [
   { id: 'hermes', label: 'Hermes', role: 'Chief of Staff', x: 50, y: 8 },
   { id: 'planner', label: 'Planner', role: 'Mission Planner', x: 50, y: 25 },
@@ -28,7 +28,10 @@ const CONNECTIONS = [
   ['frontend', 'design'], ['backend', 'api'], ['research', 'review'], ['design', 'review'], ['api', 'review'], ['review', 'human'],
 ]
 
-// Determine node execution state based on graph position and selection
+// Default selected node id, equivalent to the original useState(FLOW[3]) default.
+const DEFAULT_SELECTED_NODE_ID = FLOW[3].id
+
+// DERIVED: node execution state from graph position and current selection
 function statusFor(nodeId, index, selectedId) {
   if (nodeId === 'human') return 'waiting'
   if (selectedId === nodeId) return 'running'
@@ -37,23 +40,30 @@ function statusFor(nodeId, index, selectedId) {
   return 'queued'
 }
 
-export function buildDashboardViewModel(ledgerData, now) {
-  const { agents = [], events = [], missions = [], summary = {} } = ledgerData || {}
+function progressLabelFor(state) {
+  if (state === 'done') return '100%'
+  if (state === 'waiting') return 'En attente'
+  if (state === 'queued') return '40%'
+  return '80%'
+}
 
-  // Mission selection: prefer running/active, fallback to first
+export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAULT_SELECTED_NODE_ID) {
+  const { agents = [], events = [], missions = [], summary = {}, connected = false, lastSync = null } = ledgerData || {}
+
+  // LIVE: mission selection from ledger, DERIVED fallback to first entry
   const mission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0]
 
-  // Active agent count
+  // LIVE: active agent count from ledger
   const activeAgentCount = agents.filter((a) => /active|running/i.test(a.status || '')).length
 
-  // Progress: derived from mission or fallback // PLACEHOLDER
+  // DERIVED from mission, ESTIMATED fallback
   const progress = clamp(mission?.progress || 62)
 
-  // Graph state
-  const selectedNodeId = null // Will be set by component interaction
+  // Graph: DERIVED state per node from static topology + current selection
   const nodes = FLOW.map((item, index) => ({
     ...item,
     state: statusFor(item.id, index, selectedNodeId),
+    progressLabel: progressLabelFor(statusFor(item.id, index, selectedNodeId)),
   }))
 
   const edges = CONNECTIONS.map(([from, to]) => ({
@@ -63,51 +73,50 @@ export function buildDashboardViewModel(ledgerData, now) {
     toPoint: FLOW.find((n) => n.id === to),
   }))
 
-  // Mission summary section
-  const budgetCost = summary.budget_cost || 12.45 // PLACEHOLDER if missing
-  const budgetLimit = summary.budget_limit || 25 // PLACEHOLDER if missing
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || nodes[3]
+
+  // ESTIMATED/PLACEHOLDER: budget not yet fully exposed by backend
+  const budgetCost = summary.budget_cost || 12.45 // PLACEHOLDER if missing from ledger
+  const budgetLimit = summary.budget_limit || 25 // PLACEHOLDER if missing from ledger
   const budgetPct = budgetLimit > 0 ? clamp((budgetCost / budgetLimit) * 100) : 49 // ESTIMATED fallback
 
-  // Inspector for selected node (defaults to Frontend Agent)
-  const selectedNode = FLOW[3]
-  const inspectorItem = selectedNode
-
   return {
-    // Mission context
+    // Mission context (LIVE via useLedger/useNow)
     mission,
-    connected: ledgerData?.connected || false,
-    lastSync: ledgerData?.lastSync,
+    connected,
+    lastSync,
     now,
 
     // Summary rail
     summary: {
       mission,
-      progress,
+      progress, // DERIVED
       budget: {
         cost: `€${formatNumber(budgetCost)}`, // PLACEHOLDER if from fallback
         limit: `€${formatNumber(budgetLimit)}`, // PLACEHOLDER if from fallback
-        percent: budgetPct, // ESTIMATED fallback
+        percent: budgetPct, // ESTIMATED
       },
       tokens: {
         used: '1.24M', // PLACEHOLDER
         limit: '3M', // PLACEHOLDER
         percent: 41, // PLACEHOLDER
       },
-      activeAgent: agents[0] || { name: 'Hermes', role: 'Chief of Staff' }, // FALLBACK
+      activeAgent: agents[0] || { name: 'Hermes', role: 'Chief of Staff' }, // LIVE with PLACEHOLDER fallback
     },
 
     // Execution graph
     graph: {
-      nodes,
-      edges,
+      nodes, // DERIVED (topology PLACEHOLDER, state DERIVED)
+      edges, // PLACEHOLDER topology
       selectedNodeId,
-      activeAgentCount,
+      activeAgentCount, // LIVE
       nodeCount: nodes.length,
     },
 
-    // Inspector
+    // Inspector for the currently selected node — all metrics PLACEHOLDER
+    // until the backend exposes real per-node execution data.
     inspector: {
-      item: inspectorItem,
+      item: selectedNode,
       state: 'running', // PLACEHOLDER
       progress: 80, // PLACEHOLDER
       duration: '1h 24m 17s', // PLACEHOLDER
@@ -120,6 +129,7 @@ export function buildDashboardViewModel(ledgerData, now) {
         ['Figma: Dashboard Design', 'Updated'], // PLACEHOLDER
         ['Codebase: /frontend/src', 'Latest'], // PLACEHOLDER
       ],
+      contextTokens: '3,240 tokens', // PLACEHOLDER
       evidence: [
         ['UI Components', 'Validé'], // PLACEHOLDER
         ['Storybook', 'Validé'], // PLACEHOLDER
@@ -131,7 +141,7 @@ export function buildDashboardViewModel(ledgerData, now) {
       ],
     },
 
-    // Events from ledger, with fallback
+    // Events: LIVE from ledger, PLACEHOLDER fallback when empty
     events: events.length > 0 ? events : [
       { ts: new Date().toISOString(), data: { agent: 'Frontend Agent' }, type: 'Démarrage de la génération des composants' },
       { ts: new Date().toISOString(), data: { agent: 'Planner' }, type: 'Mandat décomposé en 5 sous-tâches' },
@@ -140,7 +150,10 @@ export function buildDashboardViewModel(ledgerData, now) {
       { ts: new Date().toISOString(), data: { agent: 'Hermes' }, type: 'Mission démarrée par commande externe' },
     ], // PLACEHOLDER fallback events
 
-    // Health panel
+    // Terminal output — PLACEHOLDER until runtime exposes a real stream
+    terminal: `> cortex mission status MIS-2024-05-24-001\n\nMission: Refonte plateforme RH multi-agent\nStatus: Running\nProgress: 62%\nActive Agents: 7\nBudget: €12.45 / €25.00\nTokens: 1,243,672 / 3,000,000\nStart Time: 2024-05-24 12:47:33\nUptime: 2h 47m 12s\n\n>`,
+
+    // Health panel — PLACEHOLDER until runtime exposes real health metrics
     health: {
       status: 'Tout est opérationnel', // PLACEHOLDER
       agents: { online: 12, total: 12 }, // PLACEHOLDER
@@ -150,4 +163,4 @@ export function buildDashboardViewModel(ledgerData, now) {
   }
 }
 
-export { FLOW, CONNECTIONS }
+export { FLOW, CONNECTIONS, DEFAULT_SELECTED_NODE_ID }

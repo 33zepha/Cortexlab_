@@ -1,37 +1,26 @@
 import ExecutionNode from './ExecutionNode.jsx'
-import { FLOW, CONNECTIONS } from '../../lib/dashboard-view-model.js'
 
-function statusFor(nodeId, index, selectedId) {
-  if (nodeId === 'human') return 'waiting'
-  if (selectedId === nodeId) return 'running'
-  if (index < 3) return 'done'
-  if (index < 7) return 'running'
-  return 'queued'
-}
-
-export default function ExecutionCanvas({ selected, onSelect, activeAgents }) {
-  const point = (id) => FLOW.find((item) => item.id === id)
+export default function ExecutionCanvas({ graph, onSelect }) {
+  const { nodes, edges, selectedNodeId, activeAgentCount } = graph
 
   return (
     <section className="reference-canvas-panel">
       <div className="canvas-toolbar">
         <button>⌁</button><button>⌕</button><button>⌘</button><button>□</button><button>⌘</button>
       </div>
-      <div className="canvas-agent-count">♙ {activeAgents || 7} agents actifs</div>
+      <div className="canvas-agent-count">♙ {activeAgentCount || 7} agents actifs</div>
       <svg className="reference-connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        {CONNECTIONS.map(([from, to]) => {
-          const a = point(from)
-          const b = point(to)
-          const mid = (a.y + b.y) / 2
-          return <path key={`${from}-${to}`} d={`M ${a.x} ${a.y + 3} C ${a.x} ${mid}, ${b.x} ${mid}, ${b.x} ${b.y - 3}`} />
+        {edges.map(({ from, to, fromPoint, toPoint }) => {
+          const mid = (fromPoint.y + toPoint.y) / 2
+          return <path key={`${from}-${to}`} d={`M ${fromPoint.x} ${fromPoint.y + 3} C ${fromPoint.x} ${mid}, ${toPoint.x} ${mid}, ${toPoint.x} ${toPoint.y - 3}`} />
         })}
       </svg>
-      {FLOW.map((item, index) => (
+      {nodes.map((item) => (
         <ExecutionNode
           key={item.id}
           item={item}
-          state={statusFor(item.id, index, selected?.id)}
-          active={selected?.id === item.id}
+          state={item.state}
+          active={selectedNodeId === item.id}
           onSelect={onSelect}
         />
       ))}

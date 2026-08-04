@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import { useLedger, useNow } from './lib/ledger.js'
+import { buildDashboardViewModel, DEFAULT_SELECTED_NODE_ID } from './lib/dashboard-view-model.js'
 import MissionHeader from './components/dashboard/MissionHeader.jsx'
 import MissionTabs from './components/dashboard/MissionTabs.jsx'
 import MissionSummary from './components/dashboard/MissionSummary.jsx'
@@ -13,29 +14,27 @@ export default function App() {
   const ledger = useLedger()
   const now = useNow()
   const [active, setActive] = useState('dashboard')
-  const [selected, setSelected] = useState(null)
+  const [selectedNodeId, setSelectedNodeId] = useState(DEFAULT_SELECTED_NODE_ID)
 
-  const mission = ledger.missions.find((m) => /running|active/i.test(m.status || '')) || ledger.missions[0]
-  const activeAgents = useMemo(() => ledger.agents.filter((a) => /active|running/i.test(a.status || '')).length, [ledger.agents])
-  const progress = Math.max(0, Math.min(100, Number(mission?.progress) || 62))
+  const view = buildDashboardViewModel(ledger, now, selectedNodeId)
 
   return (
     <div className="app-shell reference-shell">
       <Sidebar active={active} onNavigate={setActive} />
       <main className="reference-app">
-        <MissionHeader mission={mission} connected={ledger.connected} lastSync={ledger.lastSync} now={now} />
+        <MissionHeader mission={view.mission} connected={view.connected} lastSync={view.lastSync} now={view.now} />
         <MissionTabs />
         <div className="reference-layout">
           <div className="reference-left-column">
-            <MissionSummary mission={mission} summary={ledger.summary} progress={progress} agents={ledger.agents} />
+            <MissionSummary summary={view.summary} />
           </div>
           <div className="reference-center-column">
-            <ExecutionCanvas selected={selected} onSelect={setSelected} activeAgents={activeAgents} />
-            <BottomDock events={ledger.events} now={now} />
+            <ExecutionCanvas graph={view.graph} onSelect={(node) => setSelectedNodeId(node.id)} />
+            <BottomDock events={view.events} now={view.now} terminal={view.terminal} />
           </div>
           <div className="reference-right-column">
-            <ProcessInspector selected={selected} />
-            <HealthPanel />
+            <ProcessInspector inspector={view.inspector} />
+            <HealthPanel health={view.health} />
           </div>
         </div>
       </main>

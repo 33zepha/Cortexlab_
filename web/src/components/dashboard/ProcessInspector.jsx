@@ -1,5 +1,3 @@
-import { FLOW } from '../../lib/dashboard-view-model.js'
-
 function InspectorText({ title, children }) {
   return <section className="inspector-block"><span className="reference-kicker">{title}</span><p>{children}</p></section>
 }
@@ -13,24 +11,24 @@ function InspectorList({ title, trailing, items, status }) {
   )
 }
 
-export default function ProcessInspector({ selected }) {
-  const item = selected || FLOW[3]
+export default function ProcessInspector({ inspector }) {
+  const { item, progress, duration, cost, tokens, model, mandate, context, contextTokens, evidence, dependencies } = inspector
 
   return (
     <aside className="reference-inspector">
       <header><span className="inspector-icon">{item.label.slice(0, 1)}</span><strong>{item.label}</strong><button>×</button></header>
       <section className="inspector-block inspector-state">
         <span className="reference-kicker">STATUT</span>
-        <div><strong><i />En cours d'exécution</strong><b>80%</b></div>
+        <div><strong><i />En cours d'exécution</strong><b>{progress}%</b></div>
         <em><i /></em>
       </section>
       <section className="inspector-stats">
-        <div><span>DURÉE</span><strong>1h 24m 17s</strong></div><div><span>COÛT</span><strong>€0.18</strong></div><div><span>TOKENS</span><strong>243,672</strong></div><div><span>MODÈLE</span><strong>Claude 3.5 Sonnet</strong></div>
+        <div><span>DURÉE</span><strong>{duration}</strong></div><div><span>COÛT</span><strong>{cost}</strong></div><div><span>TOKENS</span><strong>{tokens}</strong></div><div><span>MODÈLE</span><strong>{model}</strong></div>
       </section>
-      <InspectorText title="MANDAT">Créer l'interface utilisateur pour le tableau de bord RH en respectant le design system et les composants existants.</InspectorText>
-      <InspectorList title="CONTEXTE" trailing="3,240 tokens" items={[['Bundle: RH Platform Guidelines','v2.1'],['Figma: Dashboard Design','Updated'],['Codebase: /frontend/src','Latest']]} />
-      <InspectorList title="PREUVES (2/3)" items={[['UI Components','Validé'],['Storybook','Validé'],['Tests E2E','En attente']]} status />
-      <InspectorList title="DÉPENDANCES" items={[['Design System','Terminé'],['API Contracts','En cours']]} status />
+      <InspectorText title="MANDAT">{mandate}</InspectorText>
+      <InspectorList title="CONTEXTE" trailing={contextTokens} items={context} />
+      <InspectorList title="PREUVES (2/3)" items={evidence} status />
+      <InspectorList title="DÉPENDANCES" items={dependencies} status />
       <footer><button>▷ Intervenir</button><button>Ⅱ Mettre en pause</button><button className="danger">▱ Arrêter</button></footer>
     </aside>
   )
