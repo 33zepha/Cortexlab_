@@ -2,7 +2,7 @@ import Icon from './Icon.jsx'
 import { relativeTime } from '../lib/ledger.js'
 
 const STATUS = {
-  running: { label: 'Running', tone: 'success' },
+  running: { label: 'En cours', tone: 'success' },
   autonomous: { label: 'Autonome', tone: 'success' },
   information: { label: 'Information', tone: 'warning' },
   escalated: { label: 'Attention', tone: 'error' },
@@ -16,8 +16,21 @@ const PHASE = {
   executing: 'Exécution',
   checking: 'Vérification',
   budget: 'Budget',
-  closed: 'Terminé',
+  closed: 'Terminée',
   unknown: 'En cours',
+}
+
+const EVENT_LABELS = {
+  analysis_step_completed: 'Analyse terminée',
+  approval_required: 'Validation requise',
+  task_started: 'Tâche lancée',
+  idle: 'Disponible',
+  'mission.start': 'Mission lancée',
+  'agent.assigned': 'Agent assigné',
+  'agent.result': 'Résultat agent',
+  'check.run': 'Contrôle exécuté',
+  'budget.eval': 'Budget évalué',
+  'mission.closure': 'Mission clôturée',
 }
 
 function formatDuration(ms, startedAt, now) {
@@ -50,7 +63,7 @@ function ManagerCell({ manager }) {
 
 function CheckStack({ checks }) {
   return (
-    <div className="check-stack" aria-label="Résultat des checks">
+    <div className="check-stack" aria-label="Résultat des contrôles">
       <span><b>{checks?.passed || 0}</b><Icon name="check" className="micro-icon success-text" /></span>
       <span><b>{checks?.violations || 0}</b><Icon name="close" className="micro-icon error-text" /></span>
       <span><b>{checks?.findings || 0}</b><Icon name="alert" className="micro-icon warning-text" /></span>
@@ -78,10 +91,10 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
     <section className="panel missions-panel">
       <div className="panel-heading">
         <div>
-          <h2>Missions actives</h2>
+          <h2>Missions</h2>
           <p>Progression, budget, preuves et dernier événement.</p>
         </div>
-        <button className="quiet-button" type="button">Voir toutes</button>
+        <span className="panel-count">{visible.length} visible{visible.length > 1 ? 's' : ''}</span>
       </div>
 
       <div className="table-viewport">
@@ -93,7 +106,7 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
               <th>Statut</th>
               <th>Progression</th>
               <th>Budget</th>
-              <th>Checks</th>
+              <th>Contrôles</th>
               <th>Dernier événement</th>
             </tr>
           </thead>
@@ -103,6 +116,7 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
             ) : visible.map((mission) => {
               const status = STATUS[mission.status] || STATUS.closed
               const budget = mission.budget || { cost: 0, limits: {}, percentage: null }
+              const rawEvent = mission.latest_event?.type || '—'
               return (
                 <tr key={mission.id}>
                   <td>
@@ -137,8 +151,8 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
                   </td>
                   <td><CheckStack checks={mission.checks} /></td>
                   <td>
-                    <div className="event-cell">
-                      <strong>{mission.latest_event?.type || '—'}</strong>
+                    <div className="event-cell" title={rawEvent}>
+                      <strong>{EVENT_LABELS[rawEvent] || rawEvent.replaceAll('_', ' ')}</strong>
                       <small>{relativeTime(mission.latest_event?.ts, now)}</small>
                     </div>
                   </td>
