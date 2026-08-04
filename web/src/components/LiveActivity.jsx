@@ -17,10 +17,10 @@ export default function LiveActivity({ events, now, connected }) {
       <div className="panel-heading live-heading">
         <div>
           <h2>Activité en direct</h2>
-          <p>Derniers événements du ledger.</p>
+          <p>Derniers événements enregistrés dans le ledger.</p>
         </div>
         <span className={`live-status ${connected ? 'is-online' : ''}`}>
-          <i aria-hidden="true" />{connected ? 'Live' : 'Hors ligne'}
+          <i aria-hidden="true" />{connected ? 'En direct' : 'Hors ligne'}
         </span>
       </div>
 
@@ -39,7 +39,9 @@ export default function LiveActivity({ events, now, connected }) {
               <div className="activity-copy">
                 <time>{relativeTime(event.ts, now)}</time>
                 <strong>{actor}</strong>
-                <span className={`activity-event event-${variant}`}>{event.type}</span>
+                <span className={`activity-event event-${variant}`} title={event.type}>
+                  {description.title}
+                </span>
                 <p>{description.detail}</p>
               </div>
             </article>
@@ -47,7 +49,7 @@ export default function LiveActivity({ events, now, connected }) {
         })}
       </div>
 
-      <button className="activity-footer-button" type="button">Voir toute l’activité</button>
+      <button className="activity-footer-button" type="button">Ouvrir le ledger complet</button>
     </aside>
   )
 }
