@@ -1,12 +1,13 @@
 {
   "name": "cortex-orchestration",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Cortex Lab — a work-in-progress AI orchestration runtime: governs multi-agent work through immutable bundles and verifiable checks.",
   "main": "index.js",
   "scripts": {
     "generate": "node generate-registry.mjs",
     "test": "node --test test/*.test.mjs",
-    "runtime": "node runtime/chief-of-staff.mjs"
+    "runtime": "node runtime/mission-runtime.mjs",
+    "runtime:legacy": "node runtime/chief-of-staff.mjs"
   },
   "keywords": [],
   "author": "",
