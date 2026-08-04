@@ -61,7 +61,7 @@ function TopHeader({ mission, connected, lastSync, now }) {
 }
 
 function MissionSummary({ mission, summary, progress, agents }) {
-  const budgetPct = summary.budget_limit > 0 ? clamp((summary.budget_cost / summary.budget_limit) * 100) : 49
+  const budgetPct = summary.budget_limit > 0 ? clamp((summary.budget_cost / summary.budget_limit) * 100) : 0
   return (
     <aside className="mission-summary-card">
       <span className="reference-kicker">ACTIVE MISSION</span>
@@ -70,7 +70,7 @@ function MissionSummary({ mission, summary, progress, agents }) {
       <span className="summary-running"><i />Running</span>
       <div className="summary-meter"><span><b style={{ width: `${progress}%` }} /></span><strong>{progress}%</strong></div>
       <div className="summary-divider" />
-      <SummaryMetric label="Budget" value={`€${formatNumber(summary.budget_cost || 12.45)} / €${formatNumber(summary.budget_limit || 25)}`} percent={budgetPct} />
+      <SummaryMetric label="Budget" value={`€${formatNumber(summary.budget_cost ?? 0)} / €${formatNumber(summary.budget_limit ?? 0)}`} percent={budgetPct} />
       <SummaryMetric label="Tokens" value="1.24M / 3M" percent={41} />
       <div className="summary-agent">
         <span className="summary-avatar">H</span>
@@ -113,7 +113,7 @@ function ExecutionCanvas({ selected, onSelect, activeAgents }) {
       <div className="canvas-toolbar">
         <button>⌁</button><button>⌕</button><button>⌘</button><button>□</button><button>⌘</button>
       </div>
-      <div className="canvas-agent-count">♙ {activeAgents || 7} agents actifs</div>
+      <div className="canvas-agent-count">♙ {activeAgents ?? 0} agents actifs</div>
       <svg className="reference-connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {CONNECTIONS.map(([from, to]) => {
           const a = point(from); const b = point(to)
@@ -206,7 +206,7 @@ export default function App() {
   const [selected, setSelected] = useState(FLOW[3])
   const mission = missions.find((item) => /running|active/i.test(item.status || '')) || missions[0]
   const activeAgents = useMemo(() => agents.filter((agent) => /active|running/i.test(agent.status || '')).length, [agents])
-  const progress = clamp(mission?.progress || 62)
+  const progress = clamp(mission?.progress ?? 0)
 
   return (
     <div className="app-shell reference-shell">
