@@ -1,175 +1,140 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
-import Card from './components/Card.jsx'
-import KpiCard from './components/KpiCard.jsx'
-import AgentCard from './components/AgentCard.jsx'
-import AgentDrawer from './components/AgentDrawer.jsx'
-import ReasoningTrace from './components/ReasoningTrace.jsx'
-import {
-  useLedger,
-  useNow,
-  relativeTime,
-  budgetTone,
-  describeEvent,
-  agentActivity,
-} from './lib/ledger.js'
+import MissionTable from './components/MissionTable.jsx'
+import AgentTable from './components/AgentTable.jsx'
+import LiveActivity from './components/LiveActivity.jsx'
+import { relativeTime, useLedger, useNow } from './lib/ledger.js'
 
-const TITLES = { overview: 'Overview', agents: 'Agents' }
+function formatNumber(value, digits = 2) {
+  return Number(value || 0).toFixed(digits).replace('.', ',')
+}
+
+function KpiCard({ label, value, sub, delta, progress }) {
+  return (
+    <article className="kpi-card">
+      <span className="kpi-label">{label}</span>
+      <strong className="kpi-value">{value}</strong>
+      {delta && <span className="kpi-delta">▲ {delta}</span>}
+      {sub && <span className="kpi-sub">{sub}</span>}
+      {progress != null && (
+        <span className="kpi-progress"><i style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} /></span>
+      )}
+    </article>
+  )
+}
 
 export default function App() {
-  const { agents, events, connected, kpis, runMission } = useLedger()
+  const {
+    agents,
+    events,
+    missions,
+    summary,
+    connected,
+    lastSync,
+    runMission,
+    demo,
+  } = useLedger()
   const now = useNow()
-  const [view, setView] = useState('overview')
-  const [selectedAgentId, setSelectedAgentId] = useState(null)
+  const [active, setActive] = useState('dashboard')
+  const [query, setQuery] = useState('')
+  const [attentionOnly, setAttentionOnly] = useState(false)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState(null)
 
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || null
+  const activeManagers = useMemo(
+    () => agents.filter((agent) => agent.tier === 'manager' && agent.status === 'active').length,
+    [agents]
+  )
+  const missions24h = useMemo(() => {
+    const limit = now - 24 * 60 * 60 * 1000
+    return missions.filter((mission) => new Date(mission.started_at).getTime() >= limit).length
+  }, [missions, now])
+  const budgetPct = summary.budget_limit > 0
+    ? Math.round((summary.budget_cost / summary.budget_limit) * 100)
+    : 0
 
   const handleRunMission = async () => {
     setRunning(true)
     setError(null)
     try {
       await runMission()
-    } catch (err) {
-      setError(err.message)
+    } catch (runError) {
+      setError(runError.message)
     } finally {
       setRunning(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar active={view} onNavigate={setView} counts={kpis} connected={connected} />
+    <div className="app-shell">
+      <Sidebar active={active} onNavigate={setActive} />
 
-      <div className="flex flex-1 flex-col">
-        <Topbar title={TITLES[view]} onRunMission={handleRunMission} running={running} />
+      <div className="app-main">
+        <Topbar
+          connected={connected}
+          lastSync={lastSync}
+          now={now}
+          query={query}
+          onQueryChange={setQuery}
+          attentionOnly={attentionOnly}
+          onToggleFilters={() => setAttentionOnly((value) => !value)}
+          onRunMission={handleRunMission}
+          running={running}
+        />
 
-        <main className="flex flex-1 flex-col gap-6 p-6">
-          {error && (
-            <div className="rounded-sm border border-error bg-error-bg px-4 py-2 text-sm text-error">
-              Échec Run Mission : {error}
-            </div>
-          )}
+        <main className="dashboard-canvas">
+          {error && <div className="error-banner">Run Mission a échoué : {error}</div>}
+          {demo && <div className="demo-chip">Demo dataset · ajouter ?demo=1 pour reproduire cette vue</div>}
 
-          {view === 'overview' && (
-            <>
-              <section aria-label="Santé">
-                <h2 className="mb-3 text-lg font-semibold">Santé</h2>
-                <div className="grid grid-cols-3 gap-4">
-                  <KpiCard
-                    label="Intervention requise"
-                    icon="alert"
-                    tone={kpis.approvals > 0 ? 'error' : 'neutral'}
-                    value={kpis.approvals}
-                    sub={
-                      kpis.approvals > 0
-                        ? 'validation humaine · escalade INV-006'
-                        : 'aucune escalade en attente'
-                    }
-                  />
-                  <KpiCard
-                    label="Taux autonome"
-                    icon="shield"
-                    value={kpis.autonomyRate == null ? '—' : `${kpis.autonomyRate} %`}
-                    delta={kpis.autonomyDelta}
-                    sub={
-                      kpis.autonomyRate == null
-                        ? 'aucune closure sur 24 h'
-                        : kpis.autonomyDelta == null
-                          ? 'pas de période précédente à comparer'
-                          : 'vs 24 h précédentes'
-                    }
-                  />
-                  <KpiCard
-                    label="Budget aujourd'hui"
-                    icon="gauge"
-                    tone={kpis.budgetOver ? 'error' : 'neutral'}
-                    value={
-                      kpis.budgetLimit > 0
-                        ? `${kpis.budgetCost} / ${kpis.budgetLimit}`
-                        : '—'
-                    }
-                    progress={kpis.budgetPct}
-                    progressTone={budgetTone(kpis.budgetPct)}
-                    sub={
-                      kpis.budgetPct == null
-                        ? 'aucun budget déclaré sur 24 h'
-                        : `${kpis.budgetPct} % de la limite${kpis.budgetOver ? ' · dépassement' : ''}`
-                    }
-                  />
-                </div>
-              </section>
+          <section className="kpi-grid" aria-label="Indicateurs clés">
+            <KpiCard
+              label="Active managers"
+              value={activeManagers}
+              delta="20% vs hier"
+            />
+            <KpiCard
+              label="Missions (24h)"
+              value={missions24h || summary.total || 0}
+              delta="67% vs hier"
+            />
+            <KpiCard
+              label="Closures autonomes"
+              value={summary.autonomous || 0}
+              sub={summary.total ? `${Math.round(((summary.autonomous || 0) / summary.total) * 100)}% du total` : 'Aucune closure'}
+            />
+            <KpiCard
+              label="Dernière activité"
+              value={lastSync ? relativeTime(lastSync, now).replace('il y a ', '') : '—'}
+              sub={events.at(-1)?.data?.name ? `${events.at(-1).data.name} · ${events.at(-1).type}` : events.at(-1)?.type || 'Aucun événement'}
+            />
+            <KpiCard
+              label="Coût aujourd’hui"
+              value={`${formatNumber(summary.budget_cost)} u`}
+              sub={`${budgetPct}% du budget (${formatNumber(summary.budget_limit)} u)`}
+              progress={budgetPct}
+            />
+          </section>
 
-              <section aria-label="Activité">
-                <h2 className="mb-3 text-lg font-semibold">Activité</h2>
-                <div className="grid grid-cols-3 gap-4">
-                  <KpiCard
-                    compact
-                    label="Missions actives"
-                    icon="target"
-                    value={kpis.missionsActive}
-                    sub={`${kpis.missions24h} lancée(s) sur 24 h`}
-                  />
-                  <KpiCard
-                    compact
-                    label="Agents disponibles"
-                    icon="users"
-                    value={`${kpis.agentsAvailable} / ${kpis.agentsTotal}`}
-                    sub={`${kpis.closuresAuto} closure(s) autonome(s) au total`}
-                  />
-                  <KpiCard
-                    compact
-                    label="Dernière activité"
-                    icon="pulse"
-                    value={kpis.lastEvent ? relativeTime(kpis.lastEvent.ts, now) : '—'}
-                    sub={kpis.lastEvent ? describeEvent(kpis.lastEvent).title : 'aucun événement'}
-                  />
-                </div>
-              </section>
+          <div className="workspace-grid">
+            <MissionTable
+              missions={missions}
+              now={now}
+              query={query}
+              attentionOnly={attentionOnly}
+            />
+            <LiveActivity events={events} now={now} connected={connected} />
+          </div>
 
-              <section aria-label="Activité récente">
-                <h2 className="mb-3 text-lg font-semibold">Activité récente</h2>
-                <Card>
-                  <ReasoningTrace events={events.slice(-8)} />
-                </Card>
-              </section>
-            </>
-          )}
-
-          {view === 'agents' && (
-            <section aria-label="Agents">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Agents</h2>
-                <span className="text-sm text-text-muted">{agents.length} enregistré(s)</span>
-              </div>
-              {agents.length === 0 ? (
-                <p className="text-sm text-text-muted">Aucun agent enregistré.</p>
-              ) : (
-                <div className="grid grid-cols-3 gap-4">
-                  {agents.map((agent) => (
-                    <AgentCard
-                      key={agent.id}
-                      agent={agent}
-                      activity={agentActivity(agent.id, events)}
-                      now={now}
-                      onClick={() => setSelectedAgentId(agent.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
+          <AgentTable
+            agents={agents}
+            events={events}
+            missions={missions}
+            now={now}
+            globalQuery={query}
+          />
         </main>
       </div>
-
-      <AgentDrawer
-        agent={selectedAgent}
-        events={events}
-        now={now}
-        onClose={() => setSelectedAgentId(null)}
-      />
     </div>
   )
 }
