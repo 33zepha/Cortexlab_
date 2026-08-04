@@ -9,6 +9,11 @@ import LiveActivity from './components/LiveActivity.jsx'
 import EventExplorer from './components/EventExplorer.jsx'
 import { relativeTime, useLedger, useNow } from './lib/ledger.js'
 
+function queryValue(name) {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get(name)
+}
+
 function formatNumber(value, digits = 2) {
   return Number(value || 0).toFixed(digits).replace('.', ',')
 }
@@ -41,8 +46,8 @@ export default function App() {
   const [active, setActive] = useState('dashboard')
   const [query, setQuery] = useState('')
   const [attentionOnly, setAttentionOnly] = useState(false)
-  const [selectedMissionId, setSelectedMissionId] = useState(null)
-  const [ledgerOpen, setLedgerOpen] = useState(false)
+  const [selectedMissionId, setSelectedMissionId] = useState(() => queryValue('mission'))
+  const [ledgerOpen, setLedgerOpen] = useState(() => queryValue('ledger') === '1')
 
   const managers = useMemo(
     () => agents.filter((agent) => agent.tier === 'manager'),
