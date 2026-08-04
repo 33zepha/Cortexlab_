@@ -50,14 +50,27 @@ function progressLabelFor(state) {
 export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAULT_SELECTED_NODE_ID) {
   const { agents = [], events = [], missions = [], summary = {}, connected = false, lastSync = null } = ledgerData || {}
 
-  // LIVE: mission selection from ledger, DERIVED fallback to first entry
-  const mission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0]
+  // Determine provenance for each section
+  const isMissionLive = missions && missions.length > 0
+  const activeMission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0]
+
+  const isBudgetCostLive = summary && summary.budget_cost != null
+  const isBudgetLimitLive = summary && summary.budget_limit != null
+  const isBudgetCompleteLive = isBudgetCostLive && isBudgetLimitLive
+
+  const areEventsLive = events && events.length > 0
+  const areAgentsLive = agents && agents.length > 0
+
+  const progressFromMission = activeMission?.progress
+
+  // LIVE: mission selection from ledger, PLACEHOLDER fallback
+  const mission = activeMission
 
   // LIVE: active agent count from ledger
   const activeAgentCount = agents.filter((a) => /active|running/i.test(a.status || '')).length
 
-  // DERIVED from mission, ESTIMATED fallback
-  const progress = clamp(mission?.progress || 62)
+  // LIVE if mission present, PLACEHOLDER fallback
+  const progress = clamp(progressFromMission ?? 62)
 
   // Graph: DERIVED state per node from static topology + current selection
   const nodes = FLOW.map((item, index) => ({
@@ -75,38 +88,47 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || nodes[3]
 
-  // ESTIMATED/PLACEHOLDER: budget not yet fully exposed by backend
-  const budgetCost = summary.budget_cost || 12.45 // PLACEHOLDER if missing from ledger
-  const budgetLimit = summary.budget_limit || 25 // PLACEHOLDER if missing from ledger
-  const budgetPct = budgetLimit > 0 ? clamp((budgetCost / budgetLimit) * 100) : 49 // ESTIMATED fallback
+  // LIVE or PLACEHOLDER: budget from backend or fallback
+  const budgetCost = isBudgetCostLive ? summary.budget_cost : 2.5
+  const budgetLimit = isBudgetLimitLive ? summary.budget_limit : 5.0
+  const budgetPct = budgetLimit > 0 ? clamp((budgetCost / budgetLimit) * 100) : 50
+
+  // Fallback mission structure when no mission is available
+  const missionOrFallback = mission || {
+    id: 'MIS-UNKNOWN',
+    name: 'Aucune mission active',
+    domain: null,
+    status: 'idle',
+    started_at: null,
+  }
 
   return {
     // Mission context (LIVE via useLedger/useNow)
-    mission,
+    mission: missionOrFallback,
     connected,
     lastSync,
     now,
 
     // Summary rail
     summary: {
-      mission,
-      progress, // DERIVED
+      mission: missionOrFallback,
+      progress, // LIVE if mission present, PLACEHOLDER if fallback
       budget: {
-        cost: `€${formatNumber(budgetCost)}`, // PLACEHOLDER if from fallback
-        limit: `€${formatNumber(budgetLimit)}`, // PLACEHOLDER if from fallback
-        percent: budgetPct, // ESTIMATED
+        cost: `€${formatNumber(budgetCost)}`,
+        limit: `€${formatNumber(budgetLimit)}`,
+        percent: budgetPct,
       },
       tokens: {
         used: '1.24M', // PLACEHOLDER
         limit: '3M', // PLACEHOLDER
         percent: 41, // PLACEHOLDER
       },
-      activeAgent: agents[0] || { name: 'Hermes', role: 'Chief of Staff' }, // LIVE with PLACEHOLDER fallback
+      activeAgent: agents[0] || { name: 'unknown', role: 'unassigned' },
     },
 
     // Execution graph
     graph: {
-      nodes, // DERIVED (topology PLACEHOLDER, state DERIVED)
+      nodes, // PLACEHOLDER (FLOW topology is hardcoded, states are simulated)
       edges, // PLACEHOLDER topology
       selectedNodeId,
       activeAgentCount, // LIVE
@@ -142,23 +164,110 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
     },
 
     // Events: LIVE from ledger, PLACEHOLDER fallback when empty
-    events: events.length > 0 ? events : [
+    events: areEventsLive ? events : [
       { ts: new Date().toISOString(), data: { agent: 'Frontend Agent' }, type: 'Démarrage de la génération des composants' },
       { ts: new Date().toISOString(), data: { agent: 'Planner' }, type: 'Mandat décomposé en 5 sous-tâches' },
       { ts: new Date().toISOString(), data: { agent: 'Hermes' }, type: 'Routage vers Frontend Agent (Claude 3.5 Sonnet)' },
       { ts: new Date().toISOString(), data: { agent: 'Researcher' }, type: 'Recherche utilisateur terminée' },
       { ts: new Date().toISOString(), data: { agent: 'Hermes' }, type: 'Mission démarrée par commande externe' },
-    ], // PLACEHOLDER fallback events
+    ],
 
     // Terminal output — PLACEHOLDER until runtime exposes a real stream
     terminal: `> cortex mission status MIS-2024-05-24-001\n\nMission: Refonte plateforme RH multi-agent\nStatus: Running\nProgress: 62%\nActive Agents: 7\nBudget: €12.45 / €25.00\nTokens: 1,243,672 / 3,000,000\nStart Time: 2024-05-24 12:47:33\nUptime: 2h 47m 12s\n\n>`,
 
     // Health panel — PLACEHOLDER until runtime exposes real health metrics
     health: {
-      status: 'Tout est opérationnel', // PLACEHOLDER
-      agents: { online: 12, total: 12 }, // PLACEHOLDER
-      services: { online: 8, total: 8 }, // PLACEHOLDER
-      memory: 78, // PLACEHOLDER
+      status: 'Tout est opérationnel',
+      agents: { online: 12, total: 12 },
+      services: { online: 8, total: 8 },
+      memory: 78,
+    },
+
+    // Provenance metadata: tracks the source and confidence of each section
+    provenance: {
+      mission: {
+        kind: isMissionLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isMissionLive ? 'ledger.missions[0] via /api/missions' : 'fallback (no active mission)',
+        updatedAt: isMissionLive ? lastSync : null,
+        confidence: isMissionLive ? 1 : 0,
+      },
+
+      'summary.progress': {
+        kind: isMissionLive ? 'LIVE' : 'PLACEHOLDER',
+        source: isMissionLive ? 'mission.progress from runtime' : 'fallback (62)',
+        updatedAt: isMissionLive ? lastSync : null,
+        confidence: isMissionLive ? 1 : 0,
+      },
+
+      'summary.budget': {
+        kind: isBudgetCompleteLive ? 'LIVE' : isBudgetCostLive || isBudgetLimitLive ? 'DERIVED' : 'PLACEHOLDER',
+        source: isBudgetCompleteLive ? 'ledger.summary.budget_* via /api/missions' : 'fallback (2.5 / 5.0)',
+        updatedAt: isBudgetCompleteLive ? lastSync : null,
+        confidence: isBudgetCompleteLive ? 1 : isBudgetCostLive || isBudgetLimitLive ? 0.5 : 0,
+      },
+
+      'summary.tokens': {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded (no runtime source yet)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      'summary.activeAgent': {
+        kind: areAgentsLive ? 'LIVE' : 'PLACEHOLDER',
+        source: areAgentsLive ? 'ledger.agents[0] via /api/agents' : 'fallback',
+        updatedAt: areAgentsLive ? lastSync : null,
+        confidence: areAgentsLive ? 1 : 0,
+      },
+
+      graph: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded FLOW/CONNECTIONS arrays + statusFor simulation',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      inspector: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded values in view-model (no per-node runtime data)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      events: {
+        kind: areEventsLive ? 'LIVE' : 'PLACEHOLDER',
+        source: areEventsLive ? 'ledger.events via /api/events + /api/stream SSE' : 'demo fallback array',
+        updatedAt: areEventsLive ? lastSync : null,
+        confidence: areEventsLive ? 1 : 0,
+      },
+
+      terminal: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded template (no runtime logs)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      health: {
+        kind: 'PLACEHOLDER',
+        source: 'hardcoded values (no runtime health metrics)',
+        updatedAt: null,
+        confidence: 0,
+      },
+
+      connected: {
+        kind: 'LIVE',
+        source: 'EventSource /api/stream connection state',
+        updatedAt: lastSync,
+        confidence: 1,
+      },
+
+      lastSync: {
+        kind: 'LIVE',
+        source: 'latest event timestamp from ledger',
+        updatedAt: lastSync,
+        confidence: 1,
+      },
     },
   }
 }
