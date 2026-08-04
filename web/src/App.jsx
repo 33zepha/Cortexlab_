@@ -6,6 +6,7 @@ import MissionTable from './components/MissionTable.jsx'
 import MissionInspector from './components/MissionInspector.jsx'
 import AgentTable from './components/AgentTable.jsx'
 import LiveActivity from './components/LiveActivity.jsx'
+import EventExplorer from './components/EventExplorer.jsx'
 import { relativeTime, useLedger, useNow } from './lib/ledger.js'
 
 function formatNumber(value, digits = 2) {
@@ -41,6 +42,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [attentionOnly, setAttentionOnly] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState(null)
+  const [ledgerOpen, setLedgerOpen] = useState(false)
 
   const managers = useMemo(
     () => agents.filter((agent) => agent.tier === 'manager'),
@@ -150,7 +152,12 @@ export default function App() {
             </div>
 
             <div id="activity" className="anchor-section activity-column">
-              <LiveActivity events={events} now={now} connected={connected} />
+              <LiveActivity
+                events={events}
+                now={now}
+                connected={connected}
+                onOpenLedger={() => setLedgerOpen(true)}
+              />
             </div>
           </div>
         </main>
@@ -160,6 +167,12 @@ export default function App() {
         mission={selectedMission}
         now={now}
         onClose={() => setSelectedMissionId(null)}
+      />
+      <EventExplorer
+        open={ledgerOpen}
+        events={events}
+        now={now}
+        onClose={() => setLedgerOpen(false)}
       />
     </div>
   )
