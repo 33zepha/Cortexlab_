@@ -41,6 +41,21 @@ npm test     # the minimal contract is locked by tests
 Curious minds will find design notes under `docs/` — though it's still
 under construction.
 
+## the console
+
+A live dashboard watches Hermes work in real time — agents, missions,
+budgets, closures — straight from the event ledger.
+
+```bash
+node server/index.mjs --port 4173   # backend: API + SSE + mission runner
+
+cd web
+npm install
+npm run build                       # or `npm run dev` for hot reload (proxies /api to :4173)
+```
+
+Then open `http://localhost:4173`.
+
 ## build with us
 
 Open an issue, send a PR, or just hang around. Fresh eyes welcome.

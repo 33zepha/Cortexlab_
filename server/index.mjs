@@ -18,7 +18,7 @@ import { EventStore, readEvents } from '../runtime/event-store.mjs'
 import { compile } from '../compile-bundle.mjs'
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
-const PUBLIC = path.join(ROOT, 'public')
+const PUBLIC = path.join(ROOT, 'web', 'dist')
 const REGISTRY = path.join(ROOT, 'registry', 'registry.json')
 const LEDGER_DIR = path.join(ROOT, 'ledger')
 const LEDGER_FILE = path.join(LEDGER_DIR, 'events.ndjson')
