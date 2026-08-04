@@ -51,7 +51,15 @@ function lastEventLabel(activity, status) {
   return 'Aucune présence détectée'
 }
 
-export default function AgentTable({ agents, events, missions, now, globalQuery = '' }) {
+export default function AgentTable({
+  agents,
+  events,
+  missions,
+  now,
+  globalQuery = '',
+  selectedAgentId = null,
+  onSelectAgent = () => {},
+}) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const effectiveQuery = `${globalQuery} ${query}`.trim().toLocaleLowerCase('fr-FR')
@@ -83,7 +91,7 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
       <div className="panel-heading agent-heading">
         <div>
           <h2>Agents</h2>
-          <p>Présence runtime, mission courante, coût et dernière preuve observée.</p>
+          <p>Cliquer sur une ligne pour inspecter la présence runtime et l’activité.</p>
         </div>
         <div className="agent-tools">
           <label className="inline-search">
@@ -137,7 +145,19 @@ export default function AgentTable({ agents, events, missions, now, globalQuery 
               const lastEvent = activity.lastResult
               const seenAt = lastEvent?.ts || activity.since || agent.last_seen_at
               return (
-                <tr key={agent.id}>
+                <tr
+                  key={agent.id}
+                  className={`agent-row ${selectedAgentId === agent.id ? 'is-selected' : ''}`}
+                  tabIndex="0"
+                  aria-selected={selectedAgentId === agent.id}
+                  onClick={() => onSelectAgent(agent)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onSelectAgent(agent)
+                    }
+                  }}
+                >
                   <td>
                     <div className="agent-identity-cell">
                       <span className={`agent-avatar avatar-${agent.name?.toLowerCase()}`}>{agent.name?.slice(0, 1) || 'A'}</span>
