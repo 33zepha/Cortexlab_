@@ -15,16 +15,21 @@ export default function Topbar({
   return (
     <header className="topbar-shell">
       <div className="topbar-title-block">
-        <h1>Console</h1>
-        <span className={`runtime-state ${hermesOnline ? 'is-online' : ''}`}>
-          <i aria-hidden="true" />
-          {hermesOnline ? 'Hermes opérationnel' : 'Hermes hors ligne'}
-        </span>
-        <span className="last-sync">
-          {streamConnected ? 'Flux connecté' : 'Flux interrompu'}
-          {' · '}
-          {lastSync ? relativeTime(lastSync, now) : 'aucune activité'}
-        </span>
+        <div className="console-identity">
+          <span className="console-kicker">Cortex / Observatory</span>
+          <h1>Mission Control</h1>
+        </div>
+        <div className="runtime-cluster">
+          <span className={`runtime-state ${hermesOnline ? 'is-online' : ''}`}>
+            <i aria-hidden="true" />
+            {hermesOnline ? 'HERMES ONLINE' : 'HERMES OFFLINE'}
+          </span>
+          <span className="last-sync">
+            {streamConnected ? 'SSE CONNECTÉ' : 'SSE INTERROMPU'}
+            {' / '}
+            {lastSync ? relativeTime(lastSync, now) : 'AUCUNE ACTIVITÉ'}
+          </span>
+        </div>
       </div>
 
       <div className="topbar-actions">
@@ -34,7 +39,7 @@ export default function Topbar({
             type="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Rechercher (⌘K)"
+            placeholder="Rechercher dans le système"
             aria-label="Rechercher"
           />
         </label>
@@ -44,7 +49,7 @@ export default function Topbar({
           onClick={onToggleFilters}
         >
           <Icon name="filter" />
-          Filtres
+          Signaux
         </button>
         <a
           className={`primary-button ${hermesUrl ? '' : 'is-disabled'}`}
