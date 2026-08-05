@@ -1,92 +1,128 @@
-# Profils d'effort — indépendants du modèle
-# feat/role-model-separation — Étape 1. NON branché sur le runtime.
+# Profils d'effort Cortex — canoniques + mapping provider
+# Ne jamais envoyer une valeur unsupported a un provider.
 
-schema_version: 1
+schema_version: 2
 kind: effort_catalog
 status: draft_parallel
 
+canonical_levels: [none, low, medium, high, xhigh, max]
+
 default_effort: medium
-# max ne doit jamais être le défaut système
-forbid_default: [max]
+forbid_default: [max, xhigh, ultra]
 
 levels:
+  - id: none
+    rank: 0
+    use_when: [deterministic_transform, no_reasoning_needed, thinking_off]
+    goals: [min_latency, min_tokens]
   - id: low
     rank: 1
-    use_when:
-      - string_search
-      - rename
-      - formatting
-      - classification
-      - short_read
-      - short_summary
-      - deterministic_transform
-      - mechanical_edit
-      - light_verification
-    goals:
-      - save_quota
-      - limit_tokens
-      - reduce_latency
-      - avoid_useless_reasoning
-
+    use_when: [rename, format, classify, short_read, light_verify, mechanical_edit]
+    goals: [save_quota, reduce_latency]
   - id: medium
     rank: 2
-    use_when:
-      - localized_bug
-      - small_component
-      - small_feature
-      - few_files_analysis
-      - technical_docs
-      - targeted_test
-      - clear_mandate_few_deps
-    goals:
-      - standard_default
-
+    use_when: [localized_bug, small_feature, targeted_test, clear_mandate]
+    goals: [standard_default]
   - id: high
     rank: 3
-    use_when:
-      - multifile_refactor
-      - architecture
-      - complex_debugging
-      - runtime_frontend_interaction
-      - contract_change
-      - security
-      - migration
-      - multidisciplinary
-      - large_context_needed
-    goals:
-      - depth
-
-  - id: max
+    use_when: [multifile, architecture, complex_debug, security, migration]
+    goals: [depth]
+  - id: xhigh
     rank: 4
-    use_when:
-      - critical_mission
-      - high_uncertainty
-      - hard_to_reverse
-      - repeated_failures
-      - risky_migration
-      - deep_architecture
-      - many_dependencies
-    goals:
-      - maximum_depth
-    constraints:
-      - never_system_default
+    use_when: [extra_depth, multi_agent_scale_up, hard_problem]
+    goals: [extra_depth]
+    constraints: [never_system_default]
+  - id: max
+    rank: 5
+    use_when: [critical, irreversible, repeated_failures, extreme_uncertainty]
+    goals: [maximum_depth]
+    constraints: [never_system_default]
 
-# Escalade / réduction (règles déclaratives — runtime plus tard)
+# Escalade / reduction (declaratif)
 escalation:
+  - from: none
+    to: low
+    when: [uncertain_result, tool_failure]
   - from: low
     to: medium
     when: [uncertain_result, insufficient_context, first_red_test, ambiguity, tool_failure]
   - from: medium
     to: high
-    when: [interdependent_files, architecture_contradiction, multiple_corrections, underestimated_risk, insufficient_proof]
+    when: [interdependent_files, architecture_contradiction, multiple_corrections, underestimated_risk, insufficient_proof, two_failures]
+  - from: high
+    to: xhigh
+    when: [complex_block, repeated_failures, multiple_plausible_approaches]
   - from: high
     to: max
-    when: [complex_block, irreversible_decision, repeated_failures, multiple_plausible_approaches, residual_high_uncertainty]
+    when: [irreversible_decision, residual_high_uncertainty, critical_discovered]
+  - from: xhigh
+    to: max
+    when: [still_blocked, critical]
 
 reduction:
   - from: high
     to: medium
-    when: [simpler_than_expected, localized_problem, deterministic_plan, extra_context_no_value]
+    when: [simpler_than_expected, localized_problem, deterministic_plan]
   - from: medium
     to: low
-    when: [simpler_than_expected, localized_problem, deterministic_plan]
+    when: [simpler_than_expected, mechanical_after_explore]
+  - from: low
+    to: none
+    when: [purely_deterministic]
+
+# Regles HY3
+hy3_policy:
+  prefer_for:
+    - classification
+    - extraction
+    - short_summary
+    - reformulation
+    - simple_transform
+    - mandate_prep
+    - light_check
+    - few_files_read
+    - repetitive_non_critical
+  exclude_by_default_for:
+    - architecture
+    - migration
+    - security
+    - large_code_change
+    - multifile_refactor
+    - irreversible_decision
+    - critical_mission
+    - oversized_context
+    - already_failed_once_with_hy3
+  on_failure:
+    next: economical_mid_tier
+    min_effort: medium
+    skip_direct_to_most_expensive: true
+
+# Notes de mapping par famille (detail runtime dans model-catalog.normalizeEffortForVariant)
+family_mapping_notes:
+  codex_gpt56:
+    none: unsupported
+    low: low
+    medium: medium
+    high: high
+    xhigh: xhigh
+    max: max
+    ultra_provider_only: true
+  claude:
+    use_only_exposed_per_variant: true
+    adaptive_thinking_separate: true
+  kimi_boolean_thinking:
+    none: thinking_off_if_disableable
+    high: thinking_on
+    medium_xhigh_max: unsupported_unless_catalog_proves
+  kimi_k3:
+    supported: [low, high, max]
+    medium: unsupported  # jamais alias silencieux vers max
+  grok_45:
+    supported: [low, medium, high]
+  grok_43:
+    supported: [none, low, medium, high]
+  grok_multi_agent:
+    semantics: multi_agent_scale
+    supported: [low, medium, high, xhigh]
+  hy3:
+    supported: [none, low, high]

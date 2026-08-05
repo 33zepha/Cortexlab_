@@ -1,0 +1,1571 @@
+{
+  "generated_at": "2026-08-05T17:48:01Z",
+  "host": "redacted",
+  "sources": [
+    {
+      "id": "codex_models_cache",
+      "path": "~/.codex/models_cache.json",
+      "cli": "codex 0.146.0",
+      "fetched_at": "2026-08-05T14:37:24Z"
+    },
+    {
+      "id": "codex_cli_help",
+      "cli": "codex --help / codex exec --help"
+    },
+    {
+      "id": "claude_cli_help",
+      "cli": "claude 2.1.220 --help"
+    },
+    {
+      "id": "claude_features_hints",
+      "path": "~/.claude.json cachedGrowthBookFeatures (model keys only)"
+    },
+    {
+      "id": "kimi_provider_list_json",
+      "cli": "kimi provider list --json"
+    },
+    {
+      "id": "hermes_status",
+      "cli": "hermes status"
+    },
+    {
+      "id": "hermes_config_model",
+      "path": "~/.hermes/config.yaml model.default (no secrets)"
+    },
+    {
+      "id": "hermes_models_dev_cache",
+      "path": "~/.hermes/models_dev_cache.json",
+      "note": "public model metadata cache; not account entitlement"
+    },
+    {
+      "id": "grok_usage",
+      "path": "~/.grok/usage.json",
+      "note": "usage counters only"
+    },
+    {
+      "id": "xai_oauth_status",
+      "cli": "hermes status Auth Providers xAI OAuth"
+    }
+  ],
+  "families": [
+    {
+      "family_id": "claude",
+      "variant_ids": [
+        "claude-opus-4-8",
+        "claude-sonnet-5",
+        "claude-haiku-4-5",
+        "claude-fable-5",
+        "opus",
+        "sonnet",
+        "fable"
+      ],
+      "count": 7
+    },
+    {
+      "family_id": "codex",
+      "variant_ids": [
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        "gpt-5.5",
+        "gpt-5.4",
+        "gpt-5.4-mini",
+        "gpt-5.6-sol-wm",
+        "codex-auto-review"
+      ],
+      "count": 8
+    },
+    {
+      "family_id": "grok",
+      "variant_ids": [
+        "grok-4.5",
+        "grok-4.3",
+        "grok-build-0.1",
+        "grok-4.20-multi-agent"
+      ],
+      "count": 4
+    },
+    {
+      "family_id": "hy3",
+      "variant_ids": [
+        "tencent/hy3:free"
+      ],
+      "count": 1
+    },
+    {
+      "family_id": "kimi",
+      "variant_ids": [
+        "kimi-for-coding",
+        "kimi-for-coding-highspeed",
+        "k3",
+        "k3-256k"
+      ],
+      "count": 4
+    }
+  ],
+  "warnings": [
+    "No dedicated grok binary on PATH; Grok access is via Hermes xAI OAuth / models.dev metadata.",
+    "Claude account model list is not exposed as a dedicated CLI catalog; variants come from --help aliases + feature flags + known registry usage.",
+    "models_dev_cache is documentary/global \u2014 account_access is gated by local auth status, not by presence in that cache.",
+    "Codex models_cache has no gpt-5.3-codex, gpt-5.4-nano, or bare gpt-5.6 alias.",
+    "Kimi K3 discovered context is 262144 (not 1M). supportEfforts low/high/max (not max-only).",
+    "HY3 free path via Nous Portal default tencent/hy3:free; hermes --reasoning accepts many levels but model-specific options differ."
+  ],
+  "unavailable": [
+    {
+      "variant_id": "gpt-5.3-codex",
+      "reason": "not_in_codex_models_cache"
+    },
+    {
+      "variant_id": "gpt-5.4-nano",
+      "reason": "not_in_codex_models_cache"
+    },
+    {
+      "variant_id": "gpt-5.6",
+      "reason": "no_bare_alias_in_cache"
+    },
+    {
+      "variant_id": "claude-opus-5",
+      "reason": "not_confirmed_in_local_cli_surface"
+    },
+    {
+      "variant_id": "claude-sonnet-5-full-catalog",
+      "reason": "only_feature_flag_keys_not_full_entitlement_list"
+    }
+  ],
+  "quota_exhausted": [],
+  "variants": [
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.6-sol",
+      "display_name": "GPT-5.6-Sol",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "default_effort": "low",
+      "strengths_prior": [
+        "max_capability",
+        "complex_reasoning",
+        "architecture"
+      ],
+      "weaknesses_prior": [
+        "cost",
+        "latency"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.6-terra",
+      "display_name": "GPT-5.6-Terra",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "default_effort": "medium",
+      "strengths_prior": [
+        "balanced",
+        "implementation",
+        "refactor"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.6-luna",
+      "display_name": "GPT-5.6-Luna",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "strengths_prior": [
+        "high_volume",
+        "economical",
+        "long_tasks",
+        "multifile"
+      ],
+      "weaknesses_prior": [
+        "max_capability"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.5",
+      "display_name": "GPT-5.5",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "medium",
+      "strengths_prior": [
+        "general"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.4",
+      "display_name": "GPT-5.4",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "medium",
+      "strengths_prior": [
+        "general",
+        "large_context_cap_1m"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.4-mini",
+      "display_name": "GPT-5.4-Mini",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "medium",
+      "strengths_prior": [
+        "fast",
+        "cheap_tier"
+      ],
+      "weaknesses_prior": [
+        "deep_architecture"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "gpt-5.6-sol-wm",
+      "display_name": "GPT-5.6-Sol-WM",
+      "status": "hidden_legacy",
+      "selectable": false,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "default_effort": "low",
+      "strengths_prior": [],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "codex",
+      "vendor": "openai",
+      "access_channel": "codex_subscription_cli",
+      "cli_alias": "codex -m",
+      "discovered_from": [
+        "codex_models_cache"
+      ],
+      "discovered_at": "2026-08-05T14:37:24Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": true,
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "reasoning_effort",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_local_cache",
+      "variant_id": "codex-auto-review",
+      "display_name": "Codex Auto Review",
+      "status": "hidden_legacy",
+      "selectable": false,
+      "context_window_advertised": 272000,
+      "context_window_effective_safe": 258400,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "strengths_prior": [
+        "review"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T14:37:24Z",
+        "failure_reason": null
+      },
+      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "claude-opus-4-8",
+      "display_name": "Claude Opus 4.8",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "deep_analysis",
+        "critique",
+        "architecture",
+        "ux_spec"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      },
+      "notes": "used_in_cortex_registry; feature flags reference opus-4-8"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "claude-sonnet-5",
+      "display_name": "Claude Sonnet 5",
+      "status": "documented_unconfirmed",
+      "selectable": false,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "balanced_coding",
+        "spec_execution"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": "unknown",
+        "last_seen_at": null,
+        "failure_reason": "not_confirmed_in_account_catalog"
+      },
+      "notes": "seen_in_feature_auto_mode_config keys only"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "claude-haiku-4-5",
+      "display_name": "Claude Haiku 4.5",
+      "status": "documented_unconfirmed",
+      "selectable": false,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "fast",
+        "cheap",
+        "colleague_loops"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": "unknown",
+        "last_seen_at": null,
+        "failure_reason": "not_confirmed_in_account_catalog"
+      },
+      "notes": "documented_seed_plus_ops_practice; not in explicit local catalog file"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "claude-fable-5",
+      "display_name": "Claude Fable 5",
+      "status": "documented_unconfirmed",
+      "selectable": false,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "latest_alias"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": "unknown",
+        "last_seen_at": null,
+        "failure_reason": "not_confirmed_in_account_catalog"
+      },
+      "notes": "mentioned_in_cli_help_as_full_name_example"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "opus",
+      "display_name": "alias:opus",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "alias"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      },
+      "notes": "cli_alias_latest"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "sonnet",
+      "display_name": "alias:sonnet",
+      "status": "active",
+      "selectable": true,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "alias"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      },
+      "notes": "cli_alias_latest"
+    },
+    {
+      "family_id": "claude",
+      "vendor": "anthropic",
+      "access_channel": "claude_code_subscription",
+      "cli_alias": "claude --model",
+      "discovered_from": [
+        "claude_cli_help",
+        "claude_features_hints",
+        "constitution_agents_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "restricted_by_policy",
+      "x_search": false,
+      "code_execution": true,
+      "filesystem": true,
+      "shell": true,
+      "thinking_mode": "effort_plus_adaptive",
+      "effort_semantics": "claude_effort",
+      "cache_support": "prompt_cache",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "deprecation_state": "active",
+      "evidence_status": "partial_local_surface",
+      "variant_id": "fable",
+      "display_name": "alias:fable",
+      "status": "documented_unconfirmed",
+      "selectable": false,
+      "context_window_advertised": null,
+      "context_window_effective_safe": null,
+      "max_output": null,
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "adaptive_thinking": true,
+      "manual_thinking": true,
+      "strengths_prior": [
+        "alias"
+      ],
+      "weaknesses_prior": [],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": "unknown",
+        "last_seen_at": null,
+        "failure_reason": "not_confirmed_in_account_catalog"
+      },
+      "notes": "cli_alias_latest"
+    },
+    {
+      "family_id": "kimi",
+      "variant_id": "kimi-for-coding",
+      "display_name": "K2.7 Coding",
+      "vendor": "moonshot",
+      "access_channel": "kimi_code_oauth",
+      "cli_alias": "kimi -m kimi-for-coding",
+      "status": "active",
+      "selectable": true,
+      "discovered_from": [
+        "kimi_provider_list_json"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 262144,
+      "context_window_effective_safe": 235929,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "tool_support": true,
+      "web_search": false,
+      "x_search": false,
+      "code_execution": false,
+      "filesystem": true,
+      "shell": false,
+      "thinking_mode": "always_thinking",
+      "supported_efforts": [
+        "none",
+        "high"
+      ],
+      "default_effort": "high",
+      "effort_semantics": "boolean_thinking",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "strengths_prior": [
+        "coding",
+        "tool_use"
+      ],
+      "weaknesses_prior": [],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_cli_json",
+      "capabilities_raw": [
+        "thinking",
+        "always_thinking",
+        "image_in",
+        "video_in",
+        "tool_use"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "kimi",
+      "variant_id": "kimi-for-coding-highspeed",
+      "display_name": "K2.7 Coding Highspeed",
+      "vendor": "moonshot",
+      "access_channel": "kimi_code_oauth",
+      "cli_alias": "kimi -m kimi-for-coding-highspeed",
+      "status": "active",
+      "selectable": true,
+      "discovered_from": [
+        "kimi_provider_list_json"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 262144,
+      "context_window_effective_safe": 235929,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "tool_support": true,
+      "web_search": false,
+      "x_search": false,
+      "code_execution": false,
+      "filesystem": true,
+      "shell": false,
+      "thinking_mode": "always_thinking",
+      "supported_efforts": [
+        "none",
+        "high"
+      ],
+      "default_effort": "high",
+      "effort_semantics": "boolean_thinking",
+      "cache_support": "unknown",
+      "latency_class": "highspeed",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "strengths_prior": [
+        "speed",
+        "coding"
+      ],
+      "weaknesses_prior": [],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_cli_json",
+      "capabilities_raw": [
+        "thinking",
+        "always_thinking",
+        "image_in",
+        "video_in",
+        "tool_use"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "kimi",
+      "variant_id": "k3",
+      "display_name": "K3",
+      "vendor": "moonshot",
+      "access_channel": "kimi_code_oauth",
+      "cli_alias": "kimi -m k3",
+      "status": "active",
+      "selectable": true,
+      "discovered_from": [
+        "kimi_provider_list_json"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 262144,
+      "context_window_effective_safe": 235929,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image",
+        "video"
+      ],
+      "tool_support": true,
+      "web_search": false,
+      "x_search": false,
+      "code_execution": false,
+      "filesystem": true,
+      "shell": false,
+      "thinking_mode": "always_thinking",
+      "supported_efforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_effort": "high",
+      "effort_semantics": "explicit_efforts",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "strengths_prior": [
+        "long_context",
+        "synthesis",
+        "research"
+      ],
+      "weaknesses_prior": [],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_cli_json",
+      "capabilities_raw": [
+        "thinking",
+        "always_thinking",
+        "image_in",
+        "video_in",
+        "tool_use"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "kimi",
+      "variant_id": "k3-256k",
+      "display_name": "K3-256k",
+      "vendor": "moonshot",
+      "access_channel": "kimi_code_oauth",
+      "cli_alias": "kimi -m k3-256k",
+      "status": "active",
+      "selectable": true,
+      "discovered_from": [
+        "kimi_provider_list_json"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 262144,
+      "context_window_effective_safe": 235929,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": false,
+      "x_search": false,
+      "code_execution": false,
+      "filesystem": true,
+      "shell": false,
+      "thinking_mode": "always_thinking",
+      "supported_efforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_effort": "high",
+      "effort_semantics": "explicit_efforts",
+      "cache_support": "unknown",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown",
+      "strengths_prior": [
+        "long_context"
+      ],
+      "weaknesses_prior": [],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "discovered_cli_json",
+      "capabilities_raw": [
+        "thinking",
+        "always_thinking",
+        "image_in",
+        "tool_use"
+      ],
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "grok",
+      "variant_id": "grok-4.5",
+      "display_name": "Grok 4.5",
+      "vendor": "xai",
+      "access_channel": "hermes_xai_oauth",
+      "cli_alias": null,
+      "status": "active_via_oauth",
+      "selectable": true,
+      "discovered_from": [
+        "hermes_models_dev_cache",
+        "xai_oauth_status",
+        "grok_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 500000,
+      "context_window_effective_safe": 450000,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "possible_if_tools_enabled",
+      "x_search": "possible_if_tools_enabled",
+      "code_execution": "possible_if_tools_enabled",
+      "filesystem": false,
+      "shell": false,
+      "thinking_mode": "reasoning",
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "high",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "cache_read_priced_on_api_ref_only",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown_tokens_used_present",
+      "strengths_prior": [
+        "coding",
+        "tools",
+        "web_search_possible"
+      ],
+      "weaknesses_prior": [
+        "no_dedicated_cli_on_host"
+      ],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "oauth_present_models_dev_metadata",
+      "api_reference_price_note": "public API prices in models_dev are NOT boss marginal cost under subscription/oauth",
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "grok",
+      "variant_id": "grok-4.3",
+      "display_name": "Grok 4.3",
+      "vendor": "xai",
+      "access_channel": "hermes_xai_oauth",
+      "cli_alias": null,
+      "status": "active_via_oauth",
+      "selectable": true,
+      "discovered_from": [
+        "hermes_models_dev_cache",
+        "xai_oauth_status",
+        "grok_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 1000000,
+      "context_window_effective_safe": 900000,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "possible_if_tools_enabled",
+      "x_search": "possible_if_tools_enabled",
+      "code_execution": "possible_if_tools_enabled",
+      "filesystem": false,
+      "shell": false,
+      "thinking_mode": "reasoning",
+      "supported_efforts": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "medium",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "cache_read_priced_on_api_ref_only",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown_tokens_used_present",
+      "strengths_prior": [
+        "coding",
+        "tools",
+        "lower_hallucination"
+      ],
+      "weaknesses_prior": [
+        "no_dedicated_cli_on_host"
+      ],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "oauth_present_models_dev_metadata",
+      "api_reference_price_note": "public API prices in models_dev are NOT boss marginal cost under subscription/oauth",
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "grok",
+      "variant_id": "grok-build-0.1",
+      "display_name": "Grok Build 0.1",
+      "vendor": "xai",
+      "access_channel": "hermes_xai_oauth",
+      "cli_alias": null,
+      "status": "active_via_oauth",
+      "selectable": true,
+      "discovered_from": [
+        "hermes_models_dev_cache",
+        "xai_oauth_status",
+        "grok_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 256000,
+      "context_window_effective_safe": 230400,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "possible_if_tools_enabled",
+      "x_search": "possible_if_tools_enabled",
+      "code_execution": "possible_if_tools_enabled",
+      "filesystem": false,
+      "shell": false,
+      "thinking_mode": "reasoning",
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "medium",
+      "effort_semantics": "reasoning_effort",
+      "cache_support": "cache_read_priced_on_api_ref_only",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown_tokens_used_present",
+      "strengths_prior": [
+        "agentic_coding",
+        "edits"
+      ],
+      "weaknesses_prior": [
+        "no_dedicated_cli_on_host"
+      ],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "oauth_present_models_dev_metadata",
+      "api_reference_price_note": "public API prices in models_dev are NOT boss marginal cost under subscription/oauth",
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "grok",
+      "variant_id": "grok-4.20-multi-agent",
+      "display_name": "Grok 4.20 Multi-Agent",
+      "vendor": "xai",
+      "access_channel": "hermes_xai_oauth",
+      "cli_alias": null,
+      "status": "active_via_oauth",
+      "selectable": true,
+      "discovered_from": [
+        "hermes_models_dev_cache",
+        "xai_oauth_status",
+        "grok_usage"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 1000000,
+      "context_window_effective_safe": 900000,
+      "max_output": null,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tool_support": true,
+      "web_search": "possible_if_tools_enabled",
+      "x_search": "possible_if_tools_enabled",
+      "code_execution": "possible_if_tools_enabled",
+      "filesystem": false,
+      "shell": false,
+      "thinking_mode": "reasoning",
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "medium",
+      "effort_semantics": "multi_agent_scale",
+      "cache_support": "cache_read_priced_on_api_ref_only",
+      "latency_class": "variable",
+      "marginal_cost_type": "included_quota",
+      "quota_state": "unknown_tokens_used_present",
+      "strengths_prior": [
+        "multi_agent",
+        "research"
+      ],
+      "weaknesses_prior": [
+        "no_dedicated_cli_on_host"
+      ],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "oauth_present_models_dev_metadata",
+      "api_reference_price_note": "public API prices in models_dev are NOT boss marginal cost under subscription/oauth",
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    },
+    {
+      "family_id": "hy3",
+      "variant_id": "tencent/hy3:free",
+      "display_name": "Tencent Hy3 (free)",
+      "vendor": "tencent_via_nous",
+      "access_channel": "nous_portal_free",
+      "cli_alias": "hermes -m tencent/hy3:free",
+      "status": "active",
+      "selectable": true,
+      "discovered_from": [
+        "hermes_status",
+        "hermes_config_model",
+        "hermes_models_dev_cache"
+      ],
+      "discovered_at": "2026-08-05T17:48:01Z",
+      "context_window_advertised": 256000,
+      "context_window_effective_safe": 200000,
+      "max_output": 64000,
+      "modalities": [
+        "text"
+      ],
+      "tool_support": true,
+      "web_search": false,
+      "x_search": false,
+      "code_execution": false,
+      "filesystem": true,
+      "shell": false,
+      "thinking_mode": "reasoning_effort",
+      "supported_efforts": [
+        "none",
+        "low",
+        "high"
+      ],
+      "default_effort": "low",
+      "effort_semantics": "hy3_nous_effort",
+      "cache_support": "unknown",
+      "latency_class": "slow_or_variable",
+      "marginal_cost_type": "zero_when_available",
+      "quota_state": "unknown",
+      "strengths_prior": [
+        "classification",
+        "extraction",
+        "short_summary",
+        "mandate_prep",
+        "mechanical_check",
+        "light_transform"
+      ],
+      "weaknesses_prior": [
+        "architecture",
+        "migration",
+        "security",
+        "critical",
+        "large_refactor",
+        "irreversible"
+      ],
+      "deprecation_state": "active",
+      "replacement": null,
+      "evidence_status": "hermes_default_live",
+      "recommended_scope": "light_low_risk",
+      "availability": {
+        "documented": true,
+        "discovered": true,
+        "account_access": true,
+        "last_seen_at": "2026-08-05T17:48:01Z",
+        "failure_reason": null
+      }
+    }
+  ]
+}

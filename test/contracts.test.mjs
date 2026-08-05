@@ -70,15 +70,17 @@ test('ids de roles uniques et reports_to acyclique', () => {
   }
 })
 
-test('catalogue modeles : familles autorisees, zero gemini/antigravity', () => {
+test('catalogue modeles : familles autorisees incluent grok, zero familles interdites actives', () => {
   const hits = assertNoForbiddenFamilies(catalogs.models)
   assert.deepEqual(hits, [])
   const famIds = catalogs.models.families.map((f) => f.id).sort()
-  assert.deepEqual(famIds, ['claude', 'codex', 'hy3-free', 'kimi'])
-  const lunaMax = catalogs.models.families
-    .find((f) => f.id === 'codex')
-    .variants.find((v) => v.id === 'luna-max')
-  assert.ok(lunaMax, 'luna-max doit etre une variante codex, pas un role')
+  assert.ok(famIds.includes('claude'))
+  assert.ok(famIds.includes('codex'))
+  assert.ok(famIds.includes('kimi'))
+  assert.ok(famIds.includes('grok'))
+  assert.ok(famIds.includes('hy3'))
+  const luna = (catalogs.models.variants || []).find((v) => v.id === 'gpt-5.6-luna')
+  assert.ok(luna, 'luna = variante codex')
 })
 
 test('effort : default medium, max jamais defaut', () => {
@@ -86,7 +88,7 @@ test('effort : default medium, max jamais defaut', () => {
   assert.ok((catalogs.efforts.forbid_default || []).includes('max'))
   assert.equal(assertEffortDefaultSafe(catalogs.efforts), null)
   const levels = catalogs.efforts.levels.map((l) => l.id)
-  assert.deepEqual(levels, ['low', 'medium', 'high', 'max'])
+  assert.deepEqual(levels, ['none', 'low', 'medium', 'high', 'xhigh', 'max'])
 })
 
 test('session assignment exemple du schema est valide', () => {

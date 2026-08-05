@@ -134,12 +134,19 @@ export function validateSessionAssignment(assignment, catalogs) {
 
   const model = assignment.model
   if (model) {
-    const family = (models.families || []).find((f) => f.id === model.family)
-    if (!family) errors.push(`unknown model.family: ${model.family}`)
-    else {
-      const variant = (family.variants || []).find((v) => v.id === model.variant)
-      if (!variant) errors.push(`unknown model.variant: ${model.variant}`)
+    const variants = models.variants || []
+    // legacy nested shape support
+    const nested = []
+    for (const f of models.families || []) {
+      for (const v of f.variants || []) nested.push({ ...v, family_id: f.id })
     }
+    const all = variants.length ? variants : nested
+    const familyOk = (models.families || []).some((f) => f.id === model.family)
+    if (!familyOk && !all.some((v) => v.family_id === model.family)) {
+      errors.push(`unknown model.family: ${model.family}`)
+    }
+    const variant = all.find((v) => v.id === model.variant || v.upstream_id === model.variant)
+    if (!variant) errors.push(`unknown model.variant: ${model.variant}`)
     const fam = String(model.family || '').toLowerCase()
     const forbidden = (models.forbidden_families || []).map((s) => String(s).toLowerCase())
     if (forbidden.some((needle) => fam === needle || fam.includes(needle))) {

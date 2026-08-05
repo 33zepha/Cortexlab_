@@ -39,13 +39,13 @@ properties:
         type: string
   effort:
     type: string
-    enum: [low, medium, high, max]
+    enum: [none, low, medium, high, xhigh, max]
   effort_requested:
     type: string
-    enum: [low, medium, high, max]
+    enum: [none, low, medium, high, xhigh, max]
   effort_actual:
     type: string
-    enum: [low, medium, high, max]
+    enum: [none, low, medium, high, xhigh, max]
   selection:
     type: object
     properties:
@@ -95,8 +95,8 @@ example:
   session_id: ses_example_001
   model:
     family: codex
-    variant: luna-max
-    provider: openai-subscription
+    variant: gpt-5.6-luna
+    provider: codex_subscription_cli
   effort: high
   effort_requested: high
   effort_actual: high
@@ -111,7 +111,7 @@ example:
         effort: high
         rejected_because:
           - cout ou quota estime superieur
-      - family: hy3-free
+      - family: hy3
         effort: medium
         rejected_because:
           - contexte insuffisant
