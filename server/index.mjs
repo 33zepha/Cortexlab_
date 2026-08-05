@@ -127,6 +127,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url === '/api/mission' && req.method === 'POST') {
+      const token = process.env.CORTEX_API_TOKEN
+      const auth = req.headers['authorization'] || ''
+      if (!token || !auth.startsWith('Bearer ') || auth.slice(7) !== token) {
+        return sendJson(res, { error: 'Unauthorized' }, 401)
+      }
       let body = ''
       for await (const chunk of req) body += chunk
       const { domain = 'frontend', mission = 'manual', fixture = 'clean' } = JSON.parse(body || '{}')

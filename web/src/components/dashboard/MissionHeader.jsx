@@ -6,13 +6,14 @@ export default function MissionHeader({ mission, connected, lastSync, now }) {
     <header className="reference-header">
       <div>
         <div className="reference-title-row">
-          <h1>{mission?.name || mission?.mission || 'Refonte plateforme RH multi-agent'}</h1>
+          <h1>{mission?.name || mission?.mission || 'Aucune mission active'}</h1>
           <span className={`reference-running ${connected ? 'is-live' : ''}`}><i />{connected ? 'Running' : 'Offline'}</span>
         </div>
         <p>
-          ID: {mission?.id || 'MIS-2024-05-24-001'}
-          <span><Icon name="clock" className="micro-icon" /> Démarrée {mission?.started_at ? relativeTime(mission.started_at, now) : 'il y a 2 h 47 m'}</span>
-          <span><Icon name="users" className="micro-icon" /> Hermes (Chief of Staff)</span>
+          ID: {mission?.id || '—'}
+          {mission?.domain && <span><Icon name="target" className="micro-icon" /> {mission.domain}</span>}
+          <span><Icon name="clock" className="micro-icon" /> {mission?.started_at ? `Démarrée ${relativeTime(mission.started_at, now)}` : 'Non démarrée'}</span>
+          <span><Icon name="users" className="micro-icon" /> {mission?.manager?.name || 'Hermes'} {mission?.manager?.role ? `(${mission.manager.role})` : '(Chief of Staff)'}</span>
         </p>
       </div>
       <div className="reference-actions">
