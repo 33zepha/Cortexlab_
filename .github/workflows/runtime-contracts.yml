@@ -1,12 +1,14 @@
 name: runtime-contracts
 on:
   pull_request:
-    branches: [main, feat/role-model-separation]
+    branches: [main, feat/role-model-separation, feat/session-runner-v1]
     paths:
       - 'contracts/**'
       - 'runtime/**'
       - 'scripts/**'
+      - 'server/**'
       - 'test/**'
+      - 'web/**'
       - 'manifests/**'
       - 'constitution/**'
       - 'registry/**'
@@ -20,7 +22,9 @@ on:
       - 'contracts/**'
       - 'runtime/**'
       - 'scripts/**'
+      - 'server/**'
       - 'test/**'
+      - 'web/**'
       - 'package.json'
       - 'package-lock.json'
       - 'generate-registry.mjs'
