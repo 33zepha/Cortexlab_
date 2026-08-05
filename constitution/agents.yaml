@@ -26,9 +26,15 @@ agents:
     name: Antigravity
     provider: google
     tier: manager
+    reports_to: AG-HERMES
     model: antigravity-code-agent
-    role: "Manager code/engineering : orchestration agents de code, livraison technique"
-    strengths: [code, orchestration-agents, autonomie]
+    role: "Manager UI/experience produit : prototypage visuel, integration frontend, experimentation"
+    # SPECIALISATION (autorite non concurrente de Codex) : l'ingenierie du depot
+    # appartient au Chief Engineer. Antigravity garde l'UI, le prototypage et
+    # l'experimentation. On retire donc « code » de ses aptitudes : deux agents
+    # ne peuvent pas detenir le meme domaine d'autorite.
+    strengths: [ui, prototypage, frontend-integration, experimentation, orchestration-agents]
+    domain_expertise: [ui_ux, visual_prototyping, frontend_integration, experimentation]
     cost_index: 1.3
     quality_index: 0.92
     status: active
@@ -53,4 +59,65 @@ agents:
     strengths: [orchestration, outils, multi-IA, raisonnement-metis]
     cost_index: 0.4
     quality_index: 0.90
+    status: active
+
+  # Codex = CHIEF ENGINEER de Cortex. Autorite technique de premier rang,
+  # rattachee directement a Hermes (pas a Antigravity). Il detient l'autorite
+  # finale sur l'ingenierie du depot : architecture d'implementation, code,
+  # tests, corrections, qualite logicielle.
+  #
+  # tier: manager -> candidat du router (INV-011). Il gouverne son cycle
+  # technique mais ne produit PAS de closure : la gouvernance reste au Chief of
+  # Staff (INV-006) et la closure a Hermes. Autorite technique != autorite de
+  # gouvernance.
+  #
+  # NOTE strengths : ce sont des TOKENS machine matches par router.mjs
+  # (requiredStrengths), pas de la prose. La description humaine des forces est
+  # dans `capabilities`, qui n'entre pas dans le scoring.
+  - id: AG-CODEX
+    name: Codex
+    provider: openai
+    tier: manager
+    reports_to: AG-HERMES
+    model: gpt-5.6-luna
+    reasoning_effort: max
+    role: "Chief Engineer de Cortex : autorite technique responsable de l'architecture d'implementation, du code, des tests, des corrections et de la qualite logicielle finale."
+    strengths: [code, tests, correction, refactoring, debugging, securite-code, autonomie]
+    domain_expertise:
+      - software_engineering
+      - system_architecture
+      - implementation
+      - debugging
+      - testing
+      - refactoring
+      - migrations
+      - technical_debt
+      - code_security
+      - release_readiness
+    capabilities:
+      - raisonnement technique profond
+      - comprehension globale du depot
+      - developpement autonome de bout en bout
+      - resolution de bugs complexes
+      - refactorisation multi-fichiers
+      - conception de tests
+      - verification par preuves
+    cost_index: 0.7
+    quality_index: 0.98
+    status: active
+
+  # Luna Max = executant d'ingenierie. Meme famille de modele que le Chief
+  # Engineer, en mode Max reasoning. Il rend compte a AG-CODEX (autorite
+  # technique), pas a Antigravity : l'ingenierie du depot a change de main.
+  # tier worker -> jamais candidat du router (INV-011), il recoit un mandat.
+  - id: AG-LUNA
+    name: "Luna Max"
+    provider: openai
+    tier: worker
+    reports_to: AG-CODEX
+    model: gpt-5.6-luna
+    role: "Executant d'ingenierie (Max reasoning) : boucle plan/code/test/correct sous mandat du Chief Engineer, produit preuves, rend au CoS"
+    strengths: [code, long-context, autonomie, tests, correction]
+    cost_index: 0.6          # < Kimi : haut-volume, long contexte, multimodal, peu couteux
+    quality_index: 0.93
     status: active

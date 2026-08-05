@@ -76,4 +76,31 @@ puis `agent.result` (violation, findings, durée). Le coût d'un mandat vaut
 `cost_index × DELEGATION_UNIT` et alimente le budget de mission (INV-010) —
 `cost_index` et `maxCost` sont des indices sans unité, pas une devise.
 
-Tests : `npm test` (node --test, voir `test/runtime.test.mjs`).
+### Chaîne d'autorité
+```
+Boss → Hermes (CEO, closure)
+         ├── Chief of Staff  gouvernance, budgets, policies, closures
+         ├── Codex           Chief Engineer — autorité technique du dépôt
+         │     └── Luna Max  exécutant d'ingénierie (worker)
+         ├── Antigravity     UI, prototypage, expérimentation
+         ├── Claude          analyse, critique, conseil
+         └── Kimi            recherche, lecture longue, synthèse
+```
+
+**Codex est le Chief Engineer** : autorité finale sur l'ingénierie du dépôt
+(implémentation, tests, debugging, refactoring, sécurité du code). Il est
+`tier: manager` et donc candidat du router, rattaché à Hermes — plus à
+Antigravity. Autorité **technique**, pas de gouvernance : il ne produit aucune
+closure (INV-006).
+
+Antigravity conserve un domaine **distinct et non concurrent** (UI, prototypage,
+intégration frontend). Deux agents ne peuvent pas détenir le même domaine
+d'autorité : c'est vérifié par `test/authority.test.mjs`.
+
+⚠️ `strengths` contient des **tokens machine** comparés par `requiredStrengths()`.
+La description en prose va dans `capabilities` / `domain_expertise`, qui
+n'entrent pas dans le scoring. Une prose placée dans `strengths` ne matche rien
+et rend l'agent non routable.
+
+Tests : `npm test` (node --test, voir `test/runtime.test.mjs`, `test/router.test.mjs`,
+`test/authority.test.mjs`).

@@ -15,8 +15,18 @@ const AGENTS = [
 
 const controlFrontend = { id: 'CTRL-X', type: 'control', domain: 'frontend' }
 
-test('un control frontend demande l’aptitude code', () => {
-  assert.deepEqual(requiredStrengths(controlFrontend), ['code'])
+test('un control frontend demande les aptitudes d’ingénierie', () => {
+  // Le domaine d'ingénierie appartient au Chief Engineer : il ne suffit plus
+  // de savoir « coder », il faut aussi tester et corriger.
+  assert.deepEqual(requiredStrengths(controlFrontend), ['code', 'tests', 'correction'])
+})
+
+test('les domaines d’ingénierie et d’UI demandent des aptitudes distinctes', () => {
+  // Deux agents ne peuvent pas détenir le même domaine d'autorité : les
+  // aptitudes exigées ne doivent donc jamais se recouvrir.
+  const engineering = requiredStrengths({ id: 'C', type: 'control', domain: 'backend' })
+  const ui = requiredStrengths({ id: 'C', type: 'control', domain: 'ui' })
+  assert.equal(engineering.some((s) => ui.includes(s)), false)
 })
 
 test('Hermes (CEO) ne reçoit jamais de mandat d’exécution (INV-001)', () => {

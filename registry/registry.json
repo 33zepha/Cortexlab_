@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-03",
+  "generated_at": "2026-08-05",
   "authority_classes": [
     "invariants",
     "policies",
@@ -205,14 +205,25 @@
       "status": "active",
       "version": 1,
       "source": "constitution/agents.yaml",
-      "role": "Manager code/engineering : orchestration agents de code, livraison technique",
+      "role": "Manager UI/experience produit : prototypage visuel, integration frontend, experimentation",
       "provider": "google",
       "model": "antigravity-code-agent",
+      "reports_to": "AG-HERMES",
+      "reasoning_effort": null,
       "strengths": [
-        "code",
-        "orchestration-agents",
-        "autonomie"
+        "ui",
+        "prototypage",
+        "frontend-integration",
+        "experimentation",
+        "orchestration-agents"
       ],
+      "domain_expertise": [
+        "ui_ux",
+        "visual_prototyping",
+        "frontend_integration",
+        "experimentation"
+      ],
+      "capabilities": null,
       "cost_index": 1.3,
       "quality_index": 0.92
     },
@@ -229,14 +240,66 @@
       "role": "Manager produit/strategie : decomposer, piloter les salaries, reporter a Hermes",
       "provider": "anthropic",
       "model": "claude-opus-4-8",
+      "reports_to": null,
+      "reasoning_effort": null,
       "strengths": [
         "raisonnement",
         "redaction",
         "code",
         "conformite"
       ],
+      "domain_expertise": null,
+      "capabilities": null,
       "cost_index": 1.7,
       "quality_index": 0.95
+    },
+    {
+      "id": "AG-CODEX",
+      "type": "agent",
+      "tier": "manager",
+      "name": "Codex",
+      "authority": 2,
+      "domain": "orchestration",
+      "status": "active",
+      "version": 1,
+      "source": "constitution/agents.yaml",
+      "role": "Chief Engineer de Cortex : autorite technique responsable de l'architecture d'implementation, du code, des tests, des corrections et de la qualite logicielle finale.",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "reports_to": "AG-HERMES",
+      "reasoning_effort": "max",
+      "strengths": [
+        "code",
+        "tests",
+        "correction",
+        "refactoring",
+        "debugging",
+        "securite-code",
+        "autonomie"
+      ],
+      "domain_expertise": [
+        "software_engineering",
+        "system_architecture",
+        "implementation",
+        "debugging",
+        "testing",
+        "refactoring",
+        "migrations",
+        "technical_debt",
+        "code_security",
+        "release_readiness"
+      ],
+      "capabilities": [
+        "raisonnement technique profond",
+        "comprehension globale du depot",
+        "developpement autonome de bout en bout",
+        "resolution de bugs complexes",
+        "refactorisation multi-fichiers",
+        "conception de tests",
+        "verification par preuves"
+      ],
+      "cost_index": 0.7,
+      "quality_index": 0.98
     },
     {
       "id": "AG-HERMES",
@@ -251,12 +314,16 @@
       "role": "CEO : raisonne H24, orchestration des managers, decisions de closure",
       "provider": "nous",
       "model": "hy3",
+      "reports_to": null,
+      "reasoning_effort": null,
       "strengths": [
         "orchestration",
         "outils",
         "multi-IA",
         "raisonnement-metis"
       ],
+      "domain_expertise": null,
+      "capabilities": null,
       "cost_index": 0.4,
       "quality_index": 0.9
     },
@@ -273,13 +340,44 @@
       "role": "Manager recherche/donnees : synthese long contexte, reporting dense",
       "provider": "moonshot",
       "model": "kimi-k3",
+      "reports_to": null,
+      "reasoning_effort": null,
       "strengths": [
         "long-context",
         "recherche",
         "resume"
       ],
+      "domain_expertise": null,
+      "capabilities": null,
       "cost_index": 0.8,
       "quality_index": 0.88
+    },
+    {
+      "id": "AG-LUNA",
+      "type": "agent",
+      "tier": "worker",
+      "name": "Luna Max",
+      "authority": 2,
+      "domain": "orchestration",
+      "status": "active",
+      "version": 1,
+      "source": "constitution/agents.yaml",
+      "role": "Executant d'ingenierie (Max reasoning) : boucle plan/code/test/correct sous mandat du Chief Engineer, produit preuves, rend au CoS",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "reports_to": "AG-CODEX",
+      "reasoning_effort": null,
+      "strengths": [
+        "code",
+        "long-context",
+        "autonomie",
+        "tests",
+        "correction"
+      ],
+      "domain_expertise": null,
+      "capabilities": null,
+      "cost_index": 0.6,
+      "quality_index": 0.93
     }
   ]
 }

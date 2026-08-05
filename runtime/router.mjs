@@ -28,13 +28,31 @@ export function loadAgents(registryPath = REGISTRY) {
   return reg.entries.filter((e) => e.type === 'agent')
 }
 
-/** Aptitude requise par une règle, déduite de son type et de son domaine. */
+/**
+ * Aptitude requise par une règle, déduite de son type et de son domaine.
+ *
+ * Les valeurs retournées sont des TOKENS comparés à `strengths` du registre —
+ * elles doivent correspondre exactement, sinon l'agent ne matche rien et le
+ * routage retombe sur le seul ratio qualité/coût.
+ */
 export function requiredStrengths(rule) {
   if (rule.type !== 'control') return ['conformite', 'raisonnement']
   switch (rule.domain) {
+    // Ingénierie du dépôt : domaine d'autorité du Chief Engineer.
     case 'frontend':
     case 'backend':
-      return ['code']
+    case 'engineering':
+    case 'implementation':
+    case 'testing':
+    case 'debugging':
+    case 'refactoring':
+    case 'code_security':
+      return ['code', 'tests', 'correction']
+    // UI / produit : domaine spécialisé, distinct de l'ingénierie.
+    case 'ui':
+    case 'ux':
+    case 'prototypage':
+      return ['ui', 'prototypage', 'frontend-integration']
     case 'recherche':
     case 'data':
       return ['recherche', 'long-context']
