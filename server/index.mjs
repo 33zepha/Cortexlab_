@@ -10,6 +10,7 @@ import { runMission } from '../runtime/chief-of-staff.mjs'
 import { EventStore, readEvents } from '../runtime/event-store.mjs'
 import { buildMissionControl } from '../runtime/mission-projection.mjs'
 import { compile } from '../compile-bundle.mjs'
+import { runOrchestrationV2, isV2Enabled } from '../runtime/orchestrator-v2.mjs'
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
 const PUBLIC = path.join(ROOT, 'web', 'dist')
@@ -147,7 +148,44 @@ const server = http.createServer(async (req, res) => {
       })
     }
 
-    if (url.startsWith('/api/')) return sendJson(res, { error: 'unknown endpoint' }, 404)
+    if (url === '/api/mission-v2' && req.method === 'POST') {
+      if (!isV2Enabled()) {
+        return sendJson(res, { error: 'CORTEX_ORCHESTRATION_V2 not enabled' }, 403)
+      }
+      const token = process.env.CORTEX_API_TOKEN
+      const auth = req.headers['authorization'] || ''
+      if (!token || !auth.startsWith('Bearer ') || auth.slice(7) !== token) {
+        return sendJson(res, { error: 'Unauthorized' }, 401)
+      }
+      let body = ''
+      for await (const chunk of req) body += chunk
+      const parsed = JSON.parse(body || '{}')
+      const { mission = null, adapter_snapshot = null, auth: execAuth = null } = parsed
+      if (!mission) return sendJson(res, { error: 'mission required' }, 400)
+      const ledgerV2 = path.join(LEDGER_DIR, 'e2e-v2.ndjson')
+      const result = await runOrchestrationV2(
+        {
+          mission,
+          adapter_snapshot,
+          auth: execAuth,
+          baseRef: process.env.CORTEX_V2_BASE_REF || null,
+          repoRoot: ROOT,
+          ledgerPath: ledgerV2,
+          expectBugFix: Boolean(parsed.expect_bugfix),
+          targetedTestCommand: parsed.targeted_test_command || null,
+        },
+        { env: process.env, argv: process.argv },
+      )
+      return sendJson(res, {
+        enabled: result.enabled,
+        plan_hash: result.plan_hash || null,
+        executable: result.executable ?? null,
+        events_v2: result.events_v2 || [],
+        session_result: result.session_result || null,
+        missionControl: buildMissionControl(getEvents()),
+      })
+    }
+
     return serveStatic(req, res)
   } catch (error) {
     return sendJson(res, { error: String(error?.message || error) }, 500)
