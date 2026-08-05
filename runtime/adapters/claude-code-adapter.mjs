@@ -15,8 +15,10 @@ const SUPPORTED_MODELS = new Set([
   'claude-opus-4-8',
   'claude-sonnet-5',
   'claude-opus-5',
+  'claude-haiku-4-5',
   'opus',
   'sonnet',
+  'haiku',
 ])
 const SUPPORTED_EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max'])
 

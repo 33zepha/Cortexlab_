@@ -304,15 +304,15 @@ variants:
     family_id: claude
     upstream_id: claude-haiku-4-5-20251001
     display_name: Claude Haiku 4.5
-    status: documented_unconfirmed
-    selectable: false
+    status: confirmed_success
+    selectable: true
     access_channels: [claude_code_subscription]
-    variant_access: { status: unconfirmed, evidence: no_local_session_or_entitlement_entry }
-    context: { advertised: null, policy_cap: null, policy_cap_reason: unknown, empirically_verified: null, empirical_evidence: null }
+    variant_access: { status: confirmed_success, evidence: local_claude_cli_preflight_2026-08-05 }
+    context: { advertised: 200000, policy_cap: 200000, policy_cap_reason: upstream_window, empirically_verified: 200000, empirical_evidence: cli_modelUsage_2026-08-05 }
     efforts:
       canonical_supported: [low, medium, high, xhigh, max]
       provider_supported: [low, medium, high, xhigh, max]
-      default_canonical: medium
+      default_canonical: low
       semantics: claude_effort
       mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max }
     capabilities: { shell: { status: true }, filesystem: { status: true }, vision: { status: true } }
