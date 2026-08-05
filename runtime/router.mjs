@@ -34,11 +34,24 @@ export function loadAgents(registryPath = REGISTRY) {
  * Les valeurs retournées sont des TOKENS comparés à `strengths` du registre —
  * elles doivent correspondre exactement, sinon l'agent ne matche rien et le
  * routage retombe sur le seul ratio qualité/coût.
+ *
+ * ---------------------------------------------------------------------------
+ * TEMPORARY MODEL BINDING (post-remove-antigravity)
+ * ---------------------------------------------------------------------------
+ * Les mappings domaine → tokens ci-dessous empêchent les domaines orphelins
+ * après la suppression d'Antigravity. Ils lient encore des *noms d'agents /
+ * modèles* du registre transitoire (Claude, Codex, …) via leurs strengths.
+ *
+ * Ce n'est PAS une autorité organisationnelle définitive. La cible est :
+ *   rôle organisationnel  ≠  modèle IA  ≠  niveau d'effort
+ * sélectionnés dynamiquement par mandat. Remplacé par
+ * `feat/role-model-separation` — ne pas figer ces bindings comme loi.
+ * ---------------------------------------------------------------------------
  */
 export function requiredStrengths(rule) {
   if (rule.type !== 'control') return ['conformite', 'raisonnement']
   switch (rule.domain) {
-    // Ingénierie du dépôt : domaine d'autorité du Chief Engineer.
+    // TEMPORARY MODEL BINDING — ingénierie exécutable (aujourd'hui: strengths Codex)
     case 'frontend':
     case 'backend':
     case 'engineering':
@@ -48,19 +61,20 @@ export function requiredStrengths(rule) {
     case 'refactoring':
     case 'code_security':
       return ['code', 'tests', 'correction']
-    // UI / UX produit : analyse et specification (Claude) — pas l'implementation.
-    // L'implementation frontend reste sous l'ingenierie (Codex).
+    // TEMPORARY MODEL BINDING — analyse/spec UX (aujourd'hui: strengths Claude)
     case 'ui':
     case 'ux':
       return ['analyse-ux', 'critique-ux', 'specification-ui', 'revue-visuelle']
-    // Prototypage / integration frontend executables = ingenierie (Codex).
+    // TEMPORARY MODEL BINDING — prototypage exécutable (aujourd'hui: strengths Codex)
     case 'prototypage':
     case 'frontend-integration':
       return ['code', 'tests', 'correction']
+    // TEMPORARY MODEL BINDING — analyse / critique / conseil
     case 'analyse':
     case 'critique':
     case 'conseil':
       return ['raisonnement', 'analyse', 'critique', 'conseil']
+    // TEMPORARY MODEL BINDING — recherche (aujourd'hui: strengths Kimi)
     case 'recherche':
     case 'data':
       return ['recherche', 'long-context']

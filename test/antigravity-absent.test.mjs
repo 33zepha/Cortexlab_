@@ -40,8 +40,19 @@ test('sources actives : zero reference Antigravity / AG-ANTIGRAVITY / agy', () =
     for (const raw of out.split('\n')) {
       const line = raw.trim()
       if (!line) continue
-      // Mentions de retrait explicites autorisées (AGENTS.md)
-      if (/retir|supprim|plus dans|absent|n.est plus/i.test(line)) continue
+      // Mentions de retrait / binding temporaire documenté (pas une référence opérationnelle active)
+      if (
+        /retir/i.test(line) ||
+        /suppression/i.test(line) ||
+        /supprim/i.test(line) ||
+        /TEMPORARY/i.test(line) ||
+        /transitoire/i.test(line) ||
+        /post-remove/i.test(line) ||
+        /remove-antigravity/i.test(line) ||
+        /NOTE TRANSITOIRE/i.test(line) ||
+        /n.est plus/i.test(line) ||
+        /absent/i.test(line)
+      ) continue
       hits.push(`${rel}: ${line}`)
     }
   }

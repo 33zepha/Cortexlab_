@@ -153,7 +153,7 @@
       "controls": [
         "ctrl-single-source"
       ],
-      "statement": "Modele d'entreprise: Hermes raisonne en CEO H24 et orchestre des managers (IAs de haut niveau, ex. Claude/Codex/Kimi) qui orchestrent des salaries (agents/workers). Toutes les IAs branchees sont utilisables; le choix d'une IA pour une mission vise la meilleure qualite au cout le plus bas, via des rapports concis de chaque IA. Aucune IA n'est privilegiee par defaut: le routing est pilote par aptitude, cout et rapport qualite/prix, jamais par habitude."
+      "statement": "Modele d'entreprise: Hermes raisonne en CEO H24 et orchestre des managers et agents porteurs de roles organisationnels. Les modeles IA disponibles sont selectionnes dynamiquement selon aptitude, cout, qualite, quota, contexte, outils et effort. Toutes les IAs branchees sont utilisables; aucune n'est privilegiee par defaut — le routing est pilote par aptitude et rapport qualite/cout, jamais par habitude. NOTE TRANSITOIRE: le registre actuel (entrees nommees Claude/Codex/Kimi/ Luna) est une representation de compatibilite avant la migration role/modele; ce n'est pas l'organigramme cible definitif."
     },
     {
       "id": "CTRL-NO-DEBUG-LOG",

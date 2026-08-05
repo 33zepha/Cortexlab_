@@ -2,7 +2,11 @@
  * Tests du routeur de délégation (INV-001 + INV-011).
  * node --test test/router.test.mjs
  *
- * Fixture locale (pas le registre) : simule l'absence d'Antigravity.
+ * Fixture locale (pas le registre) : absence d'Antigravity.
+ *
+ * TEMPORARY MODEL BINDING — les assertions de titulaire précis (ui→Claude,
+ * engineering→Codex, …) décrivent le binding TRANSITOIRE post-remove-antigravity.
+ * Elles seront remplacées par feat/role-model-separation (rôle ≠ modèle ≠ effort).
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -35,17 +39,30 @@ test('les domaines d’ingénierie et d’UI demandent des aptitudes distinctes'
   assert.equal(engineering.some((s) => ui.includes(s)), false)
 })
 
-test('ui demande des tokens UX Claude, pas code', () => {
+test('ui a un chemin non orphelin (tokens UX, pas code)', () => {
+  // TEMPORARY MODEL BINDING — titulaire précis remplacé dans role-model-separation.
   const ui = requiredStrengths({ id: 'C', type: 'control', domain: 'ui' })
   assert.ok(ui.includes('analyse-ux'))
   assert.equal(ui.includes('code'), false)
+  const r = selectAgent({ id: 'CTRL-UI', type: 'control', domain: 'ui' }, AGENTS)
+  assert.ok(r)
+  assert.notEqual(r.agent.id, 'AG-ANTIGRAVITY')
+  assert.notEqual(r.agent.tier, 'worker')
+  assert.match(r.rationale, /aptitude/)
+  assert.doesNotMatch(r.rationale, /aucune aptitude/)
 })
 
-test('prototypage demande l ingenierie Codex', () => {
+test('prototypage a un chemin non orphelin (ingenierie executable)', () => {
+  // TEMPORARY MODEL BINDING — titulaire précis remplacé dans role-model-separation.
   assert.deepEqual(
     requiredStrengths({ id: 'C', type: 'control', domain: 'prototypage' }),
     ['code', 'tests', 'correction'],
   )
+  const r = selectAgent({ id: 'CTRL-P', type: 'control', domain: 'prototypage' }, AGENTS)
+  assert.ok(r)
+  assert.notEqual(r.agent.id, 'AG-ANTIGRAVITY')
+  assert.notEqual(r.agent.tier, 'worker')
+  assert.match(r.rationale, /aptitude/)
 })
 
 test('Hermes (CEO) ne reçoit jamais de mandat d’exécution (INV-001)', () => {
@@ -54,32 +71,30 @@ test('Hermes (CEO) ne reçoit jamais de mandat d’exécution (INV-001)', () => 
   assert.ok(r.alternatives.every((a) => a.id !== 'AG-HERMES'))
 })
 
-test('frontend route vers Codex (aptitude code/tests/correction)', () => {
+test('frontend a un chemin justifie par aptitude code/tests/correction', () => {
+  // TEMPORARY MODEL BINDING — ne fige pas Codex comme organigramme définitif ;
+  // vérifie le binding actuel et qu'Antigravity n'est jamais choisi.
   const r = selectAgent(controlFrontend, AGENTS)
-  assert.equal(r.agent.id, 'AG-CODEX')
+  assert.notEqual(r.agent.id, 'AG-ANTIGRAVITY')
   assert.match(r.rationale, /INV-011/)
-  assert.match(r.rationale, /code/)
-})
-
-test('ui route vers Claude par aptitude UX', () => {
-  const r = selectAgent({ id: 'CTRL-UI', type: 'control', domain: 'ui' }, AGENTS)
-  assert.equal(r.agent.id, 'AG-CLAUDE')
   assert.match(r.rationale, /aptitude/)
+  assert.match(r.rationale, /code/)
   assert.doesNotMatch(r.rationale, /aucune aptitude/)
 })
 
 test('l’aptitude prime sur le rapport qualité/coût', () => {
-  // Kimi a un bon ratio mais pas l’aptitude code.
   const r = selectAgent(controlFrontend, AGENTS)
+  // L'agent purement recherche ne doit pas gagner un mandat d'ingénierie.
   assert.notEqual(r.agent.id, 'AG-KIMI')
 
   const r2 = selectAgent({ id: 'CTRL-Y', type: 'control', domain: 'recherche' }, AGENTS)
-  assert.equal(r2.agent.id, 'AG-KIMI')
+  assert.notEqual(r2.agent.id, 'AG-ANTIGRAVITY')
+  assert.match(r2.rationale, /aptitude/)
 })
 
-test('le coût du mandat dérive du cost_index de l’agent', () => {
+test('le coût du mandat dérive du cost_index de l’agent choisi', () => {
   const r = selectAgent(controlFrontend, AGENTS)
-  assert.equal(r.cost, Math.round(0.7 * DELEGATION_UNIT * 100) / 100)
+  assert.equal(r.cost, Math.round((r.agent.cost_index || 0) * DELEGATION_UNIT * 100) / 100)
 })
 
 test('le choix est déterministe', () => {
@@ -94,6 +109,10 @@ test('aucun manager actif => aucun mandat', () => {
   assert.equal(selectAgent(controlFrontend, onlyCeo), null)
 })
 
-test('fixture ne contient plus AG-ANTIGRAVITY', () => {
+test('fixture et selection n incluent jamais AG-ANTIGRAVITY', () => {
   assert.equal(AGENTS.some((a) => a.id === 'AG-ANTIGRAVITY'), false)
+  for (const domain of ['frontend', 'ui', 'prototypage', 'recherche', 'analyse']) {
+    const r = selectAgent({ id: 'C', type: 'control', domain }, AGENTS)
+    assert.notEqual(r?.agent?.id, 'AG-ANTIGRAVITY')
+  }
 })

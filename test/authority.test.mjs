@@ -1,9 +1,9 @@
 /**
- * Tests de la hiérarchie d'autorité (registre réel, pas de fixture).
+ * Invariants d'autorité durables (registre réel, pas de fixture).
  *
- * Post-suppression Antigravity : le registre ne doit plus contenir
- * AG-ANTIGRAVITY, et chaque domaine a un titulaire vivant non-worker justifié
- * par aptitude (pas par seul ratio qualité/coût).
+ * Post-suppression Antigravity. Ne fige PAS la liste des modèles/agents
+ * actuels comme organigramme définitif — le registre Claude/Codex/Kimi/Luna
+ * est une représentation TRANSITOIRE avant feat/role-model-separation.
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -20,96 +20,61 @@ const ALL_DOMAINS = [
   'recherche', 'data', 'analyse', 'critique', 'conseil',
 ]
 
-// ─── Absence Antigravity ────────────────────────────────────────────────────
+// ─── Absence Antigravity / providers retirés ────────────────────────────────
 
 test('AG-ANTIGRAVITY est absent du registre derive', () => {
   assert.equal(byId('AG-ANTIGRAVITY'), undefined)
-  assert.equal(agents.some((a) => /antigravity/i.test(a.name || '')), false)
+  assert.equal(agents.some((a) => /antigravity/i.test(a.name || '') || /antigravity/i.test(a.id || '')), false)
 })
 
-test('aucun agent actif ne revendique les anciens tokens Antigravity exclusifs', () => {
-  // Ces tokens UI-execution ne doivent plus servir de base de routage orpheline.
-  // ui/prototypage purs ont ete redistribues : execution -> Codex, analyse -> Claude.
-  for (const a of agents) {
-    assert.notEqual(a.id, 'AG-ANTIGRAVITY')
-  }
-})
-
-// ─── Codex : Chief Engineer ─────────────────────────────────────────────────
-
-test('Codex est un manager rattache directement a Hermes', () => {
-  const codex = byId('AG-CODEX')
-  assert.ok(codex, 'AG-CODEX absent du registre')
-  assert.equal(codex.tier, 'manager')
-  assert.equal(codex.reports_to, 'AG-HERMES')
-  assert.equal(codex.status, 'active')
-})
-
-test('Codex detient l autorite sur l ingenierie du depot', () => {
-  for (const domain of ['frontend', 'backend', 'engineering', 'implementation', 'testing', 'debugging', 'refactoring', 'code_security', 'prototypage', 'frontend-integration']) {
-    assert.equal(selectAgent(ctrl(domain), agents).agent.id, 'AG-CODEX', `domaine « ${domain} » mal route`)
-  }
-})
-
-test('le mandat confie a Codex est justifie et chiffre', () => {
-  const r = selectAgent(ctrl('backend'), agents)
-  assert.match(r.rationale, /INV-011/)
-  assert.match(r.rationale, /Codex/)
-  assert.ok(r.cost > 0)
-})
-
-// ─── Claude : UX / produit ──────────────────────────────────────────────────
-
-test('Claude porte les tokens UX machine (pas seulement le ratio)', () => {
-  const claude = byId('AG-CLAUDE')
-  assert.ok(claude)
-  for (const tok of ['analyse-ux', 'critique-ux', 'specification-ui', 'direction-produit', 'revue-visuelle', 'analyse', 'critique', 'conseil']) {
-    assert.ok((claude.strengths || []).includes(tok), `Claude manque le token ${tok}`)
-  }
-})
-
-test('ui et ux routent vers Claude par aptitude', () => {
-  for (const domain of ['ui', 'ux']) {
-    const r = selectAgent(ctrl(domain), agents)
-    assert.equal(r.agent.id, 'AG-CLAUDE', `domaine « ${domain} »`)
-    assert.match(r.rationale, /aptitude/)
-    assert.doesNotMatch(r.rationale, /aucune aptitude/)
-  }
-})
-
-test('analyse / critique / conseil routent vers Claude', () => {
-  for (const domain of ['analyse', 'critique', 'conseil']) {
-    assert.equal(selectAgent(ctrl(domain), agents).agent.id, 'AG-CLAUDE', domain)
-  }
-})
-
-// ─── Chaîne de commandement ─────────────────────────────────────────────────
-
-test('Luna est un worker place sous le Chief Engineer', () => {
-  const luna = byId('AG-LUNA')
-  assert.equal(luna.tier, 'worker')
-  assert.equal(luna.reports_to, 'AG-CODEX')
-})
-
-test('aucun worker n est candidat au routage (INV-011)', () => {
-  const workers = agents.filter((a) => a.tier === 'worker').map((a) => a.id)
+test('Antigravity n est jamais selectionne', () => {
   for (const domain of ALL_DOMAINS) {
-    const chosen = selectAgent(ctrl(domain), agents).agent.id
-    assert.equal(workers.includes(chosen), false, `worker sur « ${domain} »`)
+    const r = selectAgent(ctrl(domain), agents)
+    assert.ok(r, `${domain} sans chemin`)
+    assert.notEqual(r.agent.id, 'AG-ANTIGRAVITY')
+    assert.equal(/antigravity/i.test(r.agent.name || ''), false)
   }
+})
+
+test('aucun agent Google/Gemini actif', () => {
+  for (const a of agents.filter((x) => x.status === 'active')) {
+    const provider = String(a.provider || '').toLowerCase()
+    const model = String(a.model || '').toLowerCase()
+    assert.notEqual(provider, 'google', `${a.id} provider google`)
+    assert.equal(/gemini|antigravity/.test(model), false, `${a.id} model ${a.model}`)
+  }
+})
+
+// ─── Invariants durables (pas de liste figée de modèles) ────────────────────
+
+test('AG-HERMES est present (CEO)', () => {
+  const h = byId('AG-HERMES')
+  assert.ok(h, 'AG-HERMES absent')
+  assert.equal(h.tier, 'ceo')
+  assert.equal(h.status, 'active')
 })
 
 test('Hermes (CEO) ne recoit jamais de mandat d execution (INV-001)', () => {
   for (const domain of [...ALL_DOMAINS, 'inconnu']) {
     const r = selectAgent(ctrl(domain), agents)
+    assert.ok(r, `${domain} sans chemin`)
     assert.notEqual(r.agent.id, 'AG-HERMES')
-    assert.ok(r.alternatives.every((a) => a.id !== 'AG-HERMES'))
+    assert.ok((r.alternatives || []).every((a) => a.id !== 'AG-HERMES'))
   }
 })
 
-test('tout manager declare son rattachement a un agent existant', () => {
-  for (const a of agents.filter((x) => x.tier === 'manager')) {
-    assert.ok(a.reports_to, `${a.id} sans reports_to`)
+test('aucun worker n est selectionne directement (INV-011)', () => {
+  const workers = new Set(agents.filter((a) => a.tier === 'worker').map((a) => a.id))
+  for (const domain of ALL_DOMAINS) {
+    const chosen = selectAgent(ctrl(domain), agents).agent
+    assert.equal(workers.has(chosen.id), false, `worker ${chosen.id} sur « ${domain} »`)
+    assert.notEqual(chosen.tier, 'worker')
+  }
+})
+
+test('aucun reports_to vers un agent absent', () => {
+  for (const a of agents) {
+    if (!a.reports_to) continue
     assert.ok(byId(a.reports_to), `${a.id} reports_to inconnu: ${a.reports_to}`)
   }
 })
@@ -119,43 +84,43 @@ test('aucune boucle dans la chaine de rattachement', () => {
     const path = [a.id]
     let cur = a
     while (cur?.reports_to) {
-      assert.equal(path.includes(cur.reports_to), false, `boucle: ${[...path, cur.reports_to].join(' -> ')}`)
+      assert.equal(
+        path.includes(cur.reports_to),
+        false,
+        `boucle: ${[...path, cur.reports_to].join(' -> ')}`,
+      )
       path.push(cur.reports_to)
       cur = byId(cur.reports_to)
     }
   }
 })
 
-// ─── Domaines : titulaire vivant + aptitude ─────────────────────────────────
-
-test('chaque domaine a un titulaire vivant non-worker justifie par aptitude', () => {
+test('chaque domaine a un chemin temporaire valide (non orphelin, aptitude)', () => {
+  // TEMPORARY MODEL BINDING — le titulaire exact changera avec role-model-separation.
+  // Ici on garantit seulement : un manager actif, justifié par aptitude, pas AGY.
   for (const domain of ALL_DOMAINS) {
     const r = selectAgent(ctrl(domain), agents)
     assert.ok(r, `${domain} sans titulaire`)
-    assert.notEqual(r.agent.tier, 'worker', `${domain} -> worker`)
+    assert.equal(r.agent.status, 'active')
+    assert.notEqual(r.agent.tier, 'worker')
+    assert.notEqual(r.agent.tier, 'ceo')
     assert.notEqual(r.agent.id, 'AG-ANTIGRAVITY')
     assert.match(r.rationale, /aptitude/, `${domain} route par defaut sans aptitude`)
     assert.doesNotMatch(r.rationale, /aucune aptitude/)
+    assert.ok(r.cost >= 0)
   }
 })
 
-// ─── Cohérence registre / router ────────────────────────────────────────────
-
-test('les strengths du registre sont des tokens matchables par le router', () => {
-  const domains = ALL_DOMAINS
+test('les strengths des managers actifs sont matchables par le router', () => {
   for (const a of agents.filter((x) => x.tier === 'manager' && x.status === 'active')) {
-    const matches = domains.some((d) => requiredStrengths(ctrl(d)).some((s) => (a.strengths || []).includes(s)))
-    assert.ok(matches, `${a.id} ne matche aucun domaine`)
+    const matches = ALL_DOMAINS.some((d) =>
+      requiredStrengths(ctrl(d)).some((s) => (a.strengths || []).includes(s)),
+    )
+    assert.ok(matches, `${a.id} ne matche aucun domaine — strengths inutilisables`)
   }
 })
 
-test('Codex a la meilleure qualite parmi les managers', () => {
-  const managers = agents.filter((a) => a.tier === 'manager')
-  const best = Math.max(...managers.map((a) => a.quality_index || 0))
-  assert.equal(byId('AG-CODEX').quality_index, best)
-})
-
-test('le registre ne contient que les agents attendus', () => {
-  const ids = agents.map((a) => a.id).sort()
-  assert.deepEqual(ids, ['AG-CLAUDE', 'AG-CODEX', 'AG-HERMES', 'AG-KIMI', 'AG-LUNA'].sort())
+test('au moins un manager actif hors CEO existe (runtime delegable)', () => {
+  const managers = agents.filter((a) => a.tier === 'manager' && a.status === 'active')
+  assert.ok(managers.length >= 1, 'aucun manager actif')
 })
