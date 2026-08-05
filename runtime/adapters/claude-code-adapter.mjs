@@ -98,9 +98,27 @@ export function parseResult(stdout) {
       j.model_id ||
       (typeof j.message === 'object' && j.message?.model) ||
       null
-    return { text: String(text), parsed, raw_type: typeof j, model_applied: modelApplied }
+    const effortApplied =
+      j.effort ||
+      j.effort_level ||
+      j.reasoning_effort ||
+      (typeof j.message === 'object' && (j.message?.effort || j.message?.reasoning_effort)) ||
+      null
+    return {
+      text: String(text),
+      parsed,
+      raw_type: typeof j,
+      model_applied: modelApplied,
+      effort_applied: effortApplied,
+    }
   } catch {
-    return { text: stdout, parsed: null, raw_type: 'text', model_applied: null }
+    return {
+      text: stdout,
+      parsed: null,
+      raw_type: 'text',
+      model_applied: null,
+      effort_applied: null,
+    }
   }
 }
 
@@ -126,6 +144,7 @@ export function executeSession({
       model_applied: null,
       effort_requested: effort,
       effort_applied: null,
+      effort_verification: 'requested_only',
       argv: [],
       argv_audit: [],
       parsed: null,
@@ -192,6 +211,7 @@ export function executeSession({
         model_applied: null,
         effort_requested: effort,
         effort_applied: null,
+        effort_verification: 'requested_only',
         argv: argvAudit,
         argv_audit: argvAudit,
         parsed: null,
@@ -209,6 +229,7 @@ export function executeSession({
       else if (code === 0) status = 'completed'
       else status = 'failed'
 
+      const effortProven = parsedWrap.effort_applied || null
       resolve({
         status,
         exit_code: code,
@@ -216,10 +237,10 @@ export function executeSession({
         stderr_redacted: redactText(stderr),
         duration_ms: Date.now() - started,
         model_requested: model,
-        // only claim applied if stdout proves it
         model_applied: parsedWrap.model_applied || null,
         effort_requested: effort,
-        effort_applied: effort,
+        effort_applied: effortProven,
+        effort_verification: effortProven ? 'confirmed_from_cli_output' : 'requested_only',
         argv: argvAudit,
         argv_audit: argvAudit,
         parsed: parsedWrap.parsed,

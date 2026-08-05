@@ -27,17 +27,22 @@ function pickAdapter(assignment, { forceFake = false } = {}) {
   return null
 }
 
-function buildMandate(plan, assignment) {
+function buildMandate(plan, assignment, auth = null) {
+  const proofs = []
+  if (auth?.proof_commands?.length) {
+    proofs.push(`Required proof commands (run in workspace, do not commit): ${auth.proof_commands.join(' ; ')}`)
+  }
   return [
     'You are executing a single Cortex session under a strict mandate.',
     `Mission: ${plan.mission?.goal}`,
     `Role: ${assignment.agent_role_id}`,
-    `Workspace: current directory only.`,
-    'Allowed: edit files in workspace, run local tests if needed.',
-    'Forbidden: git commit, git push, git merge, network exfiltration, reading secrets, leaving workspace.',
-    `Effort: ${assignment.effort?.provider || assignment.effort?.canonical}`,
+    `Workspace: current directory only. Stay inside this git worktree.`,
+    'Allowed: edit files in workspace, run local tests and local web build if needed.',
+    'Forbidden: git commit, git push, git merge, network exfiltration, reading secrets, leaving workspace, writing outside the worktree.',
+    `Effort requested: ${assignment.effort?.provider || assignment.effort?.canonical}`,
     `Proofs expected: ${(assignment.proofs_expected || []).join(', ') || 'tests'}`,
-    'Fix the failing unit in this workspace if present.',
+    ...proofs,
+    'Focus on Mission Control scoping: each page must show only events, agents, summary and inspector for the selected mission. Add or fix corresponding tests.',
     'Return a final JSON object with keys: status, summary, changed_files, tests_requested, risks, missing_evidence.',
     'Stop when done. Do not ask questions.',
   ].join('\n')
@@ -76,7 +81,7 @@ export async function runSessionV1({
   forceFake = false,
   testCommand = null,
   ledgerPath = null,
-  baseRef = 'HEAD',
+  baseRef = null,
   repoRoot = ROOT,
   copyFixtureFrom = null,
   expectBugFix = false,
@@ -85,6 +90,8 @@ export async function runSessionV1({
   const events = []
   let store = null
   let workspace = null
+  const resolvedBaseRef =
+    baseRef || auth?.base_commit_sha || plan?.metadata?.base_commit_sha || 'HEAD'
 
   try {
     const assignment = (plan.assignments || []).find((a) => a.session_id === sessionId)
@@ -171,16 +178,16 @@ export async function runSessionV1({
         const wt = createWorktree({
           missionId: plan.mission.id,
           sessionId,
-          baseRef,
+          baseRef: resolvedBaseRef,
           repoRoot,
         })
         workspace = wt.path
-        baseSha = baseRef
+        baseSha = resolvedBaseRef
         push('worktree.created.v2', {
           mission_id: plan.mission.id,
           session_id: sessionId,
           path: workspace,
-          baseRef,
+          baseRef: resolvedBaseRef,
           executable: true,
         })
       } catch (e) {
@@ -210,7 +217,7 @@ export async function runSessionV1({
     })
 
     const testsBefore = runTests(workspace, testCommand)
-    const mandate = buildMandate(plan, assignment)
+    const mandate = buildMandate(plan, assignment, auth)
 
     push('adapter.invoked.v2', {
       session_id: sessionId,

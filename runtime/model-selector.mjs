@@ -89,6 +89,36 @@ function hy3Allowed({ req, risk, task, tools_required, modalities, context_requi
   return true
 }
 
+/** When adapter_snapshot is provided, only keep variants that share an installed channel. */
+export function normalizeInstalledChannels(adapter_snapshot) {
+  if (!adapter_snapshot || typeof adapter_snapshot !== 'object') return null
+  const list = adapter_snapshot.installed_access_channels
+  if (!Array.isArray(list) || list.length === 0) return null
+  return new Set(list.map(String))
+}
+
+export function pickAccessChannel(variant, installedChannels) {
+  const channels = variant?.access_channels || []
+  if (!installedChannels) return channels[0] || null
+  const hit = channels.find((c) => installedChannels.has(c))
+  return hit || null
+}
+
+function channelOk(v, installedChannels, rejected) {
+  if (!installedChannels) return true
+  const ch = pickAccessChannel(v, installedChannels)
+  if (!ch) {
+    rejected.push({
+      family_id: v.family_id,
+      variant_id: v.id,
+      reason: 'no_installed_access_channel',
+      channels: v.access_channels || [],
+    })
+    return false
+  }
+  return true
+}
+
 function candidateOrder({ task, risk, context_required, budget_policy, tools_required, hy3Ok }) {
   if ((tools_required || []).includes('x_search') || (tools_required || []).includes('web_search') || task === 'research_web') {
     return ['grok-4.5', 'grok-4.3', 'grok-4.20-multi-agent', 'k3', 'claude-opus-4-8', TERRA_ID]
@@ -177,7 +207,10 @@ export function selectModel(input = {}, doc = loadModelCatalog(), roleProfiles =
     latency_preference = 'normal',
     budget_policy = 'balanced',
     access_capability_snapshot = {},
+    adapter_snapshot = null,
   } = input
+
+  const installedChannels = normalizeInstalledChannels(adapter_snapshot)
 
   const role = agent_role_id ? profiles[agent_role_id] : null
   const req = role?.model_requirements || {}
@@ -203,6 +236,7 @@ export function selectModel(input = {}, doc = loadModelCatalog(), roleProfiles =
       rejected.push({ family_id: v.family_id, variant_id: v.id, reason: 'quota_exhausted_or_empty' })
       return false
     }
+    if (!channelOk(v, installedChannels, rejected)) return false
     if (v.family_id === 'hy3' && !hy3Ok) {
       rejected.push({ family_id: v.family_id, variant_id: v.id, reason: 'hy3_not_eligible' })
       return false
@@ -303,10 +337,12 @@ export function selectModel(input = {}, doc = loadModelCatalog(), roleProfiles =
       if (!resolveCapability(entry.v, cap, access_capability_snapshot).available) ok = false
     }
     if (!ok) continue
+    const ch = pickAccessChannel(entry.v, installedChannels)
+    if (installedChannels && !ch) continue
     fallback_chain.push({
       family_id: entry.v.family_id,
       variant_id: entry.v.id,
-      access_channel: (entry.v.access_channels || [])[0] || null,
+      access_channel: ch || (entry.v.access_channels || [])[0] || null,
       canonical_effort: ec.effort,
       provider_effort: ec.norm.provider_effort,
       reason: 'compatible_alternative',
@@ -315,12 +351,14 @@ export function selectModel(input = {}, doc = loadModelCatalog(), roleProfiles =
     if (fallback_chain.length >= 5) break
   }
 
+  const chosenChannel = pickAccessChannel(chosen, installedChannels) || (chosen.access_channels || [])[0] || null
+
   return {
     status: 'assigned',
     requires_escalation: false,
     family_id: chosen.family_id,
     variant_id: chosen.id,
-    access_channel: (chosen.access_channels || [])[0] || null,
+    access_channel: chosenChannel,
     requested_effort: requestedEffort,
     minimum_effort: minimumEffort,
     canonical_effort: chosenNorm.canonical_effort || chosenEffort,
@@ -328,13 +366,14 @@ export function selectModel(input = {}, doc = loadModelCatalog(), roleProfiles =
     effort_mapping_reason: chosenDecision?.reason || chosenNorm.reason,
     effort_semantics: chosenNorm.semantics || chosen.efforts?.semantics,
     effort_decision: chosenDecision,
-    selection_reason: `task=${task} risk=${risk} role=${agent_role_id || '—'} → ${chosen.family_id}/${chosen.id} requested=${requestedEffort} selected=${chosenEffort} score=${chosenScore}`,
+    selection_reason: `task=${task} risk=${risk} role=${agent_role_id || '—'} → ${chosen.family_id}/${chosen.id}@${chosenChannel} requested=${requestedEffort} selected=${chosenEffort} score=${chosenScore}${installedChannels ? ' adapter_filtered' : ''}`,
     rejected_alternatives: rejected.slice(0, 40),
     estimated_tradeoffs: {
       marginal_cost: chosen.economics?.marginal_cost,
       latency_class: chosen.latency_class || null,
       context_policy_cap: chosen.context?.policy_cap ?? null,
       chosen_score: chosenScore,
+      adapter_snapshot_applied: !!installedChannels,
     },
     fallback_chain,
     confidence: Math.min(0.95, 0.4 + chosenScore / 200),

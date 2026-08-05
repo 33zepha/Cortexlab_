@@ -68,6 +68,7 @@ function normalizeMission(input) {
     modalities: input.modalities || [],
     budget_policy: input.budget_policy || 'balanced',
     latency_preference: input.latency_preference || 'normal',
+    preferred_effort: input.preferred_effort || null,
     needs_evaluation: !!input.needs_evaluation,
     needs_pedagogy: !!input.needs_pedagogy,
   }
@@ -233,6 +234,9 @@ export function planMissionV2(missionInput = {}, options = {}) {
   const {
     quota_snapshot = {},
     access_capability_snapshot = {},
+    adapter_snapshot = null,
+    max_assignments = null,
+    base_commit_sha = null,
     now = () => new Date().toISOString(),
   } = options
 
@@ -300,7 +304,34 @@ export function planMissionV2(missionInput = {}, options = {}) {
     return plan
   }
 
-  const stubs = buildRoleAssignments(org, missionInput.id)
+  const stubsAll = buildRoleAssignments(org, missionInput.id)
+  let stubs = stubsAll
+  if (max_assignments != null && Number(max_assignments) > 0 && stubs.length > Number(max_assignments)) {
+    const prefer = [
+      'AGENT-FRONTEND-ENGINEER',
+      'AGENT-BACKEND-ENGINEER',
+      'AGENT-DEBUGGING',
+      'AGENT-ARCHITECTURE',
+    ]
+    const ranked = [...stubs].sort((a, b) => {
+      const ia = prefer.indexOf(a.agent_role_id)
+      const ib = prefer.indexOf(b.agent_role_id)
+      const sa = ia === -1 ? 99 : ia
+      const sb = ib === -1 ? 99 : ib
+      return sa - sb || a.order - b.order
+    })
+    stubs = ranked.slice(0, Number(max_assignments)).map((s, i) => ({ ...s, order: i }))
+    org.agent_role_ids = stubs.map((s) => s.agent_role_id)
+    org.execution_order = stubs.map((s) => s.agent_role_id)
+    org.agent_manager_map = Object.fromEntries(
+      stubs.map((s) => [s.agent_role_id, s.manager_id]),
+    )
+    org.manager_role_ids = [...new Set(stubs.map((s) => s.manager_id))]
+    org.rationale = [
+      ...(org.rationale || []),
+      `max_assignments=${max_assignments} kept ${org.agent_role_ids.join(',')}`,
+    ]
+  }
   const assignments = []
   let blocked = false
   const blockReasons = []
@@ -316,6 +347,7 @@ export function planMissionV2(missionInput = {}, options = {}) {
         preferred_effort: missionInput.preferred_effort || null,
         quota_snapshot,
         access_capability_snapshot,
+        adapter_snapshot,
         latency_preference: missionInput.latency_preference || 'normal',
         budget_policy: missionInput.budget_policy || 'balanced',
       },
@@ -445,7 +477,12 @@ export function planMissionV2(missionInput = {}, options = {}) {
     assignments,
     reviews,
     mission_budget,
-    metadata: meta(modelDoc, now),
+    metadata: {
+      ...meta(modelDoc, now),
+      adapter_snapshot: adapter_snapshot || null,
+      base_commit_sha: base_commit_sha || null,
+      max_assignments: max_assignments ?? null,
+    },
     status: blocked ? 'blocked' : 'planned',
   }
   plan.metadata.plan_hash = planHash(plan)

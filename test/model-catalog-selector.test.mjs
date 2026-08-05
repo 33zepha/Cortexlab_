@@ -187,3 +187,23 @@ test('selector is deterministic', () => {
   assert.equal(a.canonical_effort, b.canonical_effort)
   assert.equal(a.provider_effort, b.provider_effort)
 })
+
+test('adapter_snapshot keeps only installed access channels', () => {
+  const sel = selectModel(
+    {
+      agent_role_id: 'AGENT-FRONTEND-ENGINEER',
+      risk: 'medium',
+      preferred_effort: 'medium',
+      adapter_snapshot: { installed_access_channels: ['claude_code_subscription'] },
+    },
+    doc,
+  )
+  assert.equal(sel.status, 'assigned')
+  assert.equal(sel.family_id, 'claude')
+  assert.equal(sel.access_channel, 'claude_code_subscription')
+  assert.ok(String(sel.variant_id).includes('claude') || ['opus', 'sonnet'].includes(sel.variant_id))
+  assert.equal(
+    (sel.fallback_chain || []).every((f) => f.access_channel === 'claude_code_subscription'),
+    true,
+  )
+})

@@ -33,6 +33,10 @@ Options:
   --needs-pedagogy
   --quota-snapshot <file>
   --capability-snapshot <file>
+  --adapter-snapshot <file>   JSON { installed_access_channels: [...] }
+  --max-assignments N
+  --base-commit-sha SHA
+  --preferred-effort none|low|medium|high|xhigh|max
   --out <file>   (refuses overwrite; plans/ or tmp only)
   --json
 `)
@@ -55,6 +59,7 @@ const mission = {
   latency_preference: arg('--latency', 'normal'),
   needs_evaluation: flag('--needs-evaluation'),
   needs_pedagogy: flag('--needs-pedagogy'),
+  preferred_effort: arg('--preferred-effort', null),
 }
 
 function loadJsonOpt(p) {
@@ -65,6 +70,9 @@ function loadJsonOpt(p) {
 const plan = planMissionV2(mission, {
   quota_snapshot: loadJsonOpt(arg('--quota-snapshot')),
   access_capability_snapshot: loadJsonOpt(arg('--capability-snapshot')),
+  adapter_snapshot: arg('--adapter-snapshot') ? loadJsonOpt(arg('--adapter-snapshot')) : null,
+  max_assignments: arg('--max-assignments') ? Number(arg('--max-assignments')) : null,
+  base_commit_sha: arg('--base-commit-sha', null),
 })
 
 const out = arg('--out')
