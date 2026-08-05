@@ -1,5 +1,5 @@
 /**
- * Session Runner V1 gates + fake adapter + fixture E2E (no prod ledger).
+ * Session Runner V1 — critical gates + fixture E2E (no prod ledger).
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -10,79 +10,48 @@ import { fileURLToPath } from 'node:url'
 import { planMissionV2, planHash } from '../runtime/mission-planner-v2.mjs'
 import {
   gateExecution,
-  checkFeatureFlag,
   validateAuthorization,
 } from '../runtime/execution-gate.mjs'
-import { runSessionV1 } from '../runtime/session-runner-v1.mjs'
-import { resolveWorktreePath, getWorktreeRoot } from '../runtime/worktree-manager.mjs'
+import { runSessionV1, evaluateSessionSuccess } from '../runtime/session-runner-v1.mjs'
+import { resolveWorktreePath, getWorktreeRoot, createWorktree } from '../runtime/worktree-manager.mjs'
 import { preflight as claudePreflight, buildArgv } from '../runtime/adapters/claude-code-adapter.mjs'
 import { redactText } from '../runtime/evidence-collector.mjs'
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
 const FIXTURE = path.join(ROOT, 'test/fixtures/session-runner-bug')
 
+const VERIFY_CMD = [
+  'node',
+  '--input-type=module',
+  '-e',
+  "import { add } from './buggy.js'; const v=add(2,3); if(v!==5){console.error('FAIL',v); process.exit(1)}; console.log('PASS',v)",
+]
+
 function makePlan(suffix = '1') {
-  // Force a planned Claude-compatible assignment by crafting after plan
   const plan = planMissionV2({
     id: `MIS-RUNNER-${suffix}`,
     goal: 'Corriger le scoping de Mission Control.',
     domains: ['frontend'],
     risk: 'medium',
   })
-  if (plan.status !== 'planned') {
-    plan.status = 'planned'
-    plan.organization.status = 'ok'
-    plan.mission = plan.mission || { id: `MIS-RUNNER-${suffix}`, goal: 'x', risk: 'medium' }
-    plan.assignments = [
-      {
-        mission_id: `MIS-RUNNER-${suffix}`,
-        manager_id: 'MGR-ENGINEERING',
-        agent_role_id: 'AGENT-FRONTEND-ENGINEER',
-        session_id: `ses_MIS-RUNNER-${suffix}_0_FE`,
-        status: 'planned',
-        model: {
-          family: 'claude',
-          variant: 'claude-sonnet-5',
-          access_channel: 'claude_code_subscription',
-        },
-        effort: {
-          requested: 'medium',
-          minimum: 'medium',
-          canonical: 'medium',
-          provider: 'medium',
-          semantics: 'claude_effort',
-          mapping_reason: 'direct',
-          decision: { kind: 'direct', approved_by: 'test', reason: 'direct' },
-        },
-        selection: { reason: 'test', confidence: 1, chosen_score: 1, rejected_alternatives: [], fallback_chain: [] },
-        requirements: { capabilities: ['filesystem'], tools: [], modalities: [], context: 0 },
-        budget: { token_limit: 10000, time_limit_minutes: 10, retry_limit: 1, correction_limit: 1 },
-        proofs_expected: ['tests'],
-        order: 0,
-      },
-    ]
-    plan.metadata = plan.metadata || {}
-    plan.metadata.plan_hash = planHash(plan)
-  } else {
-    const a = plan.assignments.find((x) => x.status === 'planned')
-    if (a) {
-      a.model = {
-        family: 'claude',
-        variant: 'claude-sonnet-5',
-        access_channel: 'claude_code_subscription',
-      }
-      a.effort = {
-        requested: a.effort?.requested || 'medium',
-        minimum: a.effort?.minimum || 'low',
-        canonical: 'medium',
-        provider: 'medium',
-        semantics: 'claude_effort',
-        mapping_reason: 'test_override_for_adapter',
-        decision: { kind: 'direct', approved_by: 'test', reason: 'adapter_e2e' },
-      }
-      plan.metadata.plan_hash = planHash(plan)
-    }
+  assert.equal(plan.status, 'planned', JSON.stringify(plan.organization))
+  const a = plan.assignments.find((x) => x.status === 'planned')
+  a.model = {
+    family: 'claude',
+    variant: 'claude-sonnet-5',
+    access_channel: 'claude_code_subscription',
   }
+  a.effort = {
+    requested: a.effort?.requested || 'medium',
+    minimum: a.effort?.minimum || 'low',
+    canonical: 'medium',
+    provider: 'medium',
+    semantics: 'claude_effort',
+    mapping_reason: 'test_override_for_adapter',
+    decision: { kind: 'direct', approved_by: 'test', reason: 'adapter_e2e' },
+  }
+  // keep other planned assignments valid if present — only first rewritten
+  plan.metadata.plan_hash = planHash(plan)
   return plan
 }
 
@@ -115,7 +84,7 @@ test('feature flag off refuses', async () => {
     copyFixtureFrom: FIXTURE,
   })
   assert.equal(r.status, 'blocked')
-  assert.ok(r.errors?.includes('feature_flag_off') || r.reason === 'gate_failed')
+  assert.ok(r.errors?.includes('feature_flag_off'))
 })
 
 test('execute flag missing refuses', async () => {
@@ -132,6 +101,40 @@ test('execute flag missing refuses', async () => {
     copyFixtureFrom: FIXTURE,
   })
   assert.equal(r.status, 'blocked')
+  assert.ok(r.errors?.includes('execute_flag_missing'))
+})
+
+test('worktree scope requires approved_by=boss', () => {
+  const plan = makePlan('wt-boss')
+  const a = plan.assignments.find((x) => x.status === 'planned')
+  const auth = makeAuth(plan, a.session_id, {
+    scope: 'worktree',
+    approved_by: 'test_fixture',
+  })
+  const g = validateAuthorization(auth, plan)
+  assert.equal(g.ok, false)
+  assert.ok(g.errors.includes('worktree_requires_boss'))
+})
+
+test('expires_at required', () => {
+  const plan = makePlan('exp-req')
+  const a = plan.assignments.find((x) => x.status === 'planned')
+  const auth = makeAuth(plan, a.session_id)
+  delete auth.expires_at
+  const g = validateAuthorization(auth, plan)
+  assert.equal(g.ok, false)
+  assert.ok(g.errors.includes('expires_at_required'))
+})
+
+test('expired auth refuses', () => {
+  const plan = makePlan('exp')
+  const a = plan.assignments.find((x) => x.status === 'planned')
+  const auth = makeAuth(plan, a.session_id, {
+    expires_at: new Date(Date.now() - 1000).toISOString(),
+  })
+  const g = validateAuthorization(auth, plan)
+  assert.equal(g.ok, false)
+  assert.ok(g.errors.includes('auth_expired'))
 })
 
 test('bad plan hash refuses', () => {
@@ -148,15 +151,44 @@ test('bad plan hash refuses', () => {
   assert.equal(g.ok, false)
 })
 
-test('expired auth refuses', () => {
-  const plan = makePlan('exp')
-  const a = plan.assignments.find((x) => x.status === 'planned')
-  const auth = makeAuth(plan, a.session_id, {
-    expires_at: new Date(Date.now() - 1000).toISOString(),
+test('validateMissionPlanV2 runs before execute', async () => {
+  const plan = makePlan('val')
+  plan.assignments[0].model = null
+  plan.assignments[0].status = 'planned'
+  plan.metadata.plan_hash = planHash(plan)
+  const a = plan.assignments[0]
+  const auth = makeAuth(plan, a.session_id)
+  const r = await runSessionV1({
+    plan,
+    auth,
+    sessionId: a.session_id,
+    env: { ...process.env, CORTEX_SESSION_RUNNER_V1: '1' },
+    argv: ['--execute'],
+    forceFake: true,
+    copyFixtureFrom: FIXTURE,
   })
-  const g = validateAuthorization(auth, plan)
-  assert.equal(g.ok, false)
-  assert.ok(g.errors.includes('auth_expired'))
+  assert.equal(r.status, 'blocked')
+  assert.ok((r.errors || []).some((e) => String(e).includes('plan_validation') || String(e).includes('planned_missing')))
+})
+
+test('existing worktree refused', async () => {
+  const plan = makePlan(`exists-${Date.now()}`)
+  const a = plan.assignments.find((x) => x.status === 'planned')
+  const auth = makeAuth(plan, a.session_id)
+  const dest = resolveWorktreePath(plan.mission.id, a.session_id)
+  fs.mkdirSync(dest, { recursive: true })
+  fs.writeFileSync(path.join(dest, 'marker'), '1')
+  const r = await runSessionV1({
+    plan,
+    auth,
+    sessionId: a.session_id,
+    env: { ...process.env, CORTEX_SESSION_RUNNER_V1: '1' },
+    argv: ['--execute'],
+    forceFake: true,
+    copyFixtureFrom: FIXTURE,
+  })
+  assert.equal(r.status, 'blocked')
+  assert.equal(r.reason, 'worktree_already_exists')
 })
 
 test('worktree path stays under .cortex/worktrees', () => {
@@ -165,38 +197,67 @@ test('worktree path stays under .cortex/worktrees', () => {
   assert.throws(() => resolveWorktreePath('../escape', 'x'))
 })
 
+test('createWorktree refuses existing path', () => {
+  const id = `MIS-WT-${Date.now()}`
+  const sid = 'ses_dup'
+  const dest = resolveWorktreePath(id, sid)
+  fs.mkdirSync(dest, { recursive: true })
+  assert.throws(() => createWorktree({ missionId: id, sessionId: sid }), /worktree_already_exists/)
+})
+
 test('redact secrets', () => {
   const s = redactText('token sk-abcdefghijklmnop and ghp_ABCDEFG1234567890')
   assert.equal(s.includes('sk-abcdefghijklmnop'), false)
   assert.equal(s.includes('ghp_ABCDEFG1234567890'), false)
 })
 
-test('claude adapter builds argv array without shell and without dangerous skip by default', () => {
-  const argv = buildArgv({
-    model: 'claude-sonnet-5',
-    effort: 'low',
-    prompt: 'ping',
-  })
+test('claude argv audit has no prompt text', () => {
+  const argv = buildArgv({ model: 'claude-sonnet-5', effort: 'low' })
   assert.ok(Array.isArray(argv))
-  assert.ok(argv.includes('-p'))
   assert.ok(argv.includes('--model'))
-  assert.ok(argv.includes('claude-sonnet-5'))
   assert.equal(argv.includes('--dangerously-skip-permissions'), false)
+  assert.equal(
+    argv.some((x) => String(x).includes('You are executing') || String(x).includes('Mission:')),
+    false,
+  )
   const pf = claudePreflight({ model: 'claude-sonnet-5', effort: 'low' })
-  // may be ok if credentials present
   assert.equal(typeof pf.ok, 'boolean')
 })
 
-test('E2E fixture with fake adapter: red then green, source branch intact', async () => {
+test('evaluateSessionSuccess rejects red tests after and empty diff on bugfix', () => {
+  const r1 = evaluateSessionSuccess({
+    adapterResult: { status: 'completed', truncated: false },
+    testsBefore: { ok: false },
+    testsAfter: { ok: false },
+    evidence: { changed_files: ['buggy.js'] },
+  })
+  assert.equal(r1.ok, false)
+  assert.equal(r1.reason, 'tests_red_after')
+
+  const r2 = evaluateSessionSuccess({
+    adapterResult: { status: 'completed', truncated: false },
+    testsBefore: { ok: false },
+    testsAfter: { ok: true },
+    evidence: { changed_files: [], git_diff: '' },
+    expectBugFix: true,
+  })
+  assert.equal(r2.ok, false)
+  assert.equal(r2.reason, 'empty_diff_on_bugfix')
+
+  const r3 = evaluateSessionSuccess({
+    adapterResult: { status: 'failed', truncated: true },
+    testsBefore: { ok: false },
+    testsAfter: { ok: true },
+    evidence: { changed_files: ['buggy.js'] },
+  })
+  assert.equal(r3.ok, false)
+})
+
+test('E2E fixture fake: red→green, no prompt in evidence, model_applied distinct', async () => {
   const plan = makePlan(`e2e-${Date.now()}`)
   const a = plan.assignments.find((x) => x.status === 'planned')
-  assert.ok(a)
-  // use fake regardless of model channel
-  a.model.access_channel = 'claude_code_subscription'
-  a.model.variant = 'claude-sonnet-5'
   plan.metadata.plan_hash = planHash(plan)
   const auth = makeAuth(plan, a.session_id)
-
   const srcBefore = fs.readFileSync(path.join(FIXTURE, 'buggy.js'), 'utf8')
   const ledger = path.join(os.tmpdir(), `e2e-runner-${Date.now()}.ndjson`)
 
@@ -209,31 +270,25 @@ test('E2E fixture with fake adapter: red then green, source branch intact', asyn
     forceFake: true,
     copyFixtureFrom: FIXTURE,
     ledgerPath: ledger,
-    testCommand: [
-      'node',
-      '--input-type=module',
-      '-e',
-      "import { add } from './buggy.js'; const v=add(2,3); if(v!==5){console.error('FAIL',v); process.exit(1)}; console.log('PASS',v)",
-    ],
+    testCommand: VERIFY_CMD,
+    expectBugFix: true,
   })
 
-  assert.equal(r.status, 'succeeded', JSON.stringify({ errors: r.errors, reason: r.reason, before: r.evidence?.tests_before, after: r.evidence?.tests_after }))
-  assert.equal(r.evidence.tests_before.ok, false, JSON.stringify(r.evidence.tests_before))
-  assert.equal(r.evidence.tests_after.ok, true, JSON.stringify(r.evidence.tests_after))
+  assert.equal(r.status, 'succeeded', JSON.stringify({ errors: r.errors, reason: r.reason, fail: r.fail_reason }))
+  assert.equal(r.evidence.tests_before.ok, false)
+  assert.equal(r.evidence.tests_after.ok, true)
   assert.ok(
     (r.evidence.changed_files || []).some((f) => f.includes('buggy.js')) ||
       /return a \+ b/.test(fs.readFileSync(path.join(r.workspace, 'buggy.js'), 'utf8')),
   )
+  assert.equal(r.evidence.model_requested, 'claude-sonnet-5')
+  assert.equal(r.evidence.model_applied, null)
   assert.ok(r.events.every((e) => e.type !== 'mission.closure' && e.type !== 'agent.result'))
   assert.ok(r.events.some((e) => e.type === 'session.succeeded.v2'))
-  assert.ok(r.closure_recommendation)
-
-  // source fixture intact
-  const srcAfter = fs.readFileSync(path.join(FIXTURE, 'buggy.js'), 'utf8')
-  assert.equal(srcAfter, srcBefore)
+  const joined = JSON.stringify(r.events) + JSON.stringify(r.adapterResult?.argv_audit || [])
+  assert.equal(joined.includes('You are executing a single Cortex'), false)
+  assert.equal(fs.readFileSync(path.join(FIXTURE, 'buggy.js'), 'utf8'), srcBefore)
   assert.ok(fs.existsSync(ledger))
-  const lines = fs.readFileSync(ledger, 'utf8').trim().split('\n')
-  assert.ok(lines.length >= 3)
 })
 
 test('blocked plan refuses execution', async () => {

@@ -1,7 +1,8 @@
 /**
  * claude-code-adapter.mjs — Claude Code CLI via spawn (no shell).
- * Inspected flags: -p/--print, --model, --effort, --output-format json,
- * --permission-mode, --bare. No --dangerously-skip-permissions under root by default.
+ * Prompt is sent on stdin — never stored in audit argv.
+ * Truncated output is a hard failure.
+ * model_applied stays null unless stdout proves a model id.
  */
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -36,10 +37,10 @@ export function preflight({ model, effort } = {}) {
   } catch (e) {
     return { ok: false, reason: 'claude_version_failed', details: String(e.message || e) }
   }
-  // auth presence (file exists only — no content read beyond existence)
   const cred = path.join(process.env.HOME || '/root', '.claude', '.credentials.json')
-  const hasCred = fs.existsSync(cred)
-  if (!hasCred) return { ok: false, reason: 'claude_credentials_missing', details: { version } }
+  if (!fs.existsSync(cred)) {
+    return { ok: false, reason: 'claude_credentials_missing', details: { version } }
+  }
   if (model && !SUPPORTED_MODELS.has(model)) {
     return { ok: false, reason: 'model_not_supported_by_adapter', details: { model, version } }
   }
@@ -59,9 +60,9 @@ export function preflight({ model, effort } = {}) {
   }
 }
 
-export function buildArgv({ model, effort, prompt, permissionMode = 'acceptEdits' }) {
-  // Array form only — never shell string
-  const argv = [
+/** Public argv for spawn + audit — NEVER includes prompt text. */
+export function buildArgv({ model, effort, permissionMode = 'acceptEdits' }) {
+  return [
     '-p',
     '--bare',
     '--output-format',
@@ -73,15 +74,12 @@ export function buildArgv({ model, effort, prompt, permissionMode = 'acceptEdits
     '--permission-mode',
     permissionMode,
     '--no-session-persistence',
-    prompt,
   ]
-  return argv
 }
 
 export function parseResult(stdout) {
   try {
     const j = JSON.parse(stdout)
-    // Claude JSON print shape varies; try common fields
     const text = j.result || j.text || j.content || JSON.stringify(j).slice(0, 2000)
     let parsed = null
     const m = String(text).match(/\{[\s\S]*"status"[\s\S]*\}/)
@@ -92,15 +90,18 @@ export function parseResult(stdout) {
         parsed = null
       }
     }
-    return { text: String(text), parsed, raw_type: typeof j }
+    const modelApplied =
+      j.model ||
+      j.modelID ||
+      j.model_id ||
+      (typeof j.message === 'object' && j.message?.model) ||
+      null
+    return { text: String(text), parsed, raw_type: typeof j, model_applied: modelApplied }
   } catch {
-    return { text: stdout, parsed: null, raw_type: 'text' }
+    return { text: stdout, parsed: null, raw_type: 'text', model_applied: null }
   }
 }
 
-/**
- * executeSession — bounded spawn
- */
 export function executeSession({
   cwd,
   model,
@@ -113,7 +114,7 @@ export function executeSession({
 }) {
   const pf = preflight({ model, effort })
   if (!pf.ok) {
-    return {
+    return Promise.resolve({
       status: 'blocked',
       exit_code: null,
       stdout_redacted: '',
@@ -124,36 +125,49 @@ export function executeSession({
       effort_requested: effort,
       effort_applied: null,
       argv: [],
+      argv_audit: [],
       parsed: null,
+      truncated: false,
       preflight: pf,
-    }
+    })
   }
   const bin = pf.details.bin
-  const argv = buildArgv({ model, effort, prompt })
+  const argv = buildArgv({ model, effort })
+  const argvAudit = [bin, ...argv] // no prompt
   const started = Date.now()
+
   return new Promise((resolve) => {
     const child = spawnFn(bin, argv, {
       cwd,
       env: filterEnv(env),
       shell: false,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe'],
     })
     let stdout = ''
     let stderr = ''
+    let truncated = false
     let killed = false
+
+    if (child.stdin) {
+      child.stdin.write(String(prompt || ''))
+      child.stdin.end()
+    }
+
     const onChunk = (buf, which) => {
       const s = buf.toString('utf8')
       if (which === 'out') {
         stdout += s
-        if (stdout.length > maxOutputBytes) {
+        if (Buffer.byteLength(stdout, 'utf8') > maxOutputBytes) {
           stdout = stdout.slice(0, maxOutputBytes) + '\n[TRUNCATED]'
+          truncated = true
           killed = true
           child.kill('SIGKILL')
         }
       } else {
         stderr += s
-        if (stderr.length > maxOutputBytes) {
+        if (Buffer.byteLength(stderr, 'utf8') > maxOutputBytes) {
           stderr = stderr.slice(0, maxOutputBytes) + '\n[TRUNCATED]'
+          truncated = true
         }
       }
     }
@@ -163,6 +177,7 @@ export function executeSession({
       killed = true
       child.kill('SIGKILL')
     }, timeoutMs)
+
     child.on('error', (err) => {
       clearTimeout(timer)
       resolve({
@@ -175,23 +190,23 @@ export function executeSession({
         model_applied: null,
         effort_requested: effort,
         effort_applied: null,
-        argv: [bin, ...argv],
+        argv: argvAudit,
+        argv_audit: argvAudit,
         parsed: null,
+        truncated,
         preflight: pf,
       })
     })
+
     child.on('close', (code) => {
       clearTimeout(timer)
       const parsedWrap = parseResult(stdout)
-      const status = killed
-        ? code === null || code === 137 || code === 1
-          ? stdout.includes('[TRUNCATED]')
-            ? 'completed'
-            : 'timeout'
-          : 'timeout'
-        : code === 0
-          ? 'completed'
-          : 'failed'
+      let status
+      if (truncated) status = 'failed'
+      else if (killed) status = 'timeout'
+      else if (code === 0) status = 'completed'
+      else status = 'failed'
+
       resolve({
         status,
         exit_code: code,
@@ -199,11 +214,14 @@ export function executeSession({
         stderr_redacted: redactText(stderr),
         duration_ms: Date.now() - started,
         model_requested: model,
-        model_applied: model,
+        // only claim applied if stdout proves it
+        model_applied: parsedWrap.model_applied || null,
         effort_requested: effort,
         effort_applied: effort,
-        argv: [bin, ...argv],
+        argv: argvAudit,
+        argv_audit: argvAudit,
         parsed: parsedWrap.parsed,
+        truncated,
         preflight: pf,
       })
     })
@@ -211,23 +229,11 @@ export function executeSession({
 }
 
 function filterEnv(env) {
-  const allow = [
-    'PATH',
-    'HOME',
-    'USER',
-    'LANG',
-    'LC_ALL',
-    'TERM',
-    'NODE_PATH',
-    'TMPDIR',
-    'TMP',
-    'TEMP',
-  ]
+  const allow = ['PATH', 'HOME', 'USER', 'LANG', 'LC_ALL', 'TERM', 'NODE_PATH', 'TMPDIR', 'TMP', 'TEMP']
   const out = {}
   for (const k of allow) {
     if (env[k] != null) out[k] = env[k]
   }
-  // Claude may need its config dir under HOME — no secrets copied
   return out
 }
 

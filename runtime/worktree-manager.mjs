@@ -1,5 +1,6 @@
 /**
  * worktree-manager.mjs — isolated worktrees under .cortex/worktrees only.
+ * Existing path is refused (no silent reuse).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -23,14 +24,15 @@ export function createWorktree({ missionId, sessionId, baseRef = 'HEAD', repoRoo
   const dest = resolveWorktreePath(missionId, sessionId)
   fs.mkdirSync(path.dirname(dest), { recursive: true })
   if (fs.existsSync(dest)) {
-    return { path: dest, created: false }
+    const err = new Error('worktree_already_exists')
+    err.code = 'WORKTREE_EXISTS'
+    err.path = dest
+    throw err
   }
-  // git worktree add
   execFileSync('git', ['worktree', 'add', '--detach', dest, baseRef], {
     cwd: repoRoot,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
-  // refuse symlinks escaping
   assertNoEscapingSymlinks(dest)
   return { path: dest, created: true, baseRef }
 }

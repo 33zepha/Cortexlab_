@@ -3,6 +3,8 @@
  */
 import crypto from 'node:crypto'
 import { planHash } from './mission-planner-v2.mjs'
+import { validateMissionPlanV2 } from './mission-planner-v2.mjs'
+import { loadAllContracts } from './contracts.mjs'
 
 export function checkFeatureFlag(env = process.env) {
   return env.CORTEX_SESSION_RUNNER_V1 === '1'
@@ -12,6 +14,11 @@ export function checkExecuteFlag(argv = process.argv) {
   return argv.includes('--execute')
 }
 
+/**
+ * worktree scope requires approved_by=boss exclusively.
+ * fixture_only may use test_fixture.
+ * expires_at is mandatory and must be a future timestamp.
+ */
 export function validateAuthorization(auth, plan, { now = Date.now() } = {}) {
   const errors = []
   if (!auth || typeof auth !== 'object') return { ok: false, errors: ['auth_missing'] }
@@ -24,13 +31,18 @@ export function validateAuthorization(auth, plan, { now = Date.now() } = {}) {
   }
   if (!['fixture_only', 'worktree'].includes(auth.scope)) errors.push('bad_scope')
   if (!auth.approved_by) errors.push('approved_by_missing')
-  if (auth.scope === 'worktree' && auth.approved_by !== 'boss' && auth.approved_by !== 'test_fixture') {
-    // real worktree requires boss; fixture allows test_fixture
-    if (auth.approved_by !== 'boss') errors.push('worktree_requires_boss')
+  if (auth.scope === 'worktree' && auth.approved_by !== 'boss') {
+    errors.push('worktree_requires_boss')
   }
-  if (auth.expires_at) {
+  if (auth.scope === 'fixture_only' && !['test_fixture', 'boss'].includes(auth.approved_by)) {
+    errors.push('fixture_requires_test_fixture_or_boss')
+  }
+  if (!auth.expires_at) {
+    errors.push('expires_at_required')
+  } else {
     const exp = Date.parse(auth.expires_at)
-    if (Number.isFinite(exp) && exp < now) errors.push('auth_expired')
+    if (!Number.isFinite(exp)) errors.push('expires_at_invalid')
+    else if (exp < now) errors.push('auth_expired')
   }
   if (auth.allow_commit === true) errors.push('allow_commit_forbidden_v1')
   if (auth.allow_push === true) errors.push('allow_push_forbidden_v1')
@@ -38,24 +50,28 @@ export function validateAuthorization(auth, plan, { now = Date.now() } = {}) {
   return { ok: errors.length === 0, errors }
 }
 
-export function assertPlanExecutable(plan) {
+export function assertPlanExecutable(plan, catalogs = null) {
   const errors = []
   if (!plan) errors.push('plan_missing')
   else {
     if (plan.status !== 'planned') errors.push(`plan_status_${plan.status}`)
     if (plan.organization?.status !== 'ok') errors.push(`org_status_${plan.organization?.status}`)
-    if (plan.mode !== 'shadow' && plan.mode !== 'execute') {
-      // shadow plans can be executed under runner with auth — mode stays shadow
+    try {
+      const cats = catalogs || loadAllContracts()
+      const vr = validateMissionPlanV2(plan, cats)
+      if (!vr.ok) errors.push(...vr.errors.map((e) => `plan_validation:${e}`))
+    } catch (e) {
+      errors.push(`plan_validation_threw:${e.message || e}`)
     }
   }
   return { ok: errors.length === 0, errors }
 }
 
-export function gateExecution({ env, argv, plan, auth, assignment }) {
+export function gateExecution({ env, argv, plan, auth, assignment, catalogs = null }) {
   const errors = []
   if (!checkFeatureFlag(env)) errors.push('feature_flag_off')
   if (!checkExecuteFlag(argv)) errors.push('execute_flag_missing')
-  const pe = assertPlanExecutable(plan)
+  const pe = assertPlanExecutable(plan, catalogs)
   if (!pe.ok) errors.push(...pe.errors)
   const ae = validateAuthorization(auth, plan)
   if (!ae.ok) errors.push(...ae.errors)
@@ -65,7 +81,6 @@ export function gateExecution({ env, argv, plan, auth, assignment }) {
       errors.push('assignment_not_authorized')
     }
   }
-  // recalc hash
   if (plan?.metadata?.plan_hash && planHash(plan) !== plan.metadata.plan_hash) {
     errors.push('plan_tampered')
   }

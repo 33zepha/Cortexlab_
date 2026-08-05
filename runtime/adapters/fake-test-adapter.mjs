@@ -15,11 +15,27 @@ export function supportsAssignment() {
   return true
 }
 
-/**
- * Fixes a known fixture bug file if present.
- */
-export async function executeSession({ cwd, model, effort, prompt }) {
+export async function executeSession({ cwd, model, effort, prompt, maxOutputBytes }) {
   const started = Date.now()
+  // simulate truncation failure path if asked
+  if (maxOutputBytes === 1) {
+    return {
+      status: 'failed',
+      exit_code: 1,
+      stdout_redacted: 'x[TRUNCATED]',
+      stderr_redacted: '',
+      duration_ms: Date.now() - started,
+      model_requested: model,
+      model_applied: null,
+      effort_requested: effort,
+      effort_applied: effort,
+      argv: ['fake-adapter', '--model', String(model), '--effort', String(effort)],
+      argv_audit: ['fake-adapter', '--model', String(model), '--effort', String(effort)],
+      parsed: null,
+      truncated: true,
+      preflight: preflight(),
+    }
+  }
   const target = path.join(cwd, 'buggy.js')
   let changed = false
   if (fs.existsSync(target)) {
@@ -34,7 +50,7 @@ export async function executeSession({ cwd, model, effort, prompt }) {
     status: 'completed',
     summary: changed ? 'fixed subtraction bug' : 'no known bug pattern',
     changed_files: changed ? ['buggy.js'] : [],
-    tests_requested: ['node --test'],
+    tests_requested: [],
     risks: [],
     missing_evidence: [],
   }
@@ -45,11 +61,13 @@ export async function executeSession({ cwd, model, effort, prompt }) {
     stderr_redacted: '',
     duration_ms: Date.now() - started,
     model_requested: model,
-    model_applied: model || 'fake',
+    model_applied: null, // fake never proves applied model
     effort_requested: effort,
     effort_applied: effort,
     argv: ['fake-adapter', '--model', String(model), '--effort', String(effort)],
+    argv_audit: ['fake-adapter', '--model', String(model), '--effort', String(effort)],
     parsed,
+    truncated: false,
     preflight: preflight(),
   }
 }
