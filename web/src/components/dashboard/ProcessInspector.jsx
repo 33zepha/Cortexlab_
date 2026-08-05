@@ -46,9 +46,9 @@ export default function ProcessInspector({ inspector, onClose }) {
       <InspectorList title="PREUVES" items={evidence} status />
       <InspectorList title="DÉPENDANCES" items={dependencies} status />
       <footer>
-        <button type="button"><Icon name="play" className="micro-icon" />Intervenir</button>
-        <button type="button"><Icon name="pause" className="micro-icon" />Pause</button>
-        <button type="button" className="danger"><Icon name="stop" className="micro-icon" />Arrêter</button>
+        <button type="button" className="is-primary" disabled title="Bientôt disponible"><Icon name="play" className="micro-icon" />Intervenir</button>
+        <button type="button" disabled title="Bientôt disponible"><Icon name="pause" className="micro-icon" />Pause</button>
+        <button type="button" className="danger" disabled title="Bientôt disponible"><Icon name="stop" className="micro-icon" />Arrêter</button>
       </footer>
     </aside>
   )
