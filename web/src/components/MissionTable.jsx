@@ -71,7 +71,7 @@ function CheckStack({ checks }) {
   )
 }
 
-export default function MissionTable({ missions, now, query = '', attentionOnly = false }) {
+export default function MissionTable({ missions, now, query = '', attentionOnly = false, onSelect }) {
   const normalized = query.trim().toLocaleLowerCase('fr-FR')
   const visible = missions.filter((mission) => {
     if (attentionOnly && !['running', 'escalated', 'incomplete'].includes(mission.status)) return false
@@ -117,17 +117,25 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
               const status = STATUS[mission.status] || STATUS.closed
               const budget = mission.budget || { cost: 0, limits: {}, percentage: null }
               const rawEvent = mission.latest_event?.type || '—'
+              const openMission = () => onSelect?.(mission.id)
               return (
-                <tr key={mission.id}>
-                  <td>
+                <tr
+                  key={mission.id}
+                  className={onSelect ? 'is-clickable' : ''}
+                  onClick={onSelect ? openMission : undefined}
+                  onKeyDown={onSelect ? (event) => { if (event.key === 'Enter') openMission() } : undefined}
+                  role={onSelect ? 'button' : undefined}
+                  tabIndex={onSelect ? 0 : undefined}
+                >
+                  <td data-label="Mission">
                     <div className="primary-cell mission-name-cell">
                       <strong>{mission.name}</strong>
                       <small>#{mission.id}</small>
                       <span>{mission.domain || 'Mission Cortex'}</span>
                     </div>
                   </td>
-                  <td><ManagerCell manager={mission.manager} /></td>
-                  <td>
+                  <td data-label="Manager"><ManagerCell manager={mission.manager} /></td>
+                  <td data-label="Statut">
                     <div className="status-cell">
                       <span className={`status-pill status-${status.tone}`}>
                         {status.label}<i aria-hidden="true" />
@@ -136,21 +144,21 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
                       <span>{formatDuration(mission.duration_ms, mission.started_at, now)}</span>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Progression">
                     <div className="progress-cell">
                       <strong>{mission.progress ?? 0}%</strong>
                       <span className="progress-track"><i style={{ width: `${mission.progress ?? 0}%` }} /></span>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Budget">
                     <div className="budget-cell">
                       <strong>{formatCost(budget.cost)}</strong>
                       <small>/ {formatCost(budget.limits?.maxCost || 0)}</small>
                       <span>{budget.percentage == null ? '—' : `${budget.percentage}%`}</span>
                     </div>
                   </td>
-                  <td><CheckStack checks={mission.checks} /></td>
-                  <td>
+                  <td data-label="Contrôles"><CheckStack checks={mission.checks} /></td>
+                  <td data-label="Dernier événement">
                     <div className="event-cell" title={rawEvent}>
                       <strong>{EVENT_LABELS[rawEvent] || rawEvent.replaceAll('_', ' ')}</strong>
                       <small>{relativeTime(mission.latest_event?.ts, now)}</small>

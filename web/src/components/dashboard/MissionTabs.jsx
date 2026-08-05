@@ -1,11 +1,25 @@
+const TABS = [
+  ['Vue d’ensemble', true],
+  ['Graphe d’exécution', false],
+  ['Journal des événements', false],
+  ['Results', false],
+  ['Evaluations', false],
+]
+
 export default function MissionTabs() {
   return (
     <nav className="reference-tabs">
-      <button className="is-active">Vue d'ensemble</button>
-      <button>Graphe d'exécution</button>
-      <button>Journal des événements</button>
-      <button>Artefacts</button>
-      <button>Évaluations</button>
+      {TABS.map(([label, enabled]) => (
+        <button
+          key={label}
+          type="button"
+          className={enabled ? 'is-active' : 'is-disabled'}
+          disabled={!enabled}
+          title={enabled ? undefined : 'Bientôt disponible'}
+        >
+          {label}
+        </button>
+      ))}
     </nav>
   )
 }

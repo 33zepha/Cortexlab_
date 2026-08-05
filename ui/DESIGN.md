@@ -3,59 +3,87 @@ version: alpha
 name: Cortex Console
 description: Design system for the Cortex local observability console — watch, control and understand your agents, IA and Hermes in real time. Derived from 10 reference dashboards (Orchestra, Synqra, JunoMind, Agentic UI, Recent Executions, Agent Timestamp, Cost Breakdown, Logistics, +2).
 colors:
-  primary: "#4F46E5"
-  primary-hover: "#4338CA"
+  primary: "#0B725D"
+  primary-hover: "#075344"
   success: "#16A34A"
-  warning: "#D97706"
-  error: "#DC2626"
-  info: "#2563EB"
-  running: "#0EA5E9"
-  bg: "#F6F7F8"
-  sidebar: "#FBFBFC"
+  warning: "#D48A2C"
+  error: "#D75252"
+  info: "#5872C5"
+  running: "#0B725D"
+  bg: "#F6F8F6"
+  sidebar: "#FBFCFB"
   surface: "#FFFFFF"
-  sub-surface: "#F8F9FA"
-  border: "#DFE2E6"
-  border-strong: "#CDD2D8"
-  text: "#17191C"
-  text-muted: "#70757D"
+  sub-surface: "#F8FAF9"
+  border: "#E3E8E4"
+  border-strong: "#C8D2CB"
+  text: "#17231E"
+  text-muted: "#728078"
 typography:
-  h1:
+  # Six steps, four weights (400/500/600/700 — the only Inter static
+  # weights actually loaded). No in-between values like 650 or 720:
+  # arbitrary weights just snap to the nearest loaded one, so precision
+  # there is fake. See web/src/styles/index.css :root for the --fs-* tokens.
+  xl:
     fontFamily: Inter
-    fontSize: 1.75rem
+    fontSize: 24px
     fontWeight: 700
     lineHeight: 1.2
-    letterSpacing: "-0.02em"
-  h2:
+    letterSpacing: "-0.03em"
+  lg:
     fontFamily: Inter
-    fontSize: 1.25rem
+    fontSize: 18px
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+  md:
+    fontFamily: Inter
+    fontSize: 15px
     fontWeight: 600
     lineHeight: 1.3
-  body-md:
+  base:
     fontFamily: Inter
-    fontSize: 0.875rem
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 1.5
+  sm:
+    fontFamily: Inter
+    fontSize: 12px
     fontWeight: 400
     lineHeight: 1.5
-  label:
+  xs:
     fontFamily: Inter
-    fontSize: 0.75rem
+    fontSize: 11px
+    fontWeight: 400
+    lineHeight: 1.4
+  eyebrow:
+    fontFamily: Inter
+    fontSize: 10px
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: "0.04em"
+    letterSpacing: "0.05em"
   mono:
-    fontFamily: "JetBrains Mono"
-    fontSize: 0.8125rem
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+    fontSize: 11px
     fontWeight: 400
 rounded:
-  sm: 6px
-  md: 8px
-  lg: 12px
-  xl: 16px
+  xs: 6px
+  sm: 8px
+  md: 10px
+  lg: 14px
+  xl: 20px
 spacing:
   xs: 4px
   sm: 8px
   md: 16px
   lg: 24px
   xl: 32px
+shadow:
+  # Layered — a hairline plus a soft ambient blur, never a single flat
+  # shadow and never a dark halo. See --shadow-* tokens.
+  xs: "0 1px 2px rgba(23,35,30,.05)"
+  sm: "0 1px 2px rgba(23,35,30,.04), 0 6px 16px rgba(23,35,30,.05)"
+  md: "0 2px 4px rgba(23,35,30,.05), 0 14px 32px rgba(23,35,30,.08)"
+  lg: "0 8px 16px rgba(23,35,30,.06), 0 28px 56px rgba(23,35,30,.12)"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
@@ -115,20 +143,21 @@ Real-time data is fed by the existing NDJSON ledger (`runtime/event-store.mjs`) 
 
 # Colors
 
-- **Primary (#4F46E5):** Cortex indigo. The only high-emphasis interaction color (primary buttons, active nav, links).
+- **Primary (#0B725D):** Cortex jade. The only high-emphasis interaction color (primary buttons, active nav, links, running state). No purple, no indigo — jade is the single accent.
 - **Success (#16A34A):** autonomous delivery, agent active, complete.
-- **Warning (#D97706):** needs human information, threshold 60–85%.
-- **Error (#DC2626):** escalation required, failed, threshold >85%.
-- **Info / Running (#2563EB / #0EA5E9):** navigation accents, in-progress states.
+- **Warning (#D48A2C):** needs human information, waiting for intervention — orange is reserved for this meaning only.
+- **Error (#D75252):** escalation required, failed, destructive action — red is reserved for this meaning only.
+- **Info (#5872C5):** discreet navigation/informational accents only, never a dominant color.
 - **Neutrals — a layered stack, not one flat wash.** Four surface values that must stay
-  distinguishable: canvas `#F6F7F8` → sidebar `#FBFBFC` → surface `#FFFFFF` (cards) →
-  sub-surface `#F8F9FA` (blocks nested *inside* a card). Borders carry the separation:
-  `#DFE2E6` default, `#CDD2D8` for emphasis (hover, selected, dividers that must read).
-  Text `#17191C`, muted `#70757D` — muted stays legible, never a pale gray.
+  distinguishable: canvas `#F6F8F6` (broken-white, slightly mineral) → sidebar `#FBFCFB` → surface `#FFFFFF` (cards) →
+  sub-surface `#F8FAF9` (blocks nested *inside* a card). Borders carry the separation:
+  `#DDE4DF` default, `#C8D2CB` for emphasis (hover, selected, dividers that must read).
+  Text `#17231E` (graphite), muted `#728078` — muted stays legible, never a pale gray.
+  No black backgrounds anywhere, including technical/terminal surfaces.
 
 # Typography
 
-Inter for everything (matches all 10 references). JetBrains Mono for ledger hashes, IDs, technical values. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.04em`) is for section eyebrows and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
+Inter for everything (matches all 10 references), loaded at exactly four static weights (400/500/600/700) — never specify a weight outside that set, it will just snap to the nearest one. System monospace stack (`ui-monospace, SFMono-Regular, Menlo`) for ledger hashes, IDs, technical values — no extra webfont for it. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.05em`, the `eyebrow` step) is for section labels and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
 
 # Layout
 
@@ -142,22 +171,28 @@ Inter for everything (matches all 10 references). JetBrains Mono for ledger hash
 - **Sidebar header:** wordmark + live runtime state (`● Runtime online`, driven by the SSE
   connection). **Footer:** live readouts (missions 24h, pending approvals, last run) —
   state, visually distinct from navigation.
-- **Top bar:** page title left; search + Filters + primary `+ New` / `+ Run Mission` right.
+- **Top bar:** page title left; search + Filters right. Missions start elsewhere (Hermes,
+  Discord, terminal) — the Console observes, so there is no "+ Run Mission" action here.
 - **Main:** KPI summary row (3–4 cards) → toolbar (view toggle grid/table, refresh) → content grid or table.
 - **Content density:** cards max 3-up on desktop, table for dense agent lists (JunoMind pattern).
 
 # Elevation & Depth
 
-**Borders do the work, not shadows.** Every card, panel and nested block carries a
-1px `border` — that is what creates the cut. Shadows stay tight and local
-(`0 1px 2px rgba(23,25,28,0.05)` on cards), never a diffuse halo, or the whole UI
-reads as if covered in tracing paper. Only true overlays (drawer, popover) lift off
-the page: `0 8px 24px rgba(23,25,28,0.12)` plus a border. Hover raises the *border*
-to `border-strong` rather than growing the shadow.
+**Borders do the work, shadows are a whisper.** Every card, panel and nested block
+carries a 1px `border` — that is what creates the cut. Shadows are layered (a 1px
+hairline plus a soft ambient blur) instead of one flat blur, and stay nearly invisible
+at rest: `shadow.xs` (`0 1px 2px rgba(23,35,30,.05)`) on resting cards. Floating
+elements (canvas toolbar, node cards, dropdowns) step up to `shadow.sm`/`shadow.md`.
+Only true overlays (drawer, mobile sheet) use `shadow.lg`. Never a dark halo. Hover
+raises the *border* to `border-strong` before it grows the shadow.
 
 # Shapes
 
-Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inner blocks, `sm` (6px) for buttons/badges/toggles. Consistent radius = cohesive feel.
+One consistent radius scale, no one-off values: `xl` (20px) for large overlays/sheets,
+`lg` (14px) for cards/panels/containers, `md` (10px) for node cards and nested blocks,
+`sm` (8px) for buttons/inputs/badges, `xs` (6px) for tiny chips and dots. Every
+component maps to one of these five — that consistency is what reads as "finished"
+rather than "template".
 
 # Components
 
@@ -172,7 +207,7 @@ Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inn
 - **Table:** columns checkbox · NAME · ROLE · STATUS(badge) · CONFIDENCE · LAST INPUT · ETA · PROJECT · actions. Row hover = subtle `bg`.
 - **KPI summary card:** big metric + delta vs last week (green up / red down).
 - **Execution history list:** time · icon+name · status badge (Recent Executions pattern), fed by `events.ndjson`.
-- **Button primary:** indigo solid; hover = `primary-hover`.
+- **Button primary:** jade solid; hover = `primary-hover`.
 
 # Do's and Don'ts
 
