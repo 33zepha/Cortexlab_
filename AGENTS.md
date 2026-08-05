@@ -76,26 +76,29 @@ puis `agent.result` (violation, findings, durée). Le coût d'un mandat vaut
 `cost_index × DELEGATION_UNIT` et alimente le budget de mission (INV-010) —
 `cost_index` et `maxCost` sont des indices sans unité, pas une devise.
 
-### Chaîne d'autorité
+### ARCHITECTURE TRANSITOIRE
+
+> **Ce n'est PAS la cible finale.** Les managers et agents portent des *rôles
+> organisationnels*. Claude, Codex, Kimi, Luna et HY3 sont des *modèles*
+> interchangeables ; le choix du modèle et de l'effort se fait par mandat.
+> Une migration dédiée (`feat/role-model-separation`) séparera rôles, modèles
+> et niveaux d'effort. Ce qui suit est la représentation **actuelle** pour
+> compatibilité avec le runtime — pas l'organigramme définitif.
+
 ```
-Boss → Hermes (CEO, closure)
+Boss → Hermes (CEO, closure)                    [rôle CEO ; modèle HY3 aujourd'hui]
          ├── Chief of Staff  gouvernance, budgets, policies, closures
-         ├── Codex           Chief Engineer — autorité technique du dépôt
-         │     └── Luna Max  exécutant d'ingénierie (worker)
-         ├── Antigravity     UI, prototypage, expérimentation
-         ├── Claude          analyse, critique, conseil
-         └── Kimi            recherche, lecture longue, synthèse
+         ├── Codex           ingénierie (binding modèle temporaire)
+         │     └── Luna      exécutant (worker ; binding modèle temporaire)
+         ├── Claude          UX / spec / critique (binding modèle temporaire)
+         └── Kimi            recherche (binding modèle temporaire)
 ```
 
-**Codex est le Chief Engineer** : autorité finale sur l'ingénierie du dépôt
-(implémentation, tests, debugging, refactoring, sécurité du code). Il est
-`tier: manager` et donc candidat du router, rattaché à Hermes — plus à
-Antigravity. Autorité **technique**, pas de gouvernance : il ne produit aucune
-closure (INV-006).
-
-Antigravity conserve un domaine **distinct et non concurrent** (UI, prototypage,
-intégration frontend). Deux agents ne peuvent pas détenir le même domaine
-d'autorité : c'est vérifié par `test/authority.test.mjs`.
+- Claude, Codex, Kimi et Luna sont encore représentés comme *agents* pour
+  compatibilité avec le runtime actuel (registre + router à tokens).
+- Cette représentation n'est **pas** la cible finale.
+- **Antigravity a été retiré** : aucun fallback, aucun alias. L'historique
+  `ledger/` et `bundles/` reste immuable.
 
 ⚠️ `strengths` contient des **tokens machine** comparés par `requiredStrengths()`.
 La description en prose va dans `capabilities` / `domain_expertise`, qui

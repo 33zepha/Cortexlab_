@@ -89,6 +89,13 @@ for (const mf of manifestFiles) {
         role: ag?.role || null,
         provider: ag?.provider || null,
         model: ag?.model || null,
+        // ARCHITECTURE TRANSITOIRE DE COMPATIBILITÉ — role/modele encore fusionnes
+        // dans les entrees AG-*. Propages pour que le registre derive porte la
+        // semantique (pas seulement les commentaires YAML). Retires a la
+        // bascule feat/role-model-separation.
+        architecture_status: ag?.architecture_status || null,
+        role_binding: ag?.role_binding || null,
+        reasoning_effort_binding: ag?.reasoning_effort_binding || null,
         // Chaine de rattachement : sans elle le dashboard ne peut pas afficher
         // qui repond a qui, et une hierarchie incoherente passe inapercue.
         reports_to: ag?.reports_to || null,

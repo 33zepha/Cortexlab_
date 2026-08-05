@@ -153,7 +153,7 @@
       "controls": [
         "ctrl-single-source"
       ],
-      "statement": "Modele d'entreprise: Hermes raisonne en CEO H24 et orchestre des managers (IAs de haut niveau, ex. Claude/Antigravity/Kimi) qui orchestrent des salaries (agents/workers). Toutes les IAs branchees sont utilisables; le choix d'une IA pour une mission vise la meilleure qualite au cout le plus bas, via des rapports concis de chaque IA. Aucune IA n'est privilegiee par defaut: le routing est pilote par aptitude, cout et rapport qualite/prix, jamais par habitude."
+      "statement": "Modele d'entreprise: Hermes raisonne en CEO H24 et orchestre des managers et agents porteurs de roles organisationnels. Les modeles IA disponibles sont selectionnes dynamiquement selon aptitude, cout, qualite, quota, contexte, outils et effort. Toutes les IAs branchees sont utilisables; aucune n'est privilegiee par defaut — le routing est pilote par aptitude et rapport qualite/cout, jamais par habitude. NOTE TRANSITOIRE: le registre actuel (entrees nommees Claude/Codex/Kimi/ Luna) est une representation de compatibilite avant la migration role/modele; ce n'est pas l'organigramme cible definitif."
     },
     {
       "id": "CTRL-NO-DEBUG-LOG",
@@ -196,38 +196,6 @@
       }
     },
     {
-      "id": "AG-ANTIGRAVITY",
-      "type": "agent",
-      "tier": "manager",
-      "name": "Antigravity",
-      "authority": 2,
-      "domain": "orchestration",
-      "status": "active",
-      "version": 1,
-      "source": "constitution/agents.yaml",
-      "role": "Manager UI/experience produit : prototypage visuel, integration frontend, experimentation",
-      "provider": "google",
-      "model": "antigravity-code-agent",
-      "reports_to": "AG-HERMES",
-      "reasoning_effort": null,
-      "strengths": [
-        "ui",
-        "prototypage",
-        "frontend-integration",
-        "experimentation",
-        "orchestration-agents"
-      ],
-      "domain_expertise": [
-        "ui_ux",
-        "visual_prototyping",
-        "frontend_integration",
-        "experimentation"
-      ],
-      "capabilities": null,
-      "cost_index": 1.3,
-      "quality_index": 0.92
-    },
-    {
       "id": "AG-CLAUDE",
       "type": "agent",
       "tier": "manager",
@@ -237,18 +205,34 @@
       "status": "active",
       "version": 1,
       "source": "constitution/agents.yaml",
-      "role": "Manager produit/strategie : decomposer, piloter les salaries, reporter a Hermes",
+      "role": "BINDING TRANSITOIRE — Manager produit/strategie et UX : analyse, critique, specification UI, direction produit, revue visuelle",
       "provider": "anthropic",
       "model": "claude-opus-4-8",
-      "reports_to": null,
+      "architecture_status": "transitional_compatibility",
+      "role_binding": "transitional",
+      "reasoning_effort_binding": null,
+      "reports_to": "AG-HERMES",
       "reasoning_effort": null,
       "strengths": [
         "raisonnement",
         "redaction",
-        "code",
-        "conformite"
+        "conformite",
+        "analyse",
+        "critique",
+        "conseil",
+        "analyse-ux",
+        "critique-ux",
+        "specification-ui",
+        "direction-produit",
+        "revue-visuelle"
       ],
-      "domain_expertise": null,
+      "domain_expertise": [
+        "product_strategy",
+        "ux_analysis",
+        "ui_specification",
+        "visual_review",
+        "critique"
+      ],
       "capabilities": null,
       "cost_index": 1.7,
       "quality_index": 0.95
@@ -263,9 +247,12 @@
       "status": "active",
       "version": 1,
       "source": "constitution/agents.yaml",
-      "role": "Chief Engineer de Cortex : autorite technique responsable de l'architecture d'implementation, du code, des tests, des corrections et de la qualite logicielle finale.",
+      "role": "BINDING TRANSITOIRE — Chief Engineer de Cortex : autorite technique responsable de l'architecture d'implementation, du code, des tests, des corrections et de la qualite logicielle finale.",
       "provider": "openai",
       "model": "gpt-5.6-luna",
+      "architecture_status": "transitional_compatibility",
+      "role_binding": "transitional",
+      "reasoning_effort_binding": "transitional",
       "reports_to": "AG-HERMES",
       "reasoning_effort": "max",
       "strengths": [
@@ -311,9 +298,12 @@
       "status": "active",
       "version": 1,
       "source": "constitution/agents.yaml",
-      "role": "CEO : raisonne H24, orchestration des managers, decisions de closure",
+      "role": "BINDING TRANSITOIRE — CEO : raisonne H24, orchestration des managers, decisions de closure",
       "provider": "nous",
       "model": "hy3",
+      "architecture_status": "transitional_compatibility",
+      "role_binding": "transitional",
+      "reasoning_effort_binding": null,
       "reports_to": null,
       "reasoning_effort": null,
       "strengths": [
@@ -337,10 +327,13 @@
       "status": "active",
       "version": 1,
       "source": "constitution/agents.yaml",
-      "role": "Manager recherche/donnees : synthese long contexte, reporting dense",
+      "role": "BINDING TRANSITOIRE — Manager recherche/donnees : synthese long contexte, reporting dense",
       "provider": "moonshot",
       "model": "kimi-k3",
-      "reports_to": null,
+      "architecture_status": "transitional_compatibility",
+      "role_binding": "transitional",
+      "reasoning_effort_binding": null,
+      "reports_to": "AG-HERMES",
       "reasoning_effort": null,
       "strengths": [
         "long-context",
@@ -362,9 +355,12 @@
       "status": "active",
       "version": 1,
       "source": "constitution/agents.yaml",
-      "role": "Executant d'ingenierie (Max reasoning) : boucle plan/code/test/correct sous mandat du Chief Engineer, produit preuves, rend au CoS",
+      "role": "BINDING TRANSITOIRE — Executant d'ingenierie (Max reasoning) : boucle plan/code/test/correct sous mandat du Chief Engineer, produit preuves, rend au CoS",
       "provider": "openai",
       "model": "gpt-5.6-luna",
+      "architecture_status": "transitional_compatibility",
+      "role_binding": "transitional",
+      "reasoning_effort_binding": null,
       "reports_to": "AG-CODEX",
       "reasoning_effort": null,
       "strengths": [
