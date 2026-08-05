@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-08-05T18:07:32Z",
+  "host": "redacted",
+  "provider_auth": {
+    "codex_subscription_cli": {
+      "status": "authenticated",
+      "evidence": "codex doctor + models_cache"
+    },
+    "claude_code_subscription": {
+      "status": "authenticated",
+      "evidence": "local session transcripts exist"
+    },
+    "kimi_code_oauth": {
+      "status": "authenticated",
+      "evidence": "kimi provider list --json managed oauth"
+    },
+    "hermes_xai_oauth": {
+      "status": "authenticated",
+      "evidence": "hermes status xAI OAuth logged in + provider_models_cache.xai-oauth"
+    },
+    "nous_portal_free": {
+      "status": "authenticated",
+      "evidence": "hermes status Nous Portal logged in; default tencent/hy3:free"
+    }
+  },
+  "variant_confirmations": [
+    {
+      "variant_id": "claude-opus-4-8",
+      "status": "confirmed_success",
+      "evidence": "multiple ~/.claude session jsonl with model=claude-opus-4-8 effort=high; no private content retained"
+    },
+    {
+      "variant_id": "claude-sonnet-5",
+      "status": "confirmed_success",
+      "evidence": "multiple session jsonl with model=claude-sonnet-5 effort=high"
+    },
+    {
+      "variant_id": "claude-opus-5",
+      "status": "confirmed_success",
+      "evidence": "session jsonl with model=claude-opus-5 effort=high"
+    },
+    {
+      "variant_id": "grok-4.5",
+      "status": "confirmed_catalog",
+      "evidence": "listed in hermes provider_models_cache xai-oauth.models; current Hermes desktop runtime model grok-4.5 via xai-oauth"
+    },
+    {
+      "variant_id": "grok-4.3",
+      "status": "confirmed_catalog",
+      "evidence": "listed in xai-oauth.models cache"
+    },
+    {
+      "variant_id": "grok-build-0.1",
+      "status": "confirmed_catalog",
+      "evidence": "listed in xai-oauth.models cache"
+    },
+    {
+      "variant_id": "grok-4.20-multi-agent",
+      "status": "confirmed_catalog",
+      "evidence": "listed as grok-4.20-multi-agent-0309 in xai-oauth.models"
+    }
+  ],
+  "notes": [
+    "No OAuth tokens, cookies, or conversation bodies stored."
+  ]
+}

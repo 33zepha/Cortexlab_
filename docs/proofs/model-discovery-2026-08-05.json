@@ -195,7 +195,18 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "codex models_cache visibility=list"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -254,7 +265,18 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "codex models_cache visibility=list"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -315,7 +337,18 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "codex models_cache visibility=list"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -370,7 +403,18 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "codex models_cache visibility=list"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -426,7 +470,18 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "codex models_cache visibility=list"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -484,7 +539,18 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "codex models_cache visibility=list"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -539,7 +605,17 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "codex",
@@ -595,7 +671,17 @@
         "last_seen_at": "2026-08-05T14:37:24Z",
         "failure_reason": null
       },
-      "notes": "none effort not listed in supported_reasoning_levels for this slug"
+      "notes": "none effort not listed in supported_reasoning_levels for this slug",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": 272000,
+        "policy_cap": 258400,
+        "policy_cap_reason": "effective_percent_from_codex_cache",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -657,7 +743,18 @@
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
       },
-      "notes": "used_in_cortex_registry; feature flags reference opus-4-8"
+      "notes": "used_in_cortex_registry; feature flags reference opus-4-8",
+      "variant_access": {
+        "status": "confirmed_success",
+        "evidence": "multiple ~/.claude session jsonl with model=claude-opus-4-8 effort=high; no private content retained"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -691,7 +788,7 @@
       "variant_id": "claude-sonnet-5",
       "display_name": "Claude Sonnet 5",
       "status": "documented_unconfirmed",
-      "selectable": false,
+      "selectable": true,
       "context_window_advertised": null,
       "context_window_effective_safe": null,
       "max_output": null,
@@ -713,11 +810,22 @@
       "availability": {
         "documented": true,
         "discovered": true,
-        "account_access": "unknown",
+        "account_access": true,
         "last_seen_at": null,
         "failure_reason": "not_confirmed_in_account_catalog"
       },
-      "notes": "seen_in_feature_auto_mode_config keys only"
+      "notes": "seen_in_feature_auto_mode_config keys only",
+      "variant_access": {
+        "status": "confirmed_success",
+        "evidence": "multiple session jsonl with model=claude-sonnet-5 effort=high"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -778,7 +886,17 @@
         "last_seen_at": null,
         "failure_reason": "not_confirmed_in_account_catalog"
       },
-      "notes": "documented_seed_plus_ops_practice; not in explicit local catalog file"
+      "notes": "documented_seed_plus_ops_practice; not in explicit local catalog file",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -837,7 +955,17 @@
         "last_seen_at": null,
         "failure_reason": "not_confirmed_in_account_catalog"
       },
-      "notes": "mentioned_in_cli_help_as_full_name_example"
+      "notes": "mentioned_in_cli_help_as_full_name_example",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -871,7 +999,7 @@
       "variant_id": "opus",
       "display_name": "alias:opus",
       "status": "active",
-      "selectable": true,
+      "selectable": false,
       "context_window_advertised": null,
       "context_window_effective_safe": null,
       "max_output": null,
@@ -896,7 +1024,17 @@
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
       },
-      "notes": "cli_alias_latest"
+      "notes": "cli_alias_latest",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -930,7 +1068,7 @@
       "variant_id": "sonnet",
       "display_name": "alias:sonnet",
       "status": "active",
-      "selectable": true,
+      "selectable": false,
       "context_window_advertised": null,
       "context_window_effective_safe": null,
       "max_output": null,
@@ -955,7 +1093,17 @@
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
       },
-      "notes": "cli_alias_latest"
+      "notes": "cli_alias_latest",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "claude",
@@ -1014,7 +1162,17 @@
         "last_seen_at": null,
         "failure_reason": "not_confirmed_in_account_catalog"
       },
-      "notes": "cli_alias_latest"
+      "notes": "cli_alias_latest",
+      "variant_access": {
+        "status": "documentary_only"
+      },
+      "context": {
+        "advertised": null,
+        "policy_cap": null,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
+      }
     },
     {
       "family_id": "kimi",
@@ -1075,6 +1233,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "kimi provider list --json"
+      },
+      "context": {
+        "advertised": 262144,
+        "policy_cap": 249036,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1136,6 +1305,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "kimi provider list --json"
+      },
+      "context": {
+        "advertised": 262144,
+        "policy_cap": 249036,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1199,6 +1379,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "kimi provider list --json"
+      },
+      "context": {
+        "advertised": 262144,
+        "policy_cap": 249036,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1258,6 +1449,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "kimi provider list --json"
+      },
+      "context": {
+        "advertised": 262144,
+        "policy_cap": 249036,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1318,6 +1520,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "listed in hermes provider_models_cache xai-oauth.models; current Hermes desktop runtime model grok-4.5 via xai-oauth"
+      },
+      "context": {
+        "advertised": 500000,
+        "policy_cap": 475000,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1379,6 +1592,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "listed in xai-oauth.models cache"
+      },
+      "context": {
+        "advertised": 1000000,
+        "policy_cap": 950000,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1438,6 +1662,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "listed in xai-oauth.models cache"
+      },
+      "context": {
+        "advertised": 256000,
+        "policy_cap": 243200,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1498,6 +1733,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_catalog",
+        "evidence": "listed as grok-4.20-multi-agent-0309 in xai-oauth.models"
+      },
+      "context": {
+        "advertised": 1000000,
+        "policy_cap": 950000,
+        "policy_cap_reason": "unset_until_measured",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     },
     {
@@ -1565,6 +1811,17 @@
         "account_access": true,
         "last_seen_at": "2026-08-05T17:48:01Z",
         "failure_reason": null
+      },
+      "variant_access": {
+        "status": "confirmed_success",
+        "evidence": "hermes default model live"
+      },
+      "context": {
+        "advertised": 256000,
+        "policy_cap": 200000,
+        "policy_cap_reason": "cortex_hy3_policy_cap",
+        "empirically_verified": null,
+        "empirical_evidence": null
       }
     }
   ]

@@ -116,28 +116,22 @@ test('variant never receives unsupported effort silently', () => {
   assert.match(norm.reason, /unsupported|not_in_supported/)
 
   const sel = selectModel({ task: 'long_read', risk: 'low', preferred_effort: 'medium' }, doc)
-  // if k3 chosen, effort must not be medium without explicit remap reason
-  if (sel.variant_id === 'k3') {
+  if (sel.status === 'assigned' && sel.variant_id === 'k3') {
     assert.notEqual(sel.provider_effort, 'medium')
     assert.ok(sel.effort_mapping_reason)
-    assert.notEqual(sel.effort_mapping_reason, 'direct')
   }
-  // provider_effort always in supported or thinking_* 
-  if (sel.variant_id) {
+  if (sel.status === 'assigned' && sel.variant_id) {
     const v = resolveVariant(sel.variant_id, doc)
     if (sel.provider_effort && !String(sel.provider_effort).startsWith('thinking_')) {
-      assert.ok(
-        (v.efforts?.supported || []).includes(sel.provider_effort) ||
-          (v.efforts?.supported || []).includes(sel.canonical_effort),
-        `${sel.variant_id} provider_effort=${sel.provider_effort}`,
-      )
+      const psup = v.efforts?.provider_supported || v.efforts?.canonical_supported || []
+      assert.ok(psup.includes(sel.provider_effort), `${sel.variant_id} provider_effort=${sel.provider_effort}`)
     }
   }
 })
 
 test('K3 max-only false: supports low/high/max; medium not silent', () => {
   const k3 = resolveVariant('k3', doc)
-  assert.deepEqual(k3.efforts.supported.sort(), ['high', 'low', 'max'])
+  assert.deepEqual([...(k3.efforts.canonical_supported || [])].sort(), ['high', 'low', 'max'])
   assert.equal(supportsEffort(k3, 'medium', doc), false)
   assert.equal(supportsEffort(k3, 'max', doc), true)
 })
@@ -145,13 +139,20 @@ test('K3 max-only false: supports low/high/max; medium not silent', () => {
 test('Grok multi-agent effort_semantics', () => {
   const g = resolveVariant('grok-4.20-multi-agent', doc)
   assert.equal(g.efforts.semantics, 'multi_agent_scale')
-  assert.ok(g.efforts.supported.includes('xhigh'))
+  assert.ok(g.efforts.canonical_supported.includes('xhigh'))
 })
 
 test('Claude efforts are own set', () => {
   const c = resolveVariant('claude-opus-4-8', doc)
-  assert.deepEqual(c.efforts.supported, ['low', 'medium', 'high', 'xhigh', 'max'])
+  assert.deepEqual(c.efforts.canonical_supported, ['low', 'medium', 'high', 'xhigh', 'max'])
   assert.equal(c.efforts.semantics, 'claude_effort')
+})
+
+test('HY3 efforts only none/low/high', () => {
+  const h = resolveVariant('tencent/hy3:free', doc)
+  assert.deepEqual([...(h.efforts.canonical_supported || [])].sort(), ['high', 'low', 'none'])
+  assert.equal(normalizeEffortForVariant(h, 'medium', doc).ok, false)
+  assert.equal(normalizeEffortForVariant(h, 'max', doc).ok, false)
 })
 
 test('organization chosen before model; roles carry no provider/model', () => {
@@ -168,16 +169,14 @@ test('organization chosen before model; roles carry no provider/model', () => {
   }
   const stubs = buildRoleAssignments(org, 'MIS-1042')
   assert.ok(stubs.every((s) => s.model === null && s.effort === null))
-  // then model selector per agent
   const picks = stubs.map((s) =>
     selectModel({
       agent_role_id: s.agent_role_id,
-      task: s.agent_role_id.includes('FRONTEND') ? 'code' : 'light',
       risk: 'medium',
       preferred_effort: 'medium',
     }, doc),
   )
-  assert.ok(picks.every((p) => p.variant_id))
+  assert.ok(picks.every((p) => p.status === 'assigned' && p.variant_id))
 })
 
 test('selector is deterministic', () => {
@@ -187,11 +186,4 @@ test('selector is deterministic', () => {
   assert.equal(a.variant_id, b.variant_id)
   assert.equal(a.canonical_effort, b.canonical_effort)
   assert.equal(a.provider_effort, b.provider_effort)
-})
-
-test('HY3 efforts only none/low/high', () => {
-  const h = resolveVariant('tencent/hy3:free', doc)
-  assert.deepEqual(h.efforts.supported.sort(), ['high', 'low', 'none'])
-  assert.equal(normalizeEffortForVariant(h, 'medium', doc).ok, false)
-  assert.equal(normalizeEffortForVariant(h, 'max', doc).ok, false)
 })

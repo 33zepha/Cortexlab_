@@ -1,52 +1,29 @@
-# Catalogue modèles Cortex — deux couches (families + variants)
-# Vérité opérationnelle = discovery locale (docs/proofs/model-discovery-*.json)
-# + ce contrat. Documentation publique ≠ account_access.
-
-schema_version: 2
+# Model catalog v3 — access truth + tri-state capabilities + effort maps
+schema_version: 3
 kind: model_catalog
 status: draft_parallel
 discovery_proof: docs/proofs/model-discovery-2026-08-05.json
+access_proof: docs/proofs/model-access-2026-08-05.json
 
-forbidden_families:
-  - gemini
-  - antigravity
-  - google-generative
-  - google
+forbidden_families: [gemini, antigravity, google-generative, google]
+
+provider_auth:
+  codex_subscription_cli: { status: authenticated }
+  claude_code_subscription: { status: authenticated }
+  kimi_code_oauth: { status: authenticated }
+  hermes_xai_oauth: { status: authenticated }
+  nous_portal_free: { status: authenticated }
 
 families:
-  - id: codex
-    vendor: openai
-    allowed: true
-    access_channels: [codex_subscription_cli]
-    description: OpenAI Codex CLI / abo — agentic coding
+  - { id: codex, vendor: openai, allowed: true, access_channels: [codex_subscription_cli] }
+  - { id: claude, vendor: anthropic, allowed: true, access_channels: [claude_code_subscription] }
+  - { id: kimi, vendor: moonshot, allowed: true, access_channels: [kimi_code_oauth] }
+  - { id: grok, vendor: xai, allowed: true, access_channels: [hermes_xai_oauth] }
+  - { id: hy3, vendor: tencent_via_nous, allowed: true, access_channels: [nous_portal_free] }
 
-  - id: claude
-    vendor: anthropic
-    allowed: true
-    access_channels: [claude_code_subscription]
-    description: Claude Code subscription CLI
-
-  - id: kimi
-    vendor: moonshot
-    allowed: true
-    access_channels: [kimi_code_oauth]
-    description: Kimi Code OAuth managed models
-
-  - id: grok
-    vendor: xai
-    allowed: true
-    access_channels: [hermes_xai_oauth, grok_build_subscription]
-    description: xAI Grok via Hermes OAuth (pas de binaire grok local)
-
-  - id: hy3
-    vendor: tencent_via_nous
-    allowed: true
-    access_channels: [nous_portal_free]
-    description: HY3 free via Nous Portal
-
-# Variantes — availability.discovered/account_access pilotent selectable
+# helper anchors omitted — explicit variants below
 variants:
-  # ── Codex (models_cache 2026-08-05) ─────────────────────────────
+  # ── Codex ─────────────────────────────────────────────────────
   - id: gpt-5.6-sol
     family_id: codex
     upstream_id: gpt-5.6-sol
@@ -54,29 +31,39 @@ variants:
     status: active
     selectable: true
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z" }
-    context: { advertised: 272000, effective_safe: 258400, max_output: null }
+    variant_access: { status: confirmed_catalog, evidence: codex_models_cache_list }
+    provider_auth_channel: codex_subscription_cli
+    context:
+      advertised: 272000
+      policy_cap: 258400
+      policy_cap_reason: codex_effective_context_window_percent_95
+      empirically_verified: null
+      empirical_evidence: null
     efforts:
-      supported: [low, medium, high, xhigh, max, ultra]
-      default: low
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max, ultra]
+      default_canonical: low
       semantics: reasoning_effort
+      mapping:
+        low: low
+        medium: medium
+        high: high
+        xhigh: xhigh
+        max: max
+        none: null
       unsupported_canonical: [none]
+    provider_extensions:
+      ultra: { discovered: true, selectable_by_cortex: false }
     capabilities:
-      modalities: [text, image]
-      tools: true
-      web_search: true
-      shell: true
-      filesystem: true
-      code_execution: true
-      multi_agent_version: v2
-    economics:
-      access_type: subscription
-      marginal_cost: included_quota
-      api_reference_price: null
-      subscription_quota_unit: unknown
-      quota_remaining: unknown
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: true }
+      x_search: { status: false }
+      code_execution: { status: true }
+      browser: { status: unknown }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [max_capability, architecture, complex_reasoning], weaknesses_prior: [cost, latency] }
-    constraints: []
 
   - id: gpt-5.6-terra
     family_id: codex
@@ -85,14 +72,25 @@ variants:
     status: active
     selectable: true
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z" }
-    context: { advertised: 272000, effective_safe: 258400 }
+    variant_access: { status: confirmed_catalog, evidence: codex_models_cache_list }
+    provider_auth_channel: codex_subscription_cli
+    context: { advertised: 272000, policy_cap: 258400, policy_cap_reason: codex_effective_95, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, medium, high, xhigh, max, ultra]
-      default: medium
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max, ultra]
+      default_canonical: medium
       semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max, none: null }
       unsupported_canonical: [none]
-    capabilities: { modalities: [text, image], tools: true, web_search: true, shell: true, filesystem: true, code_execution: true, multi_agent_version: v2 }
+    provider_extensions: { ultra: { discovered: true, selectable_by_cortex: false } }
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: true }
+      x_search: { status: false }
+      code_execution: { status: true }
+      browser: { status: unknown }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [balanced, implementation, refactor], weaknesses_prior: [] }
 
@@ -103,17 +101,27 @@ variants:
     status: active
     selectable: true
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z" }
-    context: { advertised: 272000, effective_safe: 258400 }
+    variant_access: { status: confirmed_catalog, evidence: codex_models_cache_list }
+    provider_auth_channel: codex_subscription_cli
+    context: { advertised: 272000, policy_cap: 258400, policy_cap_reason: codex_effective_95, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, medium, high, xhigh, max]
-      default: medium
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max]
+      default_canonical: medium
       semantics: reasoning_effort
-      unsupported_canonical: [none, ultra]
-    capabilities: { modalities: [text, image], tools: true, web_search: true, shell: true, filesystem: true, code_execution: true }
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max, none: null }
+      unsupported_canonical: [none]
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: true }
+      x_search: { status: false }
+      code_execution: { status: true }
+      browser: { status: unknown }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [high_volume, economical, multifile, long_tasks], weaknesses_prior: [max_capability] }
-    notes: Luna Max n'est PAS un role org — c'est cette variante a effort max
+    notes: Luna is a model variant, never an org role
 
   - id: gpt-5.5
     family_id: codex
@@ -122,10 +130,23 @@ variants:
     status: active
     selectable: true
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z" }
-    context: { advertised: 272000, effective_safe: 258400 }
-    efforts: { supported: [low, medium, high, xhigh], default: medium, semantics: reasoning_effort, unsupported_canonical: [none, max, ultra] }
-    capabilities: { modalities: [text, image], tools: true, web_search: true, shell: true, filesystem: true }
+    variant_access: { status: confirmed_catalog, evidence: codex_models_cache_list }
+    provider_auth_channel: codex_subscription_cli
+    context: { advertised: 272000, policy_cap: 258400, policy_cap_reason: codex_effective_95, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh]
+      provider_supported: [low, medium, high, xhigh]
+      default_canonical: medium
+      semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: null, none: null }
+      unsupported_canonical: [none, max]
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: true }
+      x_search: { status: false }
+      code_execution: { status: true }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [general], weaknesses_prior: [] }
 
@@ -136,12 +157,24 @@ variants:
     status: active
     selectable: true
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z" }
-    context: { advertised: 272000, max_context_window: 1000000, effective_safe: 258400 }
-    efforts: { supported: [low, medium, high, xhigh], default: medium, semantics: reasoning_effort, unsupported_canonical: [none, max, ultra] }
-    capabilities: { modalities: [text, image], tools: true, web_search: true, shell: true, filesystem: true }
+    variant_access: { status: confirmed_catalog, evidence: codex_models_cache_list }
+    provider_auth_channel: codex_subscription_cli
+    context: { advertised: 272000, policy_cap: 258400, policy_cap_reason: codex_effective_95_advertised_not_1m, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh]
+      provider_supported: [low, medium, high, xhigh]
+      default_canonical: medium
+      semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: null, none: null }
+      unsupported_canonical: [none, max]
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: true }
+      code_execution: { status: true }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
-    empirical: { strengths_prior: [general, large_context_cap], weaknesses_prior: [] }
+    empirical: { strengths_prior: [general], weaknesses_prior: [] }
 
   - id: gpt-5.4-mini
     family_id: codex
@@ -150,10 +183,22 @@ variants:
     status: active
     selectable: true
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z" }
-    context: { advertised: 272000, effective_safe: 258400 }
-    efforts: { supported: [low, medium, high, xhigh], default: medium, semantics: reasoning_effort, unsupported_canonical: [none, max, ultra] }
-    capabilities: { modalities: [text, image], tools: true, web_search: true, shell: true, filesystem: true }
+    variant_access: { status: confirmed_catalog, evidence: codex_models_cache_list }
+    provider_auth_channel: codex_subscription_cli
+    context: { advertised: 272000, policy_cap: 258400, policy_cap_reason: codex_effective_95, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh]
+      provider_supported: [low, medium, high, xhigh]
+      default_canonical: medium
+      semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: null, none: null }
+      unsupported_canonical: [none, max]
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: true }
+      code_execution: { status: true }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [fast, cheap_tier], weaknesses_prior: [deep_architecture] }
 
@@ -164,20 +209,15 @@ variants:
     status: hidden_legacy
     selectable: false
     access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T14:37:24Z", failure_reason: visibility_hide }
-    efforts: { supported: [low, medium, high, xhigh, max, ultra], default: low, semantics: reasoning_effort }
-    economics: { access_type: subscription, marginal_cost: included_quota }
-
-  - id: codex-auto-review
-    family_id: codex
-    upstream_id: codex-auto-review
-    display_name: Codex Auto Review
-    status: hidden_legacy
-    selectable: false
-    access_channels: [codex_subscription_cli]
-    availability: { documented: true, discovered: true, account_access: true, failure_reason: visibility_hide }
-    efforts: { supported: [low, medium, high, xhigh, max], default: medium, semantics: reasoning_effort }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    variant_access: { status: unavailable, evidence: visibility_hide }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max, ultra]
+      default_canonical: low
+      semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max }
+    capabilities: { shell: { status: true }, filesystem: { status: true } }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
 
   # ── Claude ────────────────────────────────────────────────────
   - id: claude-opus-4-8
@@ -187,15 +227,25 @@ variants:
     status: active
     selectable: true
     access_channels: [claude_code_subscription]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T17:00:00Z" }
-    context: { advertised: null, effective_safe: null }
+    variant_access: { status: confirmed_success, evidence: local_session_jsonl_model_and_effort_high_redacted }
+    provider_auth_channel: claude_code_subscription
+    context: { advertised: null, policy_cap: null, policy_cap_reason: unknown_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, medium, high, xhigh, max]
-      default: high
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max]
+      default_canonical: high
       semantics: claude_effort
-      adaptive_thinking: true
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max, none: null }
       unsupported_canonical: [none]
-    capabilities: { modalities: [text, image], tools: true, shell: true, filesystem: true }
+      adaptive_thinking: true
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: conditional, condition: policy_and_mcp_allow }
+      x_search: { status: false }
+      code_execution: { status: true }
+      browser: { status: conditional, condition: chrome_integration }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [deep_analysis, critique, architecture, ux_spec], weaknesses_prior: [] }
 
@@ -203,13 +253,52 @@ variants:
     family_id: claude
     upstream_id: claude-sonnet-5
     display_name: Claude Sonnet 5
-    status: documented_unconfirmed
-    selectable: false
+    status: active
+    selectable: true
     access_channels: [claude_code_subscription]
-    availability: { documented: true, discovered: true, account_access: unknown, failure_reason: feature_flag_key_only_not_entitlement }
-    efforts: { supported: [low, medium, high, xhigh, max], default: high, semantics: claude_effort }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    variant_access: { status: confirmed_success, evidence: local_session_jsonl_model_effort_high_redacted }
+    provider_auth_channel: claude_code_subscription
+    context: { advertised: null, policy_cap: null, policy_cap_reason: unknown_until_measured, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max]
+      default_canonical: high
+      semantics: claude_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max, none: null }
+      unsupported_canonical: [none]
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      web_search: { status: conditional, condition: policy_and_mcp_allow }
+      code_execution: { status: true }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [balanced_coding, spec_execution], weaknesses_prior: [] }
+
+  - id: claude-opus-5
+    family_id: claude
+    upstream_id: claude-opus-5
+    display_name: Claude Opus 5
+    status: active
+    selectable: true
+    access_channels: [claude_code_subscription]
+    variant_access: { status: confirmed_success, evidence: local_session_jsonl_model_effort_high_redacted }
+    provider_auth_channel: claude_code_subscription
+    context: { advertised: null, policy_cap: null, policy_cap_reason: unknown_until_measured, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max]
+      default_canonical: high
+      semantics: claude_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max, none: null }
+      unsupported_canonical: [none]
+    capabilities:
+      shell: { status: true }
+      filesystem: { status: true }
+      code_execution: { status: true }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
+    empirical: { strengths_prior: [deep_analysis, architecture], weaknesses_prior: [] }
 
   - id: claude-haiku-4-5
     family_id: claude
@@ -218,10 +307,16 @@ variants:
     status: documented_unconfirmed
     selectable: false
     access_channels: [claude_code_subscription]
-    availability: { documented: true, discovered: false, account_access: unknown, failure_reason: no_local_catalog_entry }
-    efforts: { supported: [low, medium, high, xhigh, max], default: medium, semantics: claude_effort }
-    economics: { access_type: subscription, marginal_cost: included_quota }
-    empirical: { strengths_prior: [fast, cheap], weaknesses_prior: [] }
+    variant_access: { status: unconfirmed, evidence: no_local_session_or_entitlement_entry }
+    context: { advertised: null, policy_cap: null, policy_cap_reason: unknown, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max]
+      default_canonical: medium
+      semantics: claude_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max }
+    capabilities: { shell: { status: true }, filesystem: { status: true }, vision: { status: true } }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
 
   - id: claude-fable-5
     family_id: claude
@@ -230,11 +325,17 @@ variants:
     status: documented_unconfirmed
     selectable: false
     access_channels: [claude_code_subscription]
-    availability: { documented: true, discovered: true, account_access: unknown, failure_reason: help_example_only }
-    efforts: { supported: [low, medium, high, xhigh, max], default: high, semantics: claude_effort }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    variant_access: { status: documentary_only, evidence: cli_help_example_only }
+    efforts:
+      canonical_supported: [low, medium, high, xhigh, max]
+      provider_supported: [low, medium, high, xhigh, max]
+      default_canonical: high
+      semantics: claude_effort
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, max: max }
+    capabilities: { shell: { status: unknown }, filesystem: { status: unknown } }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
 
-  # ── Kimi (provider list --json) ───────────────────────────────
+  # ── Kimi ──────────────────────────────────────────────────────
   - id: k3
     family_id: kimi
     upstream_id: kimi-code/k3
@@ -242,19 +343,23 @@ variants:
     status: active
     selectable: true
     access_channels: [kimi_code_oauth]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T17:40:00Z" }
-    context: { advertised: 262144, effective_safe: 235930 }
+    variant_access: { status: confirmed_catalog, evidence: kimi_provider_list_json }
+    provider_auth_channel: kimi_code_oauth
+    context: { advertised: 262144, policy_cap: 235930, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, high, max]
-      default: high
+      canonical_supported: [low, high, max]
+      provider_supported: [low, high, max]
+      default_canonical: high
       semantics: explicit_efforts
+      mapping: { low: low, high: high, max: max, medium: null, none: null, xhigh: null }
       unsupported_canonical: [none, medium, xhigh]
-      # mapping medium→unsupported (jamais silencieux vers max)
     capabilities:
-      modalities: [text, image, video]
-      tools: true
-      always_thinking: true
-      thinking: true
+      shell: { status: false }
+      filesystem: { status: true }
+      web_search: { status: false }
+      x_search: { status: false }
+      code_execution: { status: false }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [long_context, synthesis, research], weaknesses_prior: [] }
 
@@ -265,11 +370,21 @@ variants:
     status: active
     selectable: true
     access_channels: [kimi_code_oauth]
-    availability: { documented: true, discovered: true, account_access: true }
-    context: { advertised: 262144, effective_safe: 235930 }
-    efforts: { supported: [low, high, max], default: high, semantics: explicit_efforts, unsupported_canonical: [none, medium, xhigh] }
-    capabilities: { modalities: [text, image], tools: true, always_thinking: true }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    variant_access: { status: confirmed_catalog, evidence: kimi_provider_list_json }
+    provider_auth_channel: kimi_code_oauth
+    context: { advertised: 262144, policy_cap: 235930, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
+    efforts:
+      canonical_supported: [low, high, max]
+      provider_supported: [low, high, max]
+      default_canonical: high
+      semantics: explicit_efforts
+      mapping: { low: low, high: high, max: max, medium: null, none: null, xhigh: null }
+      unsupported_canonical: [none, medium, xhigh]
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: true }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [long_context], weaknesses_prior: [] }
 
   - id: kimi-for-coding
@@ -279,16 +394,22 @@ variants:
     status: active
     selectable: true
     access_channels: [kimi_code_oauth]
-    availability: { documented: true, discovered: true, account_access: true }
-    context: { advertised: 262144, effective_safe: 235930 }
+    variant_access: { status: confirmed_catalog, evidence: kimi_provider_list_json }
+    provider_auth_channel: kimi_code_oauth
+    context: { advertised: 262144, policy_cap: 235930, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [none, high]
-      default: high
+      canonical_supported: [none, high]
+      provider_supported: [thinking_off, thinking_on]
+      default_canonical: high
       semantics: boolean_thinking
+      mapping: { none: thinking_off, high: thinking_on, low: null, medium: null, xhigh: null, max: null }
       unsupported_canonical: [low, medium, xhigh, max]
-      # none = thinking off IF desactivable; high = thinking on
-    capabilities: { modalities: [text, image, video], tools: true, always_thinking: true, thinking: true }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: true }
+      code_execution: { status: false }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [coding, tool_use], weaknesses_prior: [] }
 
   - id: kimi-for-coding-highspeed
@@ -298,19 +419,25 @@ variants:
     status: active
     selectable: true
     access_channels: [kimi_code_oauth]
-    availability: { documented: true, discovered: true, account_access: true }
-    context: { advertised: 262144, effective_safe: 235930 }
+    variant_access: { status: confirmed_catalog, evidence: kimi_provider_list_json }
+    provider_auth_channel: kimi_code_oauth
+    context: { advertised: 262144, policy_cap: 235930, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [none, high]
-      default: high
+      canonical_supported: [none, high]
+      provider_supported: [thinking_off, thinking_on]
+      default_canonical: high
       semantics: boolean_thinking
+      mapping: { none: thinking_off, high: thinking_on, low: null, medium: null, xhigh: null, max: null }
       unsupported_canonical: [low, medium, xhigh, max]
-    capabilities: { modalities: [text, image, video], tools: true, always_thinking: true }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: true }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [speed, coding], weaknesses_prior: [] }
     latency_class: highspeed
 
-  # ── Grok (xAI OAuth via Hermes — pas de CLI grok local) ───────
+  # ── Grok (OAuth auth ≠ every variant proven usable for tools) ─
   - id: grok-4.5
     family_id: grok
     upstream_id: grok-4.5
@@ -318,24 +445,25 @@ variants:
     status: active_via_oauth
     selectable: true
     access_channels: [hermes_xai_oauth]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T16:06:01Z" }
-    context: { advertised: 500000, effective_safe: 450000 }
+    variant_access: { status: confirmed_catalog, evidence: xai_oauth_provider_models_cache_plus_runtime_model }
+    provider_auth_channel: hermes_xai_oauth
+    context: { advertised: 500000, policy_cap: 450000, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, medium, high]
-      default: high
+      canonical_supported: [low, medium, high]
+      provider_supported: [low, medium, high]
+      default_canonical: high
       semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, none: null, xhigh: null, max: null }
       unsupported_canonical: [none, xhigh, max]
     capabilities:
-      modalities: [text, image]
-      tools: true
-      web_search: possible_if_tools_enabled
-      x_search: possible_if_tools_enabled
-      code_execution: possible_if_tools_enabled
-    economics:
-      access_type: subscription
-      marginal_cost: included_quota
-      api_reference_price: optional_public_only_not_boss_cost
-      quota_remaining: unknown
+      shell: { status: false }
+      filesystem: { status: false }
+      web_search: { status: conditional, condition: hermes_xai_oauth.web_search }
+      x_search: { status: conditional, condition: hermes_xai_oauth.x_search }
+      code_execution: { status: conditional, condition: hermes_xai_oauth.code_execution }
+      browser: { status: unknown }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [coding, tools, research], weaknesses_prior: [no_dedicated_cli] }
 
   - id: grok-4.3
@@ -345,16 +473,25 @@ variants:
     status: active_via_oauth
     selectable: true
     access_channels: [hermes_xai_oauth]
-    availability: { documented: true, discovered: true, account_access: true }
-    context: { advertised: 1000000, effective_safe: 900000 }
+    variant_access: { status: confirmed_catalog, evidence: xai_oauth_provider_models_cache }
+    provider_auth_channel: hermes_xai_oauth
+    context: { advertised: 1000000, policy_cap: 900000, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [none, low, medium, high]
-      default: medium
+      canonical_supported: [none, low, medium, high]
+      provider_supported: [none, low, medium, high]
+      default_canonical: medium
       semantics: reasoning_effort
+      mapping: { none: none, low: low, medium: medium, high: high, xhigh: null, max: null }
       unsupported_canonical: [xhigh, max]
-    capabilities: { modalities: [text, image], tools: true, web_search: possible_if_tools_enabled, x_search: possible_if_tools_enabled }
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: false }
+      web_search: { status: conditional, condition: hermes_xai_oauth.web_search }
+      x_search: { status: conditional, condition: hermes_xai_oauth.x_search }
+      code_execution: { status: conditional, condition: hermes_xai_oauth.code_execution }
+      vision: { status: true }
     economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
-    empirical: { strengths_prior: [coding, tools, lower_hallucination], weaknesses_prior: [] }
+    empirical: { strengths_prior: [coding, tools], weaknesses_prior: [] }
 
   - id: grok-build-0.1
     family_id: grok
@@ -362,16 +499,24 @@ variants:
     display_name: Grok Build 0.1
     status: active_via_oauth
     selectable: true
-    access_channels: [hermes_xai_oauth, grok_build_subscription]
-    availability: { documented: true, discovered: true, account_access: true }
-    context: { advertised: 256000, effective_safe: 230400 }
+    access_channels: [hermes_xai_oauth]
+    variant_access: { status: confirmed_catalog, evidence: xai_oauth_provider_models_cache }
+    provider_auth_channel: hermes_xai_oauth
+    context: { advertised: 256000, policy_cap: 230400, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, medium, high]
-      default: medium
+      canonical_supported: [low, medium, high]
+      provider_supported: [low, medium, high]
+      default_canonical: medium
       semantics: reasoning_effort
+      mapping: { low: low, medium: medium, high: high, none: null, xhigh: null, max: null }
       unsupported_canonical: [none, xhigh, max]
-    capabilities: { modalities: [text, image], tools: true }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: false }
+      web_search: { status: unknown }
+      code_execution: { status: unknown }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [agentic_coding, edits], weaknesses_prior: [] }
 
   - id: grok-4.20-multi-agent
@@ -381,19 +526,27 @@ variants:
     status: active_via_oauth
     selectable: true
     access_channels: [hermes_xai_oauth]
-    availability: { documented: true, discovered: true, account_access: true }
-    context: { advertised: 1000000, effective_safe: 900000 }
+    variant_access: { status: confirmed_catalog, evidence: xai_oauth_provider_models_cache }
+    provider_auth_channel: hermes_xai_oauth
+    context: { advertised: 1000000, policy_cap: 900000, policy_cap_reason: 90pct_policy_until_measured, empirically_verified: null, empirical_evidence: null }
     efforts:
-      supported: [low, medium, high, xhigh]
-      default: medium
+      canonical_supported: [low, medium, high, xhigh]
+      provider_supported: [low, medium, high, xhigh]
+      default_canonical: medium
       semantics: multi_agent_scale
+      mapping: { low: low, medium: medium, high: high, xhigh: xhigh, none: null, max: null }
       unsupported_canonical: [none, max]
-      # effort = taille/intensite equipe, PAS profondeur mono-agent
-    capabilities: { modalities: [text, image], tools: true, multi_agent: true }
-    economics: { access_type: subscription, marginal_cost: included_quota }
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: false }
+      web_search: { status: conditional, condition: hermes_xai_oauth.web_search }
+      x_search: { status: conditional, condition: hermes_xai_oauth.x_search }
+      code_execution: { status: conditional, condition: hermes_xai_oauth.code_execution }
+      vision: { status: true }
+    economics: { access_type: subscription, marginal_cost: included_quota, quota_remaining: unknown }
     empirical: { strengths_prior: [multi_agent, research], weaknesses_prior: [not_comparable_to_mono_agent_effort] }
 
-  # ── HY3 Free ──────────────────────────────────────────────────
+  # ── HY3 ───────────────────────────────────────────────────────
   - id: tencent/hy3:free
     family_id: hy3
     upstream_id: tencent/hy3:free
@@ -401,25 +554,32 @@ variants:
     status: active
     selectable: true
     access_channels: [nous_portal_free]
-    availability: { documented: true, discovered: true, account_access: true, last_seen_at: "2026-08-05T17:40:00Z" }
-    context: { advertised: 256000, effective_safe: 200000, max_output: 64000 }
+    variant_access: { status: confirmed_success, evidence: hermes_default_live_model }
+    provider_auth_channel: nous_portal_free
+    context:
+      advertised: 256000
+      policy_cap: 200000
+      policy_cap_reason: cortex_hy3_light_task_policy_cap
+      empirically_verified: null
+      empirical_evidence: null
     efforts:
-      supported: [none, low, high]
-      default: low
+      canonical_supported: [none, low, high]
+      provider_supported: [none, low, high]
+      default_canonical: low
       semantics: hy3_nous_effort
+      mapping: { none: none, low: low, high: high, medium: null, xhigh: null, max: null }
       unsupported_canonical: [medium, xhigh, max]
-    capabilities: { modalities: [text], tools: true, shell: false }
-    economics:
-      access_type: free
-      marginal_cost: zero_when_available
-      quota_remaining: unknown
+    capabilities:
+      shell: { status: false }
+      filesystem: { status: true }
+      web_search: { status: false }
+      x_search: { status: false }
+      code_execution: { status: false }
+      vision: { status: false }
+    economics: { access_type: free, marginal_cost: zero_when_available, quota_remaining: unknown }
     empirical:
       strengths_prior: [classification, extraction, short_summary, mandate_prep, mechanical_check, light_transform, few_files_read]
-      weaknesses_prior: [architecture, migration, security, critical, large_refactor, irreversible, large_context_practical]
-    constraints:
-      - free
-      - potentially_slow
-      - reliability_empirical
-      - not_for_critical_because_free
+      weaknesses_prior: [architecture, migration, security, critical, large_refactor, irreversible]
+    constraints: [free, potentially_slow, reliability_empirical, not_for_critical_because_free]
     recommended_scope: light_low_risk
     latency_class: slow_or_variable

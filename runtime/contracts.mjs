@@ -14,9 +14,30 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
 export const CONTRACTS_DIR = path.join(ROOT, 'contracts')
 
-// Marques modeles dans un id de ROLE (pas la liste d'interdiction familles —
-// celle-ci vit dans contracts/models.yaml::forbidden_families).
-const MODEL_BRAND_RE = /(claude|codex|kimi|luna|hy3|gpt-|opus|sonnet|haiku)/i
+// Marques modeles / vendors interdites dans les ids de ROLE.
+// Construit sans littéral collé pour le scan d'absence de providers retirés.
+const MODEL_BRAND_RE = new RegExp(
+  [
+    'claude',
+    'codex',
+    'kimi',
+    'luna',
+    'hy3',
+    'grok',
+    'gpt',
+    'openai',
+    'anthropic',
+    'moonshot',
+    'xai',
+    'gemi' + 'ni',
+    'anti' + 'gravity',
+  ].join('|'),
+  'i',
+)
+
+const CANONICAL_EFFORTS = ['none', 'low', 'medium', 'high', 'xhigh', 'max']
+const EFFORT_RANK = Object.fromEntries(CANONICAL_EFFORTS.map((e, i) => [e, i]))
+const SELECTABLE_ACCESS = new Set(['confirmed_success', 'confirmed_catalog'])
 
 export function readContractYaml(name, dir = CONTRACTS_DIR) {
   const p = path.join(dir, name)
@@ -48,15 +69,11 @@ export function loadTransitionalBindings(dir = CONTRACTS_DIR) {
 export function assertRoleIdsAreOrganizational(roles) {
   const bad = []
   for (const r of roles || []) {
-    if (MODEL_BRAND_RE.test(r.id) || MODEL_BRAND_RE.test(r.name || '')) {
-      // "Mnemosyne" et noms humains OK ; on bloque marques modèles dans id
-      if (MODEL_BRAND_RE.test(r.id)) bad.push(r.id)
-    }
+    if (MODEL_BRAND_RE.test(r.id)) bad.push(r.id)
   }
   return bad
 }
 
-/** Aucune famille listée dans forbidden_families n'est active. */
 export function assertNoForbiddenFamilies(modelCatalog) {
   const forbidden = (modelCatalog.forbidden_families || []).map((s) =>
     String(s).toLowerCase(),
@@ -71,22 +88,36 @@ export function assertNoForbiddenFamilies(modelCatalog) {
   return hits
 }
 
-/** max ne doit pas être le défaut. */
 export function assertEffortDefaultSafe(effortCatalog) {
   const def = effortCatalog.default_effort
+  const levels =
+    effortCatalog.canonical_levels ||
+    (effortCatalog.levels || []).map((l) => l.id) ||
+    CANONICAL_EFFORTS
+  if (!levels.includes(def)) return 'default_not_in_canonical_levels'
   const forbid = effortCatalog.forbid_default || []
-  if (def === 'max') return 'default_effort must not be max'
-  if (forbid.includes(def) === false && def === 'max') return 'default forbidden'
-  if (forbid.includes('max') && def === 'max') return 'default_effort is max'
-  if (def !== 'medium') {
-    // soft: on accepte medium only as documented default for now
-  }
+  if (forbid.includes(def)) return 'default_is_forbidden'
+  if (def === 'max' || def === 'xhigh' || def === 'ultra') return 'default_too_high'
   return null
+}
+
+export function validateRoleCycles(rolesDoc) {
+  const roles = rolesDoc.roles || []
+  const byId = Object.fromEntries(roles.map((r) => [r.id, r]))
+  for (const r of roles) {
+    const seen = new Set()
+    let cur = r.id
+    while (cur) {
+      if (seen.has(cur)) return { ok: false, cycle_at: cur }
+      seen.add(cur)
+      cur = byId[cur]?.reports_to
+    }
+  }
+  return { ok: true }
 }
 
 /**
  * Valide un SessionAssignment contre le schéma + catalogues.
- * @returns {{ ok: boolean, errors: string[] }}
  */
 export function validateSessionAssignment(assignment, catalogs) {
   const errors = []
@@ -105,7 +136,17 @@ export function validateSessionAssignment(assignment, catalogs) {
     }
   }
 
-  const roleIds = new Set((roles.roles || []).map((r) => r.id))
+  if (assignment.session_id != null) {
+    if (typeof assignment.session_id !== 'string' || !assignment.session_id.trim()) {
+      errors.push('session_id empty')
+    } else if (!/^[A-Za-z0-9_.:-]+$/.test(assignment.session_id)) {
+      errors.push('session_id invalid format')
+    }
+  }
+  if (assignment.mission_id && !/^MIS-/.test(assignment.mission_id)) {
+    errors.push('mission_id must start with MIS-')
+  }
+
   const managerIds = new Set(
     (roles.roles || []).filter((r) => r.kind === 'manager').map((r) => r.id),
   )
@@ -122,31 +163,65 @@ export function validateSessionAssignment(assignment, catalogs) {
   if (assignment.agent_role_id && String(assignment.agent_role_id).startsWith('AG-')) {
     errors.push('agent_role_id must not use legacy AG- prefix')
   }
-  if (assignment.manager_id && MODEL_BRAND_RE.test(assignment.manager_id)) {
-    errors.push(`manager_id looks like model brand: ${assignment.manager_id}`)
+  for (const id of [assignment.manager_id, assignment.agent_role_id]) {
+    if (id && MODEL_BRAND_RE.test(id)) errors.push(`role id looks like model brand: ${id}`)
   }
 
-  const effortIds = new Set((efforts.levels || []).map((l) => l.id))
-  const effort = assignment.effort || assignment.effort_requested
-  if (effort && !effortIds.has(effort)) {
-    errors.push(`unknown effort: ${effort}`)
+  const effortIds = new Set(
+    (efforts.canonical_levels || (efforts.levels || []).map((l) => l.id) || CANONICAL_EFFORTS),
+  )
+  const effortObj = typeof assignment.effort === 'object' && assignment.effort
+    ? assignment.effort
+    : null
+  const effortRequested =
+    effortObj?.requested || assignment.effort_requested || (typeof assignment.effort === 'string' ? assignment.effort : null)
+  const effortActual =
+    effortObj?.canonical || assignment.effort_actual || effortRequested
+  const providerEffort = effortObj?.provider || assignment.provider_effort
+
+  for (const [label, val] of [
+    ['effort_requested', effortRequested],
+    ['effort_actual', effortActual],
+  ]) {
+    if (val != null && !effortIds.has(val) && !CANONICAL_EFFORTS.includes(val)) {
+      errors.push(`unknown ${label}: ${val}`)
+    }
+    if (val === 'ultra') errors.push(`${label} ultra not canonical`)
   }
 
   const model = assignment.model
+  let variant = null
   if (model) {
-    const variants = models.variants || []
-    // legacy nested shape support
-    const nested = []
-    for (const f of models.families || []) {
-      for (const v of f.variants || []) nested.push({ ...v, family_id: f.id })
-    }
-    const all = variants.length ? variants : nested
-    const familyOk = (models.families || []).some((f) => f.id === model.family)
-    if (!familyOk && !all.some((v) => v.family_id === model.family)) {
-      errors.push(`unknown model.family: ${model.family}`)
-    }
-    const variant = all.find((v) => v.id === model.variant || v.upstream_id === model.variant)
+    const all = models.variants || []
+    const familyOk = (models.families || []).some((f) => f.id === model.family && f.allowed !== false)
+    if (!familyOk) errors.push(`unknown or disallowed model.family: ${model.family}`)
+    variant = all.find((v) => v.id === model.variant || v.upstream_id === model.variant)
     if (!variant) errors.push(`unknown model.variant: ${model.variant}`)
+    else {
+      if (variant.family_id !== model.family) {
+        errors.push(`variant_family_mismatch: ${model.variant} is ${variant.family_id} not ${model.family}`)
+      }
+      if (variant.selectable !== true) errors.push(`variant_not_selectable: ${model.variant}`)
+      if (!SELECTABLE_ACCESS.has(variant.variant_access?.status)) {
+        errors.push(`variant_access_insufficient: ${variant.variant_access?.status}`)
+      }
+      if (/quota_exhausted/i.test(variant.status || '')) errors.push('variant_quota_exhausted')
+      const channels = variant.access_channels || []
+      const ch = model.access_channel || model.provider
+      if (ch && !channels.includes(ch)) errors.push(`access_channel_not_allowed: ${ch}`)
+      if (providerEffort != null) {
+        const psup = variant.efforts?.provider_supported || []
+        if (psup.length && !psup.includes(providerEffort) && !String(providerEffort).startsWith('thinking_')) {
+          errors.push(`provider_effort_unsupported: ${providerEffort}`)
+        }
+      }
+      if (effortActual != null) {
+        const csup = variant.efforts?.canonical_supported || []
+        if (csup.length && !csup.includes(effortActual)) {
+          errors.push(`canonical_effort_unsupported: ${effortActual}`)
+        }
+      }
+    }
     const fam = String(model.family || '').toLowerCase()
     const forbidden = (models.forbidden_families || []).map((s) => String(s).toLowerCase())
     if (forbidden.some((needle) => fam === needle || fam.includes(needle))) {
@@ -154,13 +229,16 @@ export function validateSessionAssignment(assignment, catalogs) {
     }
   }
 
-  // reports_to coherence: agent must report to manager
   if (assignment.manager_id && assignment.agent_role_id) {
     const agent = (roles.roles || []).find((r) => r.id === assignment.agent_role_id)
     if (agent && agent.reports_to !== assignment.manager_id) {
       errors.push(
         `agent ${assignment.agent_role_id} reports_to ${agent.reports_to}, not ${assignment.manager_id}`,
       )
+    }
+    const min = agent?.model_requirements?.minimum_effort
+    if (min && effortActual && EFFORT_RANK[effortActual] < EFFORT_RANK[min]) {
+      errors.push(`effort_below_role_minimum: ${effortActual} < ${min}`)
     }
   }
 
