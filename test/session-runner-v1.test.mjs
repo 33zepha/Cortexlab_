@@ -16,6 +16,7 @@ import { runSessionV1, evaluateSessionSuccess } from '../runtime/session-runner-
 import { resolveWorktreePath, getWorktreeRoot, createWorktree } from '../runtime/worktree-manager.mjs'
 import { preflight as claudePreflight, buildArgv } from '../runtime/adapters/claude-code-adapter.mjs'
 import { redactText } from '../runtime/evidence-collector.mjs'
+import { execFileSync } from 'node:child_process'
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../..')
 const FIXTURE = path.join(ROOT, 'test/fixtures/session-runner-bug')
@@ -309,3 +310,41 @@ test('blocked plan refuses execution', async () => {
   })
   assert.equal(r.status, 'blocked')
 })
+
+import { computeWorkspaceStateHash } from '../runtime/worktree-manager.mjs'
+
+test('worktree_resume requires hash auth id nonce', () => {
+  const plan = makePlan(`resume-gate-${Date.now()}`)
+  const a = plan.assignments.find((x) => x.status === 'planned')
+  const auth = makeAuth(plan, a.session_id, {
+    scope: 'worktree_resume',
+    approved_by: 'boss',
+  })
+  const g = validateAuthorization(auth, plan)
+  assert.equal(g.ok, false)
+  assert.ok(g.errors.includes('workspace_state_hash_required'))
+  assert.ok(g.errors.includes('authorization_id_required'))
+  assert.ok(g.errors.includes('nonce_required'))
+  assert.ok(g.errors.includes('resume_from_session_id_required'))
+})
+
+test('workspace state hash is stable until files change', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wsh-'))
+  execGitInit(dir)
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'hello')
+  execSilent(dir, ['git', 'add', 'a.txt'])
+  execSilent(dir, ['git', '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-m', 'i'])
+  const h1 = computeWorkspaceStateHash(dir).workspace_state_hash
+  const h2 = computeWorkspaceStateHash(dir).workspace_state_hash
+  assert.equal(h1, h2)
+  fs.writeFileSync(path.join(dir, 'b.txt'), 'x')
+  const h3 = computeWorkspaceStateHash(dir).workspace_state_hash
+  assert.notEqual(h1, h3)
+})
+
+function execSilent(cwd, args) {
+  execFileSync(args[0], args.slice(1), { cwd, stdio: 'ignore' })
+}
+function execGitInit(dir) {
+  execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' })
+}

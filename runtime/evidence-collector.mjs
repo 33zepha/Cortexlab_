@@ -4,6 +4,7 @@
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 
 function run(cmd, args, cwd, timeout = 30000) {
   try {
@@ -40,22 +41,54 @@ export function collectGitEvidence(workspace) {
       git_diff_stat: '',
       git_diff: '',
       changed_files: [],
+      untracked_files: [],
+      file_content_hashes: {},
       git_skipped: 'no_git_in_workspace',
     }
   }
-  const status = run('git', ['status', '--porcelain'], workspace)
+  const status = run('git', ['status', '--porcelain', '-uall'], workspace)
   const diffStat = run('git', ['diff', '--stat'], workspace)
   const diff = run('git', ['diff'], workspace)
-  const changed = (status.stdout || '')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((l) => l.replace(/^..\s+/, ''))
+  const lines = (status.stdout || '').split('\n').map((l) => l.trimEnd()).filter(Boolean)
+  const changed = []
+  const untracked = []
+  const hashes = {}
+  for (const line of lines) {
+    let rel = line.slice(3)
+    if (rel.includes(' -> ')) rel = rel.split(' -> ').pop()
+    rel = rel.replace(/^"|"$/g, '')
+    changed.push(rel)
+    if (line.startsWith('??')) untracked.push(rel)
+    const abs = path.join(workspace, rel)
+    try {
+      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
+        hashes[rel] = crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex')
+      }
+    } catch {
+      /* skip */
+    }
+  }
+  // also include untracked file bodies in a bounded dump for evidence
+  let untracked_dump = ''
+  for (const rel of untracked.slice(0, 20)) {
+    const abs = path.join(workspace, rel)
+    try {
+      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
+        const body = fs.readFileSync(abs, 'utf8')
+        untracked_dump += `\n===== ${rel} =====\n${body.slice(0, 50000)}\n`
+      }
+    } catch {
+      /* skip */
+    }
+  }
   return {
     git_status_porcelain: redactText(status.stdout),
     git_diff_stat: redactText(diffStat.stdout),
     git_diff: redactText(diff.stdout).slice(0, 200000),
     changed_files: changed,
+    untracked_files: untracked,
+    file_content_hashes: hashes,
+    untracked_dump: redactText(untracked_dump).slice(0, 100000),
   }
 }
 

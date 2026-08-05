@@ -1,9 +1,9 @@
 /**
- * worktree-manager.mjs — isolated worktrees under .cortex/worktrees only.
- * Existing path is refused (no silent reuse).
+ * worktree-manager.mjs — isolated worktrees + workspace state hash.
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
@@ -66,4 +66,71 @@ export function removeWorktree(dest, { repoRoot = ROOT, force = false } = {}) {
 
 export function getWorktreeRoot() {
   return WT_ROOT
+}
+
+function sh(cmd, args, cwd) {
+  try {
+    return execFileSync(cmd, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
+  } catch (e) {
+    return (e.stdout?.toString?.() || '').trim()
+  }
+}
+
+/**
+ * Deterministic workspace state fingerprint for resume gates.
+ * Includes HEAD, porcelain status (with untracked), and content hashes of dirty paths.
+ */
+export function computeWorkspaceStateHash(workspace) {
+  if (!workspace || !fs.existsSync(workspace)) {
+    throw new Error('workspace_missing')
+  }
+  const head = sh('git', ['rev-parse', 'HEAD'], workspace)
+  const porcelain = sh('git', ['status', '--porcelain', '-uall'], workspace)
+  const lines = porcelain.split('\n').filter(Boolean)
+  const fileEntries = []
+  for (const line of lines) {
+    // XY path  or  XY old -> new
+    let rel = line.slice(3)
+    if (rel.includes(' -> ')) rel = rel.split(' -> ').pop()
+    rel = rel.replace(/^"|"$/g, '')
+    const abs = path.join(workspace, rel)
+    let digest = 'missing'
+    try {
+      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
+        digest = crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex')
+      } else if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
+        digest = 'dir'
+      }
+    } catch {
+      digest = 'error'
+    }
+    fileEntries.push(`${line}\t${digest}`)
+  }
+  fileEntries.sort()
+  const payload = [`head=${head}`, `status_lines=${lines.length}`, ...fileEntries].join('\n')
+  const hash = crypto.createHash('sha256').update(payload).digest('hex')
+  return {
+    workspace_state_hash: hash,
+    head,
+    porcelain,
+    dirty_paths: lines.map((l) => {
+      let rel = l.slice(3)
+      if (rel.includes(' -> ')) rel = rel.split(' -> ').pop()
+      return rel.replace(/^"|"$/g, '')
+    }),
+    payload_preview: payload.slice(0, 2000),
+  }
+}
+
+export function assertWorkspaceState(workspace, expectedHash) {
+  const live = computeWorkspaceStateHash(workspace)
+  if (live.workspace_state_hash !== expectedHash) {
+    const err = new Error('workspace_state_hash_mismatch')
+    err.code = 'WORKSPACE_STATE_MISMATCH'
+    err.live = live.workspace_state_hash
+    err.expected = expectedHash
+    err.details = live
+    throw err
+  }
+  return live
 }

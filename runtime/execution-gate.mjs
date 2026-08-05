@@ -2,8 +2,7 @@
  * execution-gate.mjs — double gate + authorization checks (pure).
  */
 import crypto from 'node:crypto'
-import { planHash } from './mission-planner-v2.mjs'
-import { validateMissionPlanV2 } from './mission-planner-v2.mjs'
+import { planHash, validateMissionPlanV2 } from './mission-planner-v2.mjs'
 import { loadAllContracts } from './contracts.mjs'
 
 export function checkFeatureFlag(env = process.env) {
@@ -14,10 +13,14 @@ export function checkExecuteFlag(argv = process.argv) {
   return argv.includes('--execute')
 }
 
+const SCOPES = new Set(['fixture_only', 'worktree', 'worktree_resume'])
+
 /**
- * worktree scope requires approved_by=boss exclusively.
+ * worktree / worktree_resume require approved_by=boss.
  * fixture_only may use test_fixture.
- * expires_at is mandatory and must be a future timestamp.
+ * expires_at mandatory.
+ * worktree_resume requires resume_from_session_id, workspace_state_hash,
+ * authorization_id, nonce.
  */
 export function validateAuthorization(auth, plan, { now = Date.now() } = {}) {
   const errors = []
@@ -29,13 +32,23 @@ export function validateAuthorization(auth, plan, { now = Date.now() } = {}) {
   if (!Array.isArray(auth.assignment_session_ids) || !auth.assignment_session_ids.length) {
     errors.push('no_sessions')
   }
-  if (!['fixture_only', 'worktree'].includes(auth.scope)) errors.push('bad_scope')
+  if (!SCOPES.has(auth.scope)) errors.push('bad_scope')
   if (!auth.approved_by) errors.push('approved_by_missing')
-  if (auth.scope === 'worktree' && auth.approved_by !== 'boss') {
+  if ((auth.scope === 'worktree' || auth.scope === 'worktree_resume') && auth.approved_by !== 'boss') {
     errors.push('worktree_requires_boss')
   }
   if (auth.scope === 'fixture_only' && !['test_fixture', 'boss'].includes(auth.approved_by)) {
     errors.push('fixture_requires_test_fixture_or_boss')
+  }
+  if (auth.scope === 'worktree_resume') {
+    if (!auth.resume_from_session_id) errors.push('resume_from_session_id_required')
+    else if (!auth.assignment_session_ids.includes(auth.resume_from_session_id)) {
+      errors.push('resume_session_not_authorized')
+    }
+    if (!auth.workspace_state_hash) errors.push('workspace_state_hash_required')
+    if (!auth.authorization_id) errors.push('authorization_id_required')
+    if (!auth.nonce) errors.push('nonce_required')
+    if (!auth.worktree_path && !auth.resume_from_session_id) errors.push('worktree_path_required')
   }
   if (!auth.expires_at) {
     errors.push('expires_at_required')
@@ -80,6 +93,13 @@ export function gateExecution({ env, argv, plan, auth, assignment, catalogs = nu
     if (auth && !auth.assignment_session_ids?.includes(assignment.session_id)) {
       errors.push('assignment_not_authorized')
     }
+    if (
+      auth?.scope === 'worktree_resume' &&
+      auth.resume_from_session_id &&
+      auth.resume_from_session_id !== assignment.session_id
+    ) {
+      errors.push('resume_session_mismatch')
+    }
   }
   if (plan?.metadata?.plan_hash && planHash(plan) !== plan.metadata.plan_hash) {
     errors.push('plan_tampered')
@@ -94,6 +114,10 @@ export function authFingerprint(auth) {
     sessions: [...(auth.assignment_session_ids || [])].sort(),
     scope: auth.scope,
     approved_by: auth.approved_by,
+    authorization_id: auth.authorization_id || null,
+    nonce: auth.nonce || null,
+    resume_from_session_id: auth.resume_from_session_id || null,
+    workspace_state_hash: auth.workspace_state_hash || null,
   }
   return crypto.createHash('sha256').update(JSON.stringify(stable)).digest('hex').slice(0, 12)
 }
