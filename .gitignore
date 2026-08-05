@@ -19,3 +19,4 @@ bundles/*.json
 
 # External attachments (rapports collés, hors produit)
 .hermes/
+plans/

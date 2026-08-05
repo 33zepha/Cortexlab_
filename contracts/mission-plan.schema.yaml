@@ -1,0 +1,29 @@
+# MissionPlanV2 schema — shadow mode only
+schema_version: 2
+kind: mission_plan_schema
+mode: shadow
+
+required_top:
+  - schema_version
+  - kind
+  - mode
+  - mission
+  - organization
+  - assignments
+  - metadata
+
+mission_required: [id, goal, risk]
+organization_required: [status]
+assignment_required: [mission_id, manager_id, agent_role_id, status]
+
+forbidden_in_org_ids:
+  - AG-
+  - claude
+  - codex
+  - kimi
+  - luna
+  - hy3
+  - grok
+  - gemini
+
+hash_excludes: [generated_at]
