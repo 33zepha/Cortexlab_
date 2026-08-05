@@ -14,48 +14,76 @@ colors:
   sidebar: "#FBFCFB"
   surface: "#FFFFFF"
   sub-surface: "#F8FAF9"
-  border: "#DDE4DF"
+  border: "#E3E8E4"
   border-strong: "#C8D2CB"
   text: "#17231E"
   text-muted: "#728078"
 typography:
-  h1:
+  # Six steps, four weights (400/500/600/700 — the only Inter static
+  # weights actually loaded). No in-between values like 650 or 720:
+  # arbitrary weights just snap to the nearest loaded one, so precision
+  # there is fake. See web/src/styles/index.css :root for the --fs-* tokens.
+  xl:
     fontFamily: Inter
-    fontSize: 1.75rem
+    fontSize: 24px
     fontWeight: 700
     lineHeight: 1.2
-    letterSpacing: "-0.02em"
-  h2:
+    letterSpacing: "-0.03em"
+  lg:
     fontFamily: Inter
-    fontSize: 1.25rem
+    fontSize: 18px
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+  md:
+    fontFamily: Inter
+    fontSize: 15px
     fontWeight: 600
     lineHeight: 1.3
-  body-md:
+  base:
     fontFamily: Inter
-    fontSize: 0.875rem
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 1.5
+  sm:
+    fontFamily: Inter
+    fontSize: 12px
     fontWeight: 400
     lineHeight: 1.5
-  label:
+  xs:
     fontFamily: Inter
-    fontSize: 0.75rem
+    fontSize: 11px
+    fontWeight: 400
+    lineHeight: 1.4
+  eyebrow:
+    fontFamily: Inter
+    fontSize: 10px
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: "0.04em"
+    letterSpacing: "0.05em"
   mono:
-    fontFamily: "JetBrains Mono"
-    fontSize: 0.8125rem
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+    fontSize: 11px
     fontWeight: 400
 rounded:
-  sm: 6px
-  md: 8px
-  lg: 12px
-  xl: 16px
+  xs: 6px
+  sm: 8px
+  md: 10px
+  lg: 14px
+  xl: 20px
 spacing:
   xs: 4px
   sm: 8px
   md: 16px
   lg: 24px
   xl: 32px
+shadow:
+  # Layered — a hairline plus a soft ambient blur, never a single flat
+  # shadow and never a dark halo. See --shadow-* tokens.
+  xs: "0 1px 2px rgba(23,35,30,.05)"
+  sm: "0 1px 2px rgba(23,35,30,.04), 0 6px 16px rgba(23,35,30,.05)"
+  md: "0 2px 4px rgba(23,35,30,.05), 0 14px 32px rgba(23,35,30,.08)"
+  lg: "0 8px 16px rgba(23,35,30,.06), 0 28px 56px rgba(23,35,30,.12)"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
@@ -129,7 +157,7 @@ Real-time data is fed by the existing NDJSON ledger (`runtime/event-store.mjs`) 
 
 # Typography
 
-Inter for everything (matches all 10 references). JetBrains Mono for ledger hashes, IDs, technical values. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.04em`) is for section eyebrows and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
+Inter for everything (matches all 10 references), loaded at exactly four static weights (400/500/600/700) — never specify a weight outside that set, it will just snap to the nearest one. System monospace stack (`ui-monospace, SFMono-Regular, Menlo`) for ledger hashes, IDs, technical values — no extra webfont for it. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.05em`, the `eyebrow` step) is for section labels and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
 
 # Layout
 
@@ -143,22 +171,28 @@ Inter for everything (matches all 10 references). JetBrains Mono for ledger hash
 - **Sidebar header:** wordmark + live runtime state (`● Runtime online`, driven by the SSE
   connection). **Footer:** live readouts (missions 24h, pending approvals, last run) —
   state, visually distinct from navigation.
-- **Top bar:** page title left; search + Filters + primary `+ New` / `+ Run Mission` right.
+- **Top bar:** page title left; search + Filters right. Missions start elsewhere (Hermes,
+  Discord, terminal) — the Console observes, so there is no "+ Run Mission" action here.
 - **Main:** KPI summary row (3–4 cards) → toolbar (view toggle grid/table, refresh) → content grid or table.
 - **Content density:** cards max 3-up on desktop, table for dense agent lists (JunoMind pattern).
 
 # Elevation & Depth
 
-**Borders do the work, not shadows.** Every card, panel and nested block carries a
-1px `border` — that is what creates the cut. Shadows stay tight and local
-(`0 1px 2px rgba(23,25,28,0.05)` on cards), never a diffuse halo, or the whole UI
-reads as if covered in tracing paper. Only true overlays (drawer, popover) lift off
-the page: `0 8px 24px rgba(23,25,28,0.12)` plus a border. Hover raises the *border*
-to `border-strong` rather than growing the shadow.
+**Borders do the work, shadows are a whisper.** Every card, panel and nested block
+carries a 1px `border` — that is what creates the cut. Shadows are layered (a 1px
+hairline plus a soft ambient blur) instead of one flat blur, and stay nearly invisible
+at rest: `shadow.xs` (`0 1px 2px rgba(23,35,30,.05)`) on resting cards. Floating
+elements (canvas toolbar, node cards, dropdowns) step up to `shadow.sm`/`shadow.md`.
+Only true overlays (drawer, mobile sheet) use `shadow.lg`. Never a dark halo. Hover
+raises the *border* to `border-strong` before it grows the shadow.
 
 # Shapes
 
-Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inner blocks, `sm` (6px) for buttons/badges/toggles. Consistent radius = cohesive feel.
+One consistent radius scale, no one-off values: `xl` (20px) for large overlays/sheets,
+`lg` (14px) for cards/panels/containers, `md` (10px) for node cards and nested blocks,
+`sm` (8px) for buttons/inputs/badges, `xs` (6px) for tiny chips and dots. Every
+component maps to one of these five — that consistency is what reads as "finished"
+rather than "template".
 
 # Components
 
@@ -173,7 +207,7 @@ Rounded corners throughout: `lg` (12px) for cards/containers, `md` (8px) for inn
 - **Table:** columns checkbox · NAME · ROLE · STATUS(badge) · CONFIDENCE · LAST INPUT · ETA · PROJECT · actions. Row hover = subtle `bg`.
 - **KPI summary card:** big metric + delta vs last week (green up / red down).
 - **Execution history list:** time · icon+name · status badge (Recent Executions pattern), fed by `events.ndjson`.
-- **Button primary:** indigo solid; hover = `primary-hover`.
+- **Button primary:** jade solid; hover = `primary-hover`.
 
 # Do's and Don'ts
 
