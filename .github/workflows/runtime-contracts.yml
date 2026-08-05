@@ -65,7 +65,9 @@ jobs:
           echo 'secret scan clean'
       - name: No IA CLI invocation in workflow
         run: |
-          if grep -En 'claude |codex |kimi |hermes chat|grok ' .github/workflows/runtime-contracts.yml; then
+          # Detect real invocations (commands), not this grep pattern itself.
+          # Fail if a run step starts a model CLI as a command.
+          if grep -En '^[[:space:]]+(run:[[:space:]]*)?(claude|codex|kimi|grok)([[:space:]]|$)' .github/workflows/*.yml; then
             echo 'workflow must not invoke IA CLIs'; exit 1
           fi
           echo 'workflow clean'
