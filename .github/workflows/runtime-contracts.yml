@@ -15,7 +15,7 @@ on:
       - 'generate-registry.mjs'
       - '.github/workflows/runtime-contracts.yml'
   push:
-    branches: [feat/role-model-separation, feat/session-runner-v1]
+    branches: [feat/role-model-separation, feat/session-runner-v1, fix/mission-control-scoping, feat/orchestrator-v2, feat/haiku-confirmed]
     paths:
       - 'contracts/**'
       - 'runtime/**'
