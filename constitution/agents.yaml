@@ -1,14 +1,34 @@
 # Agents gouvernés — source canonique (derivation, pas dupliquee)
 #
-# Modele d'entreprise Cortex (rapport deep-research) :
-#   Hermes = CEO qui raisonne H24 (orchestration globale)
-#   Managers = IAs de haut niveau qui orchestrent les salaries
-#   Salaries = agents/workers execution
-# Toutes les IAs branchees sont utilisees ; optimisation par rapports concis
-# de chaque IA -> meilleure qualite, couts diminues.
+# =============================================================================
+# ARCHITECTURE TRANSITOIRE DE COMPATIBILITÉ
+# =============================================================================
+# Ce fichier reste la VERITE machine pour le runtime actuel
+# (manifests/agents.json + generate-registry.mjs → registry/registry.json).
 #
-# Ce fichier est la VERITE sur les entites. manifests/agents.json ne porte que
-# les metadonnees ; generate-registry.mjs tire le reste d'ici.
+# Les entrees ci-dessous FUSIONNENT TEMPORAIREMENT :
+#   - un role organisationnel (ceo / manager / worker)
+#   - un modele ou une variante de modele (Claude, Codex, Kimi, Luna, HY3)
+#
+# Ce n'est PAS l'organigramme cible definitif.
+#
+# Cible validee :
+#   Boss
+#   → Hermes (entree conversationnelle + closure)
+#   → Chief of Staff (orchestration globale)
+#   → managers metier (Engineering, Product & Experience, Research, Mnemosyne)
+#   → agents specialises
+#   → selection dynamique du modele
+#   → selection dynamique de l'effort
+#   → execution, preuves, evaluation
+#
+# Claude, Codex, Kimi, Luna Max et HY3 Free = modeles / variantes, pas l'org finale.
+# Migration dediee : feat/role-model-separation
+# Antigravity / Gemini : absents de l'architecture active.
+# =============================================================================
+#
+# manifests/agents.json ne porte que les metadonnees (id, tier, source) ;
+# generate-registry.mjs tire le reste d'ici.
 
 agents:
   - id: AG-CLAUDE
@@ -17,9 +37,13 @@ agents:
     tier: manager
     reports_to: AG-HERMES
     model: claude-opus-4-8
-    role: "Manager produit/strategie et UX : analyse, critique, specification UI, direction produit, revue visuelle"
+    # BINDING TRANSITOIRE : role org + modele Claude fusionnes (compat runtime).
+    # Pas le Product & Experience Manager definitif.
+    role: "BINDING TRANSITOIRE — Manager produit/strategie et UX : analyse, critique, specification UI, direction produit, revue visuelle"
+    architecture_status: transitional_compatibility
+    role_binding: transitional
     # strengths = TOKENS machine pour le router. UI/UX n'est PAS une aptitude unique.
-    # Implementation frontend = Codex (code/tests/correction).
+    # Implementation frontend = binding Codex temporaire (code/tests/correction).
     strengths:
       - raisonnement
       - redaction
@@ -48,7 +72,11 @@ agents:
     tier: manager
     reports_to: AG-HERMES
     model: kimi-k3
-    role: "Manager recherche/donnees : synthese long contexte, reporting dense"
+    # BINDING TRANSITOIRE : role org + modele Kimi fusionnes (compat runtime).
+    # Pas le Research Manager definitif.
+    role: "BINDING TRANSITOIRE — Manager recherche/donnees : synthese long contexte, reporting dense"
+    architecture_status: transitional_compatibility
+    role_binding: transitional
     strengths: [long-context, recherche, resume]
     cost_index: 0.8
     quality_index: 0.88
@@ -59,33 +87,33 @@ agents:
     provider: nous
     tier: ceo
     model: hy3
-    role: "CEO : raisonne H24, orchestration des managers, decisions de closure"
+    # BINDING TRANSITOIRE : role CEO + modele HY3 par defaut fusionnes.
+    # Hermes reste l'entree/closure ; HY3 n'est pas l'identite organisationnelle.
+    role: "BINDING TRANSITOIRE — CEO : raisonne H24, orchestration des managers, decisions de closure"
+    architecture_status: transitional_compatibility
+    role_binding: transitional
     strengths: [orchestration, outils, multi-IA, raisonnement-metis]
     cost_index: 0.4
     quality_index: 0.90
     status: active
 
-  # Codex = CHIEF ENGINEER de Cortex. Autorite technique de premier rang,
-  # rattachee directement a Hermes Il detient l'autorite
-  # finale sur l'ingenierie du depot : architecture d'implementation, code,
-  # tests, corrections, qualite logicielle.
-  #
-  # tier: manager -> candidat du router (INV-011). Il gouverne son cycle
-  # technique mais ne produit PAS de closure : la gouvernance reste au Chief of
-  # Staff (INV-006) et la closure a Hermes. Autorite technique != autorite de
-  # gouvernance.
-  #
-  # NOTE strengths : ce sont des TOKENS machine matches par router.mjs
-  # (requiredStrengths), pas de la prose. La description humaine des forces est
-  # dans `capabilities`, qui n'entre pas dans le scoring.
+  # BINDING TRANSITOIRE — AG-CODEX fusionne aujourd'hui :
+  #   role d'autorite technique d'ingenierie + famille/modele Codex (gpt-5.6-luna).
+  # Ce n'est PAS le Engineering Manager metier definitif (MGR-ENGINEERING).
+  # tier: manager -> candidat du router (INV-011). Pas de closure (INV-006).
+  # strengths = TOKENS machine (router.mjs) ; prose humaine dans capabilities.
   - id: AG-CODEX
     name: Codex
     provider: openai
     tier: manager
     reports_to: AG-HERMES
     model: gpt-5.6-luna
+    # TRANSITOIRE — effort fige sur l'entite agent ; cible = effort au niveau session/mandat.
     reasoning_effort: max
-    role: "Chief Engineer de Cortex : autorite technique responsable de l'architecture d'implementation, du code, des tests, des corrections et de la qualite logicielle finale."
+    reasoning_effort_binding: transitional
+    role: "BINDING TRANSITOIRE — Chief Engineer de Cortex : autorite technique responsable de l'architecture d'implementation, du code, des tests, des corrections et de la qualite logicielle finale."
+    architecture_status: transitional_compatibility
+    role_binding: transitional
     strengths: [code, tests, correction, refactoring, debugging, securite-code, autonomie]
     domain_expertise:
       - software_engineering
@@ -110,20 +138,18 @@ agents:
     quality_index: 0.98
     status: active
 
-  # Luna Max = executant d'ingenierie. Meme famille de modele que le Chief
-  # Engineer, en mode Max reasoning. Il rend compte a AG-CODEX (autorite
-  # technique).
-  # tier worker -> jamais candidat du router (INV-011), il recoit un mandat.
-  # Luna Max = executant d'ingenierie. Meme famille de modele que le Chief
-  # Engineer, en mode Max reasoning. Il rend compte a AG-CODEX (autorite
-  # technique). tier worker -> jamais candidat du router (INV-011), il recoit un mandat.
+  # BINDING TRANSITOIRE — AG-LUNA fusionne worker d'execution + variante Luna Max.
+  # Cible : plus d'identite org AG-LUNA ; Luna Max = variante modele sous catalogue codex.
+  # tier worker -> jamais candidat du router (INV-011) ; recoit un mandat.
   - id: AG-LUNA
     name: "Luna Max"
     provider: openai
     tier: worker
     reports_to: AG-CODEX
     model: gpt-5.6-luna
-    role: "Executant d'ingenierie (Max reasoning) : boucle plan/code/test/correct sous mandat du Chief Engineer, produit preuves, rend au CoS"
+    role: "BINDING TRANSITOIRE — Executant d'ingenierie (Max reasoning) : boucle plan/code/test/correct sous mandat du Chief Engineer, produit preuves, rend au CoS"
+    architecture_status: transitional_compatibility
+    role_binding: transitional
     strengths: [code, long-context, autonomie, tests, correction]
     cost_index: 0.6          # < Kimi : haut-volume, long contexte, multimodal, peu couteux
     quality_index: 0.93
