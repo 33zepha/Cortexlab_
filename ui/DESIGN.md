@@ -19,52 +19,60 @@ colors:
   text: "#17231E"
   text-muted: "#728078"
 typography:
-  # Six steps, four weights (400/500/600/700 — the only Inter static
-  # weights actually loaded). No in-between values like 650 or 720:
-  # arbitrary weights just snap to the nearest loaded one, so precision
-  # there is fake. See web/src/styles/index.css :root for the --fs-* tokens.
+  # ONE family: Recursive Variable (self-hosted, @fontsource-variable/recursive).
+  # Six steps, four weights (400/500/600/700). Roles are expressed through
+  # variation axes, not through a second family — see the fontVariationSettings
+  # block below and web/src/styles/index.css :root for the --fs-* / --font-* tokens.
   xl:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 24px
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "-0.03em"
   lg:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 18px
     fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "-0.02em"
   md:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 15px
     fontWeight: 600
     lineHeight: 1.3
   base:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 13px
     fontWeight: 500
     lineHeight: 1.5
   sm:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 12px
     fontWeight: 400
     lineHeight: 1.5
   xs:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 11px
     fontWeight: 400
     lineHeight: 1.4
   eyebrow:
-    fontFamily: Inter
+    fontFamily: "Recursive Variable"
     fontSize: 10px
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: "0.05em"
   mono:
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+    fontFamily: "Recursive Variable"
+    fontVariationSettings: '"MONO" 1, "CASL" 0, "slnt" 0, "CRSV" 0.5'
     fontSize: 11px
     fontWeight: 400
+fontVariationSettings:
+  # Four roles, one typeface. Never repeat these axes in component selectors —
+  # they live as CSS custom properties in web/src/styles/index.css :root.
+  ui: '"MONO" 0, "CASL" 0, "slnt" 0, "CRSV" 0.5'
+  title: '"MONO" 0, "CASL" 0.18, "slnt" 0, "CRSV" 0.5'
+  metric: '"MONO" 0.35, "CASL" 0, "slnt" 0, "CRSV" 0.5'
+  mono: '"MONO" 1, "CASL" 0, "slnt" 0, "CRSV" 0.5'
 rounded:
   xs: 6px
   sm: 8px
@@ -157,7 +165,14 @@ Real-time data is fed by the existing NDJSON ledger (`runtime/event-store.mjs`) 
 
 # Typography
 
-Inter for everything (matches all 10 references), loaded at exactly four static weights (400/500/600/700) — never specify a weight outside that set, it will just snap to the nearest one. System monospace stack (`ui-monospace, SFMono-Regular, Menlo`) for ledger hashes, IDs, technical values — no extra webfont for it. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.05em`, the `eyebrow` step) is for section labels and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
+Recursive Variable for everything — a single self-hosted variable typeface (`@fontsource-variable/recursive`, no font CDN), loaded once from `web/src/styles/index.css`. Four *roles* come from variation axes, not from extra families:
+
+- **UI** (`--font-settings-ui`, `MONO 0 / CASL 0`) — nav, tables, buttons, inspector, events, metadata. The default, inherited from `:root` and `body`.
+- **Titles** (`--font-settings-title`, `CASL 0.18`) — Cortex Lab wordmark, page / mission / panel titles. **Never exceed `CASL 0.25`**; past that the casual axis reads as a toy font.
+- **Metrics** (`--font-settings-metric`, `MONO 0.35`) + `font-variant-numeric: tabular-nums` — budgets, costs, tokens, durations, percentages, KPIs. Slightly monospaced so digits align in a column without switching family.
+- **Technical** (`--font-settings-mono`, `MONO 1`) — IDs, hashes, ledger, logs, terminal, paths, model names.
+
+Four weights only (400/500/600/700) even though the `wght` axis is continuous — the scale stays discrete on purpose. Large bold numbers for KPIs (the "big stat" pattern seen in JunoMind / Synqra / Agentic UI). Uppercase tracking (`letterSpacing: 0.05em`, the `eyebrow` step) is for section labels and badges only — navigation and other reading text stay sentence-case, since micro-uppercase labels are hard to scan.
 
 # Layout
 

@@ -109,7 +109,9 @@
 .state-waiting .reference-node-icon { color: var(--r-orange); background: #fff3df; }
 .state-queued .reference-node-icon { color: var(--r-blue); background: #edf0fb; }
 .reference-node-copy { min-width: 0; display: flex; flex-direction: column; }
-.reference-node-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); font-weight: 600; }
+/* Recursive runs marginally wider than Inter at this size; the node card is a
+   fixed 202px, so a hair of negative tracking keeps names uncut. */
+.reference-node-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); font-weight: 600; letter-spacing: -.012em; }
 .reference-node-copy small { margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--r-muted); font-size: 9px; }
 .reference-node-progress { display: flex; align-items: center; gap: 5px; color: var(--r-jade); font-size: 9px; font-weight: 600; white-space: nowrap; }
 .reference-node-progress i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
@@ -170,11 +172,15 @@
 .dock-events { padding: 10px 16px; }
 .dock-events article { min-height: 40px; display: grid; grid-template-columns: 62px 24px 108px 1fr; gap: 8px; align-items: center; border-bottom: 1px solid rgba(23, 35, 30, .06); font-size: var(--fs-xs); }
 .dock-events article:last-child { border-bottom: 0; }
-.dock-events time { color: var(--r-faint); font-size: var(--fs-2xs); }
+.dock-events time { color: var(--r-faint); font-size: var(--fs-2xs); font-variation-settings: var(--font-settings-metric); font-variant-numeric: tabular-nums; }
 .dock-events article > i { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--r-jade-dark); font-size: 9px; font-style: normal; font-weight: 600; }
 .dock-events strong { font-weight: 600; }.dock-events span { color: var(--r-muted); }
 .dock-empty { padding: 48px 16px; color: var(--r-faint); font-size: var(--fs-xs); text-align: center; }
-.dock-terminal { margin: 16px; padding: 16px; border-radius: var(--radius-md); background: var(--r-panel-soft); color: var(--r-ink); font: 11px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+.dock-terminal {
+  margin: 16px; padding: 16px; border-radius: var(--radius-md); background: var(--r-panel-soft); color: var(--r-ink);
+  font-family: var(--font-ui); font-variation-settings: var(--font-settings-mono);
+  font-size: 11px; line-height: 1.7; white-space: pre-wrap;
+}
 
 .reference-health { height: 288px; margin-top: 10px; overflow: hidden; border: 1px solid var(--r-line); border-radius: var(--radius-lg); background: var(--r-panel); box-shadow: var(--shadow-xs); }
 .reference-health header { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--r-line); }

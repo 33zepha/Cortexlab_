@@ -1,6 +1,21 @@
+/* Recursive Variable — self-hosted, reproducible (npm, no CDN). `full.css`
+   carries every axis we drive below (MONO / CASL / slnt / CRSV). */
+@import '@fontsource-variable/recursive/full.css';
+
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Typography — ONE family, four roles expressed through variation axes.
+     Never repeat axis values in component selectors: use these tokens. */
+  --font-ui: "Recursive Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-settings-ui: "MONO" 0, "CASL" 0, "slnt" 0, "CRSV" 1;
+  --font-settings-title: "MONO" 0, "CASL" 0.85, "slnt" 0, "CRSV" 1;
+  --font-settings-brand: "MONO" 0, "CASL" 1, "slnt" 0, "CRSV" 1;
+  --font-settings-metric: "MONO" 0.35, "CASL" 0, "slnt" 0, "CRSV" 0.5;
+  --font-settings-mono: "MONO" 1, "CASL" 0, "slnt" 0, "CRSV" 0.5;
+
+  font-family: var(--font-ui);
+  font-variation-settings: var(--font-settings-ui);
   font-synthesis: none;
   --canvas: #f6f8f6;
   --surface: #ffffff;
@@ -38,8 +53,8 @@
   --shadow-md: 0 2px 4px rgba(23, 35, 30, .05), 0 14px 32px rgba(23, 35, 30, .08);
   --shadow-lg: 0 8px 16px rgba(23, 35, 30, .06), 0 28px 56px rgba(23, 35, 30, .12);
 
-  /* Type scale — six steps, four weights (400/500/600/700, the only Inter
-     static weights actually loaded). No arbitrary in-between values. */
+  /* Type scale — six steps, four weights (400/500/600/700). Recursive is a
+     variable font, but the scale stays discrete on purpose. */
   --fs-2xs: 10px;
   --fs-xs: 11px;
   --fs-sm: 12px;
@@ -52,8 +67,48 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 html, body, #root { min-height: 100%; margin: 0; }
-body { background: var(--canvas); color: var(--text); font-size: var(--fs-sm); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-button, input { font: inherit; }
+body {
+  background: var(--canvas); color: var(--text); font-size: var(--fs-sm); line-height: 1.5;
+  font-family: var(--font-ui); font-variation-settings: var(--font-settings-ui);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; font-variation-settings: inherit; }
+
+/* ---- Typographic roles (Recursive axes applied once, here) --------------
+   1. UI            — default, inherited from :root / body.
+   2. Titles        — CASL 0.18 (never above 0.25).
+   3. Metrics       — MONO 0.35 + tabular numerals so figures align.
+   4. Technical     — MONO 1 for IDs, hashes, models, ledger, logs, paths. */
+h1, h2, h3,
+.topbar-title-block h1,
+.panel-heading h2,
+.reference-title-row h1,
+.mission-summary-card h2 { font-variation-settings: var(--font-settings-title); }
+.brand-name { font-variation-settings: var(--font-settings-brand); }
+
+.kpi-value,
+.progress-cell strong,
+.budget-cell strong, .budget-cell > span,
+.quality-cell strong,
+.check-stack b,
+.summary-meter strong,
+.summary-metric strong, .summary-metric b,
+.inspector-state b,
+.inspector-stats strong,
+.health-stats strong,
+.reference-node-progress,
+.timeline-step-progress, .timeline-step-index,
+.canvas-zoom span,
+.canvas-agent-count { font-variation-settings: var(--font-settings-metric); font-variant-numeric: tabular-nums; }
+
+.mono-number,
+.mission-name-cell small,
+.agent-identity-cell small,
+.model-cell strong,
+.mission-summary-card > p,
+.inspector-stats div:nth-child(4) strong,
+.dock-events span,
+.dock-terminal { font-variation-settings: var(--font-settings-mono); }
 button { color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid rgba(11, 114, 93, .28); outline-offset: 2px; }
 .icon { width: 16px; height: 16px; flex: 0 0 16px; }
@@ -75,9 +130,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid rgba(11, 114, 93,
   background: var(--sidebar);
   border-right: 1px solid var(--border);
 }
-.brand-row { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--border); }
+.brand-row { height: 72px; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--border); }
 .brand-mark {
-  position: relative; width: 21px; height: 21px; flex: 0 0 21px; display: block;
+  position: relative; width: 32px; height: 32px; flex: 0 0 32px; display: block;
   border: 1.5px solid var(--primary); border-radius: var(--radius-xs); background: var(--primary-soft);
   transform: rotate(45deg);
 }
@@ -85,7 +140,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid rgba(11, 114, 93,
 .brand-mark::before { inset: 4px; border: 1px solid rgba(11, 114, 93, .58); }
 .brand-mark::after { width: 4px; height: 4px; top: 50%; left: 50%; background: var(--primary); transform: translate(-50%, -50%); }
 .brand-mark i { inset: -4px; border: 1px solid rgba(11, 114, 93, .1); }
-.brand-name { font-size: var(--fs-base); font-weight: 700; letter-spacing: -.02em; }
+.brand-name { font-size: var(--fs-lg); font-weight: 700; letter-spacing: -.02em; }
 .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px 18px; }
 .sidebar-group { margin-bottom: 0; }
 .sidebar-group-label { display: block; padding: 0 10px 8px; color: var(--muted); font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
@@ -246,8 +301,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid rgba(11, 114, 93,
 .segmented-control button.is-active { background: var(--surface); color: var(--primary); font-weight: 600; box-shadow: var(--shadow-xs); }
 .agent-table { min-width: 760px; }
 .agent-table th:nth-child(1) { width: 12%; }
-.agent-table th:nth-child(2) { width: 17%; }
-.agent-table th:nth-child(3) { width: 14%; }
+/* Modèle carries the MONO 1 token (model names are technical data), and
+   Recursive's monospaced axis runs ~11px wider than Inter there. The 2% comes
+   from "Rôle", which is a 2-line clamp and simply re-wraps — not from "Mission
+   actuelle", which truncates. Net table width unchanged. */
+.agent-table th:nth-child(2) { width: 15%; }
+.agent-table th:nth-child(3) { width: 16%; }
 .agent-table th:nth-child(4) { width: 10%; }
 .agent-table th:nth-child(5) { width: 18%; }
 .agent-table th:nth-child(6) { width: 8%; }
@@ -257,7 +316,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid rgba(11, 114, 93,
 .agent-identity-cell strong { color: var(--text); font-size: var(--fs-xs); font-weight: 600; }
 .agent-identity-cell small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 .role-cell { display: -webkit-box; overflow: hidden; color: var(--text-soft); font-size: var(--fs-2xs); line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.mono-number { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--fs-xs); }
+.mono-number { color: var(--text); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
 .quality-cell { display: grid; grid-template-columns: 28px 1fr; gap: 6px; align-items: center; }
 .quality-cell strong { color: var(--text-soft); font-size: var(--fs-2xs); font-weight: 600; }
 .mini-progress { height: 4px; }

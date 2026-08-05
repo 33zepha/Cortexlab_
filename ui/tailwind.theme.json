@@ -28,7 +28,13 @@
     "xl": "32px"
   },
   "fontFamily": {
-    "sans": ["Inter", "system-ui", "sans-serif"],
-    "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"]
+    "sans": ["Recursive Variable", "ui-sans-serif", "system-ui", "sans-serif"],
+    "mono": ["Recursive Variable", "ui-sans-serif", "system-ui", "sans-serif"]
+  },
+  "fontVariationSettings": {
+    "ui": "'MONO' 0, 'CASL' 0, 'slnt' 0, 'CRSV' 0.5",
+    "title": "'MONO' 0, 'CASL' 0.18, 'slnt' 0, 'CRSV' 0.5",
+    "metric": "'MONO' 0.35, 'CASL' 0, 'slnt' 0, 'CRSV' 0.5",
+    "mono": "'MONO' 1, 'CASL' 0, 'slnt' 0, 'CRSV' 0.5"
   }
 }
