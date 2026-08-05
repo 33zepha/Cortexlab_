@@ -82,20 +82,23 @@ Boss → Hermes (CEO, closure)
          ├── Chief of Staff  gouvernance, budgets, policies, closures
          ├── Codex           Chief Engineer — autorité technique du dépôt
          │     └── Luna Max  exécutant d'ingénierie (worker)
-         ├── Antigravity     UI, prototypage, expérimentation
-         ├── Claude          analyse, critique, conseil
+         ├── Claude          UX, critique, spécification, direction produit
          └── Kimi            recherche, lecture longue, synthèse
 ```
 
 **Codex est le Chief Engineer** : autorité finale sur l'ingénierie du dépôt
-(implémentation, tests, debugging, refactoring, sécurité du code). Il est
-`tier: manager` et donc candidat du router, rattaché à Hermes — plus à
-Antigravity. Autorité **technique**, pas de gouvernance : il ne produit aucune
-closure (INV-006).
+(implémentation front et back, tests, debugging, refactoring, sécurité du
+code, prototypage exécutable). Il est `tier: manager` et candidat du router,
+rattaché à Hermes. Autorité **technique**, pas de gouvernance : il ne produit
+aucune closure (INV-006).
 
-Antigravity conserve un domaine **distinct et non concurrent** (UI, prototypage,
-intégration frontend). Deux agents ne peuvent pas détenir le même domaine
-d'autorité : c'est vérifié par `test/authority.test.mjs`.
+**Claude** porte l'analyse UX, la critique, la spécification UI, la direction
+produit et la revue visuelle (`analyse-ux`, `critique-ux`, `specification-ui`,
+`direction-produit`, `revue-visuelle`). Il ne gagne **pas** ui/ux par le seul
+ratio qualité/coût.
+
+**Antigravity a été retiré** du système. Aucun fallback, aucun alias.
+L'historique `ledger/` et `bundles/` reste immuable.
 
 ⚠️ `strengths` contient des **tokens machine** comparés par `requiredStrengths()`.
 La description en prose va dans `capabilities` / `domain_expertise`, qui

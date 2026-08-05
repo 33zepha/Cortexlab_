@@ -48,11 +48,19 @@ export function requiredStrengths(rule) {
     case 'refactoring':
     case 'code_security':
       return ['code', 'tests', 'correction']
-    // UI / produit : domaine spécialisé, distinct de l'ingénierie.
+    // UI / UX produit : analyse et specification (Claude) — pas l'implementation.
+    // L'implementation frontend reste sous l'ingenierie (Codex).
     case 'ui':
     case 'ux':
+      return ['analyse-ux', 'critique-ux', 'specification-ui', 'revue-visuelle']
+    // Prototypage / integration frontend executables = ingenierie (Codex).
     case 'prototypage':
-      return ['ui', 'prototypage', 'frontend-integration']
+    case 'frontend-integration':
+      return ['code', 'tests', 'correction']
+    case 'analyse':
+    case 'critique':
+    case 'conseil':
+      return ['raisonnement', 'analyse', 'critique', 'conseil']
     case 'recherche':
     case 'data':
       return ['recherche', 'long-context']

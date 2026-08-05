@@ -197,7 +197,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid rgba(15, 107, 95,
 .agent-avatar { width: 27px; height: 27px; flex: 0 0 27px; display: grid; place-items: center; border-radius: 50%; background: var(--primary-dark); color: #fff; font-size: var(--fs-2xs); font-weight: 600; }
 .agent-avatar-small { width: 24px; height: 24px; flex-basis: 24px; }
 .avatar-hermes { background: #0f6670; }
-.avatar-antigravity { background: #111827; }
+.avatar-claude { background: #7c3aed; }
+.avatar-codex { background: #0f6b5f; }
 .avatar-kimi { background: #7b8798; }
 .status-pill { width: fit-content; display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: var(--radius-xs); font-size: 9px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
 .status-pill i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .8; }
