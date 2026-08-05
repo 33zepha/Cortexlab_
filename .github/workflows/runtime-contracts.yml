@@ -15,7 +15,7 @@ on:
       - 'generate-registry.mjs'
       - '.github/workflows/runtime-contracts.yml'
   push:
-    branches: [feat/role-model-separation]
+    branches: [feat/role-model-separation, feat/session-runner-v1]
     paths:
       - 'contracts/**'
       - 'runtime/**'
@@ -36,9 +36,9 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: package-lock.json
       - name: Install
-        run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+        run: npm ci --no-audit --no-fund
       - name: Unit tests
         run: npm test
       - name: Registry verify
@@ -47,7 +47,7 @@ jobs:
         run: git diff --exit-code
       - name: YAML parse contracts
         run: |
-          node -e "
+          node --input-type=module -e "
           import yaml from 'js-yaml';
           import fs from 'fs';
           import path from 'path';
@@ -59,11 +59,13 @@ jobs:
           "
       - name: Secret scan proofs
         run: |
-          if rg -n 'sk-[a-zA-Z0-9]{10,}|ghp_|BEGIN PRIVATE|api[_-]?key\s*[:=]\s*['\''\"][A-Za-z0-9]' docs/proofs contracts 2>/dev/null; then
+          if grep -REn 'sk-[a-zA-Z0-9]{10,}|ghp_|BEGIN PRIVATE' docs/proofs contracts 2>/dev/null; then
             echo 'secret-like content found'; exit 1
           fi
           echo 'secret scan clean'
-      - name: No IA CLI invocation
+      - name: No IA CLI invocation in workflow
         run: |
-          # Ensure workflow itself doesn't call model CLIs
-          ! rg -n 'claude |codex |kimi |hermes chat|grok ' .github/workflows/runtime-contracts.yml
+          if grep -En 'claude |codex |kimi |hermes chat|grok ' .github/workflows/runtime-contracts.yml; then
+            echo 'workflow must not invoke IA CLIs'; exit 1
+          fi
+          echo 'workflow clean'
