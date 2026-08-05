@@ -24,13 +24,14 @@ function InspectorList({ title, trailing, items, status }) {
 }
 
 export default function ProcessInspector({ inspector, onClose }) {
-  const { item, progress, duration, cost, tokens, model, mandate, context, contextTokens, evidence, dependencies } = inspector
+  const { item, progress, duration, cost, tokens, model, mandate, context, contextTokens, evidence, dependencies, agent, scopedMissionId } = inspector
 
   return (
     <aside className="reference-inspector">
       <header>
         <span className="inspector-icon">{item.label.slice(0, 1)}</span>
         <strong>{item.label}</strong>
+        {scopedMissionId && <small className="inspector-scope">mission {scopedMissionId}</small>}
         <button type="button" onClick={onClose} aria-label="Fermer l'inspecteur"><Icon name="close" /></button>
       </header>
       <section className="inspector-block inspector-state">
@@ -41,6 +42,9 @@ export default function ProcessInspector({ inspector, onClose }) {
       <section className="inspector-stats">
         <div><span>DURÉE</span><strong>{duration}</strong></div><div><span>COÛT</span><strong>{cost}</strong></div><div><span>TOKENS</span><strong>{tokens}</strong></div><div><span>MODÈLE</span><strong>{model}</strong></div>
       </section>
+      {agent && (
+        <section className="inspector-block"><span className="reference-kicker">AGENT</span><p>{agent.name || agent.id}</p></section>
+      )}
       <InspectorText title="MANDAT">{mandate}</InspectorText>
       <InspectorList title="CONTEXTE" trailing={contextTokens} items={context} />
       <InspectorList title="PREUVES" items={evidence} status />

@@ -22,8 +22,8 @@ export default function MissionSummary({ summary }) {
       <SummaryMetric label="Budget" value={`${budget.cost} / ${budget.limit}`} percent={budget.percent} />
       <SummaryMetric label="Tokens" value={`${tokens.used} / ${tokens.limit}`} percent={tokens.percent} />
       <div className="summary-agent">
-        <span className="summary-avatar">H</span>
-        <div><strong>{activeAgent?.name || 'Hermes'}</strong><small>Chief of Staff</small></div>
+        <span className="summary-avatar">{activeAgent?.name?.slice(0, 1) || 'H'}</span>
+        <div><strong>{activeAgent?.name || 'Hermes'}</strong><small>{activeAgent?.role || 'Chief of Staff'}</small></div>
         <b>›</b>
       </div>
     </aside>

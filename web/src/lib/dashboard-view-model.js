@@ -113,7 +113,9 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
     lastSync,
     now,
 
-    // Summary rail
+    // Summary rail — scoped to the active mission. `agents` here is already the
+  // mission-scoped roster (see MissionControl scopedLedger), so the active agent
+  // slot never leaks another mission's roster.
     summary: {
       mission,
       progress, // LIVE if mission has numeric progress, PLACEHOLDER fallback otherwise
@@ -127,7 +129,7 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
         limit: '3M', // PLACEHOLDER
         percent: 41, // PLACEHOLDER
       },
-      activeAgent: agents[0] || { name: 'Hermes', role: 'Chief of Staff' },
+      activeAgent: agents[0] || (mission && (mission.agents?.[0] || { name: mission.name || 'Hermes', role: 'Chief of Staff' })) || { name: 'Hermes', role: 'Chief of Staff' },
     },
 
     // Execution graph
@@ -140,7 +142,9 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
     },
 
     // Inspector for the currently selected node — all metrics PLACEHOLDER
-    // until the backend exposes real per-node execution data.
+    // until the backend exposes real per-node execution data. The agent label
+    // is derived from the mission-scoped roster (already filtered above) so it
+    // never shows another mission's agent.
     inspector: {
       item: selectedNode,
       state: 'running', // PLACEHOLDER
@@ -149,7 +153,10 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
       cost: '€0.18', // PLACEHOLDER
       tokens: '243,672', // PLACEHOLDER
       model: 'Claude 3.5 Sonnet', // PLACEHOLDER
-      mandate: 'Créer l\'interface utilisateur pour le tableau de bord RH en respectant le design system et les composants existants.', // PLACEHOLDER
+      agent: agents.find((a) => a.id === selectedNode?.id || a.name === selectedNode?.label) || null,
+      mandate: mission?.name
+        ? `Mandat de la mission ${mission.name} (scoped to selected mission).`
+        : 'Créer l\'interface utilisateur pour le tableau de bord RH en respectant le design system et les composants existants.', // PLACEHOLDER / scoped
       context: [
         ['Bundle: RH Platform Guidelines', 'v2.1'], // PLACEHOLDER
         ['Figma: Dashboard Design', 'Updated'], // PLACEHOLDER
@@ -165,6 +172,7 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
         ['Design System', 'Terminé'], // PLACEHOLDER
         ['API Contracts', 'En cours'], // PLACEHOLDER
       ],
+      scopedMissionId: mission?.id || null,
     },
 
     // Events: LIVE from ledger, PLACEHOLDER fallback when empty
@@ -257,7 +265,7 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
 
       'summary.activeAgent': {
         kind: areAgentsLive ? 'LIVE' : 'PLACEHOLDER',
-        source: areAgentsLive ? 'ledger.agents[0] via /api/agents' : 'fallback',
+        source: areAgentsLive ? 'ledger.agents[0] via /api/agents (already scoped to mission)' : 'fallback',
         updatedAt: areAgentsLive ? lastSync : null,
         confidence: areAgentsLive ? 1 : 0,
       },
@@ -271,7 +279,7 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
 
       inspector: {
         kind: 'PLACEHOLDER',
-        source: 'hardcoded values in view-model (no per-node runtime data)',
+        source: 'hardcoded values in view-model (no per-node runtime data); agent label scoped to mission roster',
         updatedAt: null,
         confidence: 0,
       },

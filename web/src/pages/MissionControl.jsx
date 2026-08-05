@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { buildDashboardViewModel, DEFAULT_SELECTED_NODE_ID } from '../lib/dashboard-view-model.js'
+import { scopeEventsToMission, scopeAgentsToMission } from '../lib/mission-scope.js'
 import Icon from '../components/Icon.jsx'
 import MissionHeader from '../components/dashboard/MissionHeader.jsx'
 import MissionTabs from '../components/dashboard/MissionTabs.jsx'
@@ -20,9 +21,13 @@ export default function MissionControl({ missionId, ledger, now, onBack, onMenu 
 
   // Filter to the requested mission so buildDashboardViewModel (unchanged)
   // selects it as the active mission, instead of picking the first running one.
+  // Events and agents are scoped the same way so the page never leaks another
+  // mission's activity or roster.
   const scopedLedger = useMemo(() => ({
     ...ledger,
     missions: matchedMission ? [matchedMission] : ledger.missions,
+    events: matchedMission ? scopeEventsToMission(ledger.events, matchedMission) : ledger.events,
+    agents: matchedMission ? scopeAgentsToMission(ledger.agents, matchedMission) : ledger.agents,
   }), [ledger, matchedMission])
 
   const view = buildDashboardViewModel(scopedLedger, now, selectedNodeId)
