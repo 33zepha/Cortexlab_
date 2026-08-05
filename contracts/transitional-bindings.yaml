@@ -1,0 +1,54 @@
+# Mapping de compatibilité TRANSITOIRE uniquement.
+# Relie les anciennes identités AG-* (registre runtime actuel) aux rôles org cibles.
+# NON utilisé par le router / CoS tant que l'étape dual-write n'est pas activée.
+
+schema_version: 1
+kind: transitional_bindings
+status: transitional
+note: >
+  Ces bindings permettent la lecture parallèle et les futurs dual-write ledger.
+  Ils ne valident PAS Claude/Codex/Kimi/Luna comme organigramme définitif.
+
+bindings:
+  - legacy_agent_id: AG-HERMES
+    maps_role_to: ROLE-HERMES
+    default_model_family: hy3-free
+    default_model_variant: hy3
+    note: Hermes role remains; HY3 is default engine today only.
+
+  - legacy_agent_id: AG-CODEX
+    maps_role_to: MGR-ENGINEERING
+    # Aussi utilisable comme moteur pour AGENT-*-ENGINEER plus tard
+    default_model_family: codex
+    default_model_variant: gpt-5.6-luna
+    default_effort: max  # TRANSITOIRE — était fige sur l'entite
+    note: Authority technique temporaire porte par binding modele; cible = manager metier.
+
+  - legacy_agent_id: AG-CLAUDE
+    maps_role_to: MGR-PRODUCT-EXPERIENCE
+    default_model_family: claude
+    default_model_variant: claude-opus-4-8
+    default_effort: high
+    note: Binding temporaire UX/spec/critique.
+
+  - legacy_agent_id: AG-KIMI
+    maps_role_to: MGR-RESEARCH
+    default_model_family: kimi
+    default_model_variant: kimi-k3
+    default_effort: medium
+    note: Binding temporaire research/long-context.
+
+  - legacy_agent_id: AG-LUNA
+    maps_role_to: null  # pas un role org cible
+    default_model_family: codex
+    default_model_variant: luna-max
+    default_effort: max
+    note: >
+      Luna Max n'a pas d'identite organisationnelle cible. C'est une variante
+      modele. Les mandats worker iront a AGENT-*-ENGINEER + variant luna-max.
+
+# Chief of Staff n'a pas d'entree AG-* legacy — c'est le runtime.
+chief_of_staff:
+  role_id: ROLE-CHIEF-OF-STAFF
+  legacy_agent_id: null
+  implementation_today: runtime/chief-of-staff.mjs

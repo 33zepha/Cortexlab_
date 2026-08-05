@@ -1,0 +1,237 @@
+# Catalogue des rôles organisationnels Cortex
+# Source de vérité pour feat/role-model-separation — Étape 1.
+# NON branché sur le runtime d'exécution (router / CoS inchangés).
+#
+# Règle : aucun id de rôle ne porte un nom de marque modèle
+# (claude, codex, kimi, luna, hy3, gemini, antigravity).
+
+schema_version: 1
+kind: role_catalog
+status: draft_parallel  # parallèle au registre AG-* transitoire
+
+roles:
+  # ── Couche direction ──────────────────────────────────────────
+  - id: ROLE-HERMES
+    kind: ceo
+    name: Hermes
+    reports_to: null
+    responsibilities:
+      - conversational_entry
+      - mission_creation
+      - final_closure
+    must_not:
+      - direct_technical_execution
+
+  - id: ROLE-CHIEF-OF-STAFF
+    kind: chief_of_staff
+    name: Chief of Staff
+    reports_to: ROLE-HERMES
+    responsibilities:
+      - mission_decomposition
+      - manager_selection
+      - budgets
+      - proof_requirements
+      - stop_conditions
+      - escalation
+      - prepare_closure
+    must_not:
+      - be_an_ai_model_identity
+      - final_closure_without_hermes
+
+  # ── Managers métier ───────────────────────────────────────────
+  - id: MGR-ENGINEERING
+    kind: manager
+    name: Engineering Manager
+    reports_to: ROLE-CHIEF-OF-STAFF
+    domain: engineering
+    responsibilities:
+      - staff_specialized_agents
+      - verify_technical_proofs
+      - return_structured_result
+
+  - id: MGR-PRODUCT-EXPERIENCE
+    kind: manager
+    name: Product & Experience Manager
+    reports_to: ROLE-CHIEF-OF-STAFF
+    domain: product_experience
+    responsibilities:
+      - ux_analysis
+      - interface_direction
+      - product_specification
+      - visual_review_coordination
+
+  - id: MGR-RESEARCH
+    kind: manager
+    name: Research Manager
+    reports_to: ROLE-CHIEF-OF-STAFF
+    domain: research
+    responsibilities:
+      - documentary_exploration
+      - source_verification
+      - long_context_synthesis
+
+  - id: MGR-LEARNING-EVALUATION
+    kind: manager
+    name: Mnemosyne
+    reports_to: ROLE-CHIEF-OF-STAFF
+    domain: learning_evaluation
+    responsibilities:
+      - mission_evaluation
+      - model_evaluation
+      - routing_evaluation
+      - missed_items
+      - pedagogy_brief
+      - improvement_proposals
+    must_not:
+      - mutate_constitution_alone
+      - mutate_router_alone
+      - produce_closure
+      - definitive_conclusion_from_single_mission
+
+  # ── Agents spécialisés — Engineering ──────────────────────────
+  - id: AGENT-ARCHITECTURE
+    kind: specialized_agent
+    name: Architecture Agent
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  - id: AGENT-FRONTEND-ENGINEER
+    kind: specialized_agent
+    name: Frontend Engineer
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  - id: AGENT-BACKEND-ENGINEER
+    kind: specialized_agent
+    name: Backend Engineer
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  - id: AGENT-TEST-ENGINEER
+    kind: specialized_agent
+    name: Test Engineer
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  - id: AGENT-DEBUGGING
+    kind: specialized_agent
+    name: Debugging Agent
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  - id: AGENT-SECURITY-REVIEWER
+    kind: specialized_agent
+    name: Security Reviewer
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  - id: AGENT-RELEASE-REVIEWER
+    kind: specialized_agent
+    name: Release Reviewer
+    reports_to: MGR-ENGINEERING
+    domain: engineering
+
+  # ── Agents spécialisés — Product & Experience ─────────────────
+  - id: AGENT-PRODUCT-ANALYST
+    kind: specialized_agent
+    name: Product Analyst
+    reports_to: MGR-PRODUCT-EXPERIENCE
+    domain: product_experience
+
+  - id: AGENT-UX-ANALYST
+    kind: specialized_agent
+    name: UX Analyst
+    reports_to: MGR-PRODUCT-EXPERIENCE
+    domain: product_experience
+
+  - id: AGENT-INTERFACE-DESIGNER
+    kind: specialized_agent
+    name: Interface Designer
+    reports_to: MGR-PRODUCT-EXPERIENCE
+    domain: product_experience
+
+  - id: AGENT-INTERACTION-DESIGNER
+    kind: specialized_agent
+    name: Interaction Designer
+    reports_to: MGR-PRODUCT-EXPERIENCE
+    domain: product_experience
+
+  - id: AGENT-VISUAL-REVIEWER
+    kind: specialized_agent
+    name: Visual Reviewer
+    reports_to: MGR-PRODUCT-EXPERIENCE
+    domain: product_experience
+
+  - id: AGENT-ACCESSIBILITY-REVIEWER
+    kind: specialized_agent
+    name: Accessibility Reviewer
+    reports_to: MGR-PRODUCT-EXPERIENCE
+    domain: product_experience
+
+  # ── Agents spécialisés — Research ─────────────────────────────
+  - id: AGENT-RESEARCH
+    kind: specialized_agent
+    name: Research Agent
+    reports_to: MGR-RESEARCH
+    domain: research
+
+  - id: AGENT-SOURCE-VERIFIER
+    kind: specialized_agent
+    name: Source Verifier
+    reports_to: MGR-RESEARCH
+    domain: research
+
+  - id: AGENT-LONG-CONTEXT-READER
+    kind: specialized_agent
+    name: Long-Context Reader
+    reports_to: MGR-RESEARCH
+    domain: research
+
+  - id: AGENT-SYNTHESIS
+    kind: specialized_agent
+    name: Synthesis Agent
+    reports_to: MGR-RESEARCH
+    domain: research
+
+  - id: AGENT-FACT-CHECKER
+    kind: specialized_agent
+    name: Fact Checker
+    reports_to: MGR-RESEARCH
+    domain: research
+
+  # ── Agents spécialisés — Learning (Mnemosyne) ─────────────────
+  - id: AGENT-MISSION-EVALUATOR
+    kind: specialized_agent
+    name: Mission Evaluator
+    reports_to: MGR-LEARNING-EVALUATION
+    domain: learning_evaluation
+
+  - id: AGENT-MODEL-EVALUATOR
+    kind: specialized_agent
+    name: Model Evaluator
+    reports_to: MGR-LEARNING-EVALUATION
+    domain: learning_evaluation
+
+  - id: AGENT-ROUTING-EVALUATOR
+    kind: specialized_agent
+    name: Routing Evaluator
+    reports_to: MGR-LEARNING-EVALUATION
+    domain: learning_evaluation
+
+  - id: AGENT-EVIDENCE-AUDITOR
+    kind: specialized_agent
+    name: Evidence Auditor
+    reports_to: MGR-LEARNING-EVALUATION
+    domain: learning_evaluation
+
+  - id: AGENT-LESSONS
+    kind: specialized_agent
+    name: Lessons Agent
+    reports_to: MGR-LEARNING-EVALUATION
+    domain: learning_evaluation
+
+  - id: AGENT-PEDAGOGY
+    kind: specialized_agent
+    name: Pedagogy Agent
+    reports_to: MGR-LEARNING-EVALUATION
+    domain: learning_evaluation

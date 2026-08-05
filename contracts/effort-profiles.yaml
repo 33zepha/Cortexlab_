@@ -1,0 +1,92 @@
+# Profils d'effort — indépendants du modèle
+# feat/role-model-separation — Étape 1. NON branché sur le runtime.
+
+schema_version: 1
+kind: effort_catalog
+status: draft_parallel
+
+default_effort: medium
+# max ne doit jamais être le défaut système
+forbid_default: [max]
+
+levels:
+  - id: low
+    rank: 1
+    use_when:
+      - string_search
+      - rename
+      - formatting
+      - classification
+      - short_read
+      - short_summary
+      - deterministic_transform
+      - mechanical_edit
+      - light_verification
+    goals:
+      - save_quota
+      - limit_tokens
+      - reduce_latency
+      - avoid_useless_reasoning
+
+  - id: medium
+    rank: 2
+    use_when:
+      - localized_bug
+      - small_component
+      - small_feature
+      - few_files_analysis
+      - technical_docs
+      - targeted_test
+      - clear_mandate_few_deps
+    goals:
+      - standard_default
+
+  - id: high
+    rank: 3
+    use_when:
+      - multifile_refactor
+      - architecture
+      - complex_debugging
+      - runtime_frontend_interaction
+      - contract_change
+      - security
+      - migration
+      - multidisciplinary
+      - large_context_needed
+    goals:
+      - depth
+
+  - id: max
+    rank: 4
+    use_when:
+      - critical_mission
+      - high_uncertainty
+      - hard_to_reverse
+      - repeated_failures
+      - risky_migration
+      - deep_architecture
+      - many_dependencies
+    goals:
+      - maximum_depth
+    constraints:
+      - never_system_default
+
+# Escalade / réduction (règles déclaratives — runtime plus tard)
+escalation:
+  - from: low
+    to: medium
+    when: [uncertain_result, insufficient_context, first_red_test, ambiguity, tool_failure]
+  - from: medium
+    to: high
+    when: [interdependent_files, architecture_contradiction, multiple_corrections, underestimated_risk, insufficient_proof]
+  - from: high
+    to: max
+    when: [complex_block, irreversible_decision, repeated_failures, multiple_plausible_approaches, residual_high_uncertainty]
+
+reduction:
+  - from: high
+    to: medium
+    when: [simpler_than_expected, localized_problem, deterministic_plan, extra_context_no_value]
+  - from: medium
+    to: low
+    when: [simpler_than_expected, localized_problem, deterministic_plan]

@@ -1,0 +1,128 @@
+# Contrat d'une session = rôle + modèle + effort + budget + preuves
+# feat/role-model-separation — Étape 1. Schéma déclaratif (pas d'exécution).
+
+schema_version: 1
+kind: session_assignment_schema
+status: draft_parallel
+
+# Champs requis d'un SessionAssignment
+required:
+  - mission_id
+  - manager_id
+  - agent_role_id
+  - model
+  - effort
+  - session_id
+
+properties:
+  mission_id:
+    type: string
+    pattern: '^MIS-.+'
+  manager_id:
+    type: string
+    pattern: '^MGR-.+'
+  agent_role_id:
+    type: string
+    pattern: '^AGENT-.+'
+  session_id:
+    type: string
+  model:
+    type: object
+    required: [family, variant, provider]
+    properties:
+      family:
+        type: string
+        enum_ref: model_catalog.families.id
+      variant:
+        type: string
+      provider:
+        type: string
+  effort:
+    type: string
+    enum: [low, medium, high, max]
+  effort_requested:
+    type: string
+    enum: [low, medium, high, max]
+  effort_actual:
+    type: string
+    enum: [low, medium, high, max]
+  selection:
+    type: object
+    properties:
+      reasons:
+        type: array
+        items: { type: string }
+      alternatives:
+        type: array
+        items:
+          type: object
+          required: [family, rejected_because]
+  tools:
+    type: array
+    items: { type: string }
+  permissions:
+    type: object
+  workspace:
+    type: string
+  budget:
+    type: object
+    properties:
+      token_limit: { type: number }
+      time_limit_minutes: { type: number }
+      retry_limit: { type: number }
+      correction_limit: { type: number }
+  proofs_expected:
+    type: array
+  stop_conditions:
+    type: array
+  resume_strategy:
+    type: object
+
+# Interdits absolus sur un assignment
+forbidden:
+  model_family_in:
+    - gemini
+    - antigravity
+  # Un assignment ne doit pas utiliser un id AG-* comme rôle org
+  agent_role_id_prefix_forbidden:
+    - AG-
+  manager_id_must_not_be_model_brand: true
+
+example:
+  mission_id: MIS-1042
+  manager_id: MGR-ENGINEERING
+  agent_role_id: AGENT-FRONTEND-ENGINEER
+  session_id: ses_example_001
+  model:
+    family: codex
+    variant: luna-max
+    provider: openai-subscription
+  effort: high
+  effort_requested: high
+  effort_actual: high
+  selection:
+    reasons:
+      - refactorisation multi-fichiers
+      - besoin shell et tests
+      - contexte estime eleve
+    alternatives:
+      - family: claude
+        variant: claude-opus-4-8
+        effort: high
+        rejected_because:
+          - cout ou quota estime superieur
+      - family: hy3-free
+        effort: medium
+        rejected_because:
+          - contexte insuffisant
+          - mission trop risquee
+  tools: [filesystem, shell, tests]
+  workspace: worktree/mis-1042/frontend
+  budget:
+    token_limit: 180000
+    time_limit_minutes: 40
+    retry_limit: 1
+    correction_limit: 2
+  proofs_expected:
+    - type: tests
+    - type: visual-proof

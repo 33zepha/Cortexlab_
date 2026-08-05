@@ -1,0 +1,85 @@
+# Catalogue des familles et variantes de modèles
+# Source de vérité pour feat/role-model-separation — Étape 1.
+# NON branché sur le runtime d'exécution.
+#
+# Aucune famille Gemini / Antigravity dans l'architecture active.
+
+schema_version: 1
+kind: model_catalog
+status: draft_parallel
+
+forbidden_families:
+  - gemini
+  - antigravity
+  - google-generative
+
+families:
+  - id: claude
+    provider_paths:
+      - anthropic-cli
+      - anthropic-subscription
+    description: Famille Claude — analyse, critique, archi, produit, UX, spec, revue.
+    # Tendances = priors faibles, pas des lois de routage.
+    initial_priors: [complex_analysis, critique, architecture, product, ux, specification, code_review, long_reasoning]
+    variants:
+      - id: claude-opus-4-8
+        status: available
+        cost_class: high
+        quality_prior: 0.95
+      - id: claude-sonnet-4-5
+        status: available
+        cost_class: medium
+        quality_prior: 0.9
+      - id: claude-haiku-4-5
+        status: available
+        cost_class: low
+        quality_prior: 0.82
+
+  - id: codex
+    provider_paths:
+      - openai-codex-cli
+      - openai-subscription
+    description: Famille Codex/OpenAI — exploration repo, implementation, shell, tests, debug.
+    initial_priors: [repo_exploration, implementation, shell, tests, debugging, refactor, migration]
+    variants:
+      - id: gpt-5.6-luna
+        status: available
+        aliases: [luna]
+        cost_class: medium
+        quality_prior: 0.93
+      - id: luna-max
+        status: available
+        # Hypothèse avantage long contexte / multi-fichiers — À MESURER (pas une vérité).
+        cost_class: medium
+        quality_prior: 0.93
+        long_context_prior: high
+        hypothesis: economical_long_context_multifile
+
+  - id: kimi
+    provider_paths:
+      - moonshot-cli
+      - moonshot-subscription
+    description: Famille Kimi — long contexte, lecture massive, synthèse, recherche.
+    initial_priors: [long_context, documentary_exploration, synthesis, extraction, research]
+    variants:
+      - id: kimi-k3
+        status: available
+        cost_class: medium
+        quality_prior: 0.88
+
+  - id: hy3-free
+    provider_paths:
+      - nous-hermes
+    description: Modele gratuit de soutien — low risk only.
+    initial_priors: [classification, light_summary, mandate_prep, mechanical_check]
+    constraints:
+      - free
+      - potentially_slow
+      - limited_context
+      - reliability_to_measure
+      - not_for_critical_missions_because_free
+    variants:
+      - id: hy3
+        status: available
+        cost_class: free
+        quality_prior: 0.8
