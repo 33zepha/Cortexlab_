@@ -1,69 +1,67 @@
-# Contrat d'une session = rôle + modèle + effort + budget + preuves
-# feat/role-model-separation — Étape 1. Schéma déclaratif (pas d'exécution).
-
-schema_version: 1
+# SessionAssignment V2 — aligné Mission Planner V2
+schema_version: 2
 kind: session_assignment_schema
 status: draft_parallel
 
-# Champs requis d'un SessionAssignment
 required:
   - mission_id
   - manager_id
   - agent_role_id
-  - model
-  - effort
   - session_id
+  - status
 
 properties:
-  mission_id:
-    type: string
-    pattern: '^MIS-.+'
-  manager_id:
-    type: string
-    pattern: '^MGR-.+'
-  agent_role_id:
-    type: string
-    pattern: '^AGENT-.+'
-  session_id:
-    type: string
+  mission_id: { type: string, pattern: '^MIS-.+' }
+  manager_id: { type: string, pattern: '^MGR-.+' }
+  agent_role_id: { type: string, pattern: '^AGENT-.+' }
+  session_id: { type: string }
+  status: { type: string, enum: [planned, unassigned, blocked] }
+  order: { type: number }
+  role_profile: { type: object }
+
   model:
     type: object
-    required: [family, variant, provider]
+    required: [family, variant, access_channel]
     properties:
-      family:
-        type: string
-        enum_ref: model_catalog.families.id
-      variant:
-        type: string
-      provider:
-        type: string
+      family: { type: string }
+      variant: { type: string }
+      access_channel: { type: string }
+      # provider is LEGACY only — never authoritative in V2 outputs
+
   effort:
-    type: string
-    enum: [none, low, medium, high, xhigh, max]
-  effort_requested:
-    type: string
-    enum: [none, low, medium, high, xhigh, max]
-  effort_actual:
-    type: string
-    enum: [none, low, medium, high, xhigh, max]
+    type: object
+    required: [requested, canonical, provider, minimum]
+    properties:
+      requested: { type: string, enum: [none, low, medium, high, xhigh, max] }
+      minimum: { type: string, enum: [none, low, medium, high, xhigh, max] }
+      canonical: { type: string, enum: [none, low, medium, high, xhigh, max] }
+      provider: { type: string }
+      semantics: { type: string }
+      mapping_reason: { type: string }
+      decision:
+        type: object
+        properties:
+          kind: { type: string, enum: [direct, upward_remap, explicit_reduction] }
+          approved_by: { type: string }
+          reason: { type: string }
+
   selection:
     type: object
     properties:
-      reasons:
-        type: array
-        items: { type: string }
-      alternatives:
-        type: array
-        items:
-          type: object
-          required: [family, rejected_because]
-  tools:
-    type: array
-    items: { type: string }
-  permissions:
+      reason: { type: string }
+      confidence: { type: number }
+      chosen_score: { type: number }
+      rejected_alternatives: { type: array }
+      fallback_chain: { type: array }
+
+  requirements:
     type: object
-  workspace:
-    type: string
+    properties:
+      capabilities: { type: array }
+      tools: { type: array }
+      modalities: { type: array }
+      context: { type: number }
+
   budget:
     type: object
     properties:
@@ -71,58 +69,44 @@ properties:
       time_limit_minutes: { type: number }
       retry_limit: { type: number }
       correction_limit: { type: number }
-  proofs_expected:
-    type: array
-  stop_conditions:
-    type: array
-  resume_strategy:
-    type: object
+      allocation_reason: { type: string }
 
-# Interdits absolus sur un assignment
-forbidden:
-  model_family_in:
-    - gemini
-    - antigravity
-  # Un assignment ne doit pas utiliser un id AG-* comme rôle org
-  agent_role_id_prefix_forbidden:
-    - AG-
-  manager_id_must_not_be_model_brand: true
+  proofs_expected: { type: array }
 
 example:
   mission_id: MIS-1042
   manager_id: MGR-ENGINEERING
   agent_role_id: AGENT-FRONTEND-ENGINEER
-  session_id: ses_example_001
+  session_id: ses_MIS-1042_0_AGENT-FRONTEND-ENGINEER
+  status: planned
+  order: 0
   model:
     family: codex
     variant: gpt-5.6-luna
-    provider: codex_subscription_cli
-  effort: high
-  effort_requested: high
-  effort_actual: high
+    access_channel: codex_subscription_cli
+  effort:
+    requested: high
+    minimum: medium
+    canonical: high
+    provider: high
+    semantics: reasoning_effort
+    mapping_reason: direct
+    decision: { kind: direct, approved_by: selector, reason: direct }
   selection:
-    reasons:
-      - refactorisation multi-fichiers
-      - besoin shell et tests
-      - contexte estime eleve
-    alternatives:
-      - family: claude
-        variant: claude-opus-4-8
-        effort: high
-        rejected_because:
-          - cout ou quota estime superieur
-      - family: hy3
-        effort: medium
-        rejected_because:
-          - contexte insuffisant
-          - mission trop risquee
-  tools: [filesystem, shell, tests]
-  workspace: worktree/mis-1042/frontend
+    reason: example
+    confidence: 0.8
+    chosen_score: 90
+    rejected_alternatives: []
+    fallback_chain: []
+  requirements:
+    capabilities: [filesystem, shell, code_execution]
+    tools: []
+    modalities: []
+    context: 0
   budget:
-    token_limit: 180000
+    token_limit: 40000
     time_limit_minutes: 40
     retry_limit: 1
-    correction_limit: 2
-  proofs_expected:
-    - type: tests
-    - type: visual-proof
+    correction_limit: 1
+    allocation_reason: weight_3_of_mission
+  proofs_expected: [tests]

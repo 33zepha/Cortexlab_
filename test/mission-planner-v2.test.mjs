@@ -332,12 +332,22 @@ test('SCENARIO D light task prefers HY3', () => {
     risk: 'low',
     budget_policy: 'economical',
   })
-  // may clarify if weak signal — if planned, hy3 preferred
-  if (plan.status === 'planned') {
-    assert.equal(plan.organization.manager_role_ids.includes('MGR-LEARNING-EVALUATION'), false)
-    const families = plan.assignments.filter((a) => a.status === 'planned').map((a) => a.model.family)
-    assert.ok(families.includes('hy3') || families.every((f) => f !== 'claude' || true))
-  }
+  assert.equal(plan.status, 'planned', JSON.stringify(plan.organization))
+  assert.ok(plan.organization.manager_role_ids.includes('MGR-RESEARCH'))
+  assert.ok(plan.organization.agent_role_ids.includes('AGENT-SYNTHESIS'))
+  assert.equal(plan.organization.manager_role_ids.includes('MGR-LEARNING-EVALUATION'), false)
+  const syn = plan.assignments.find((a) => a.agent_role_id === 'AGENT-SYNTHESIS')
+  assert.ok(syn)
+  assert.equal(syn.status, 'planned')
+  assert.equal(syn.model.family, 'hy3')
+  assert.equal(syn.model.variant, 'tencent/hy3:free')
+  assert.ok(['none', 'low'].includes(syn.effort.canonical))
+  assert.equal(
+    plan.assignments.some(
+      (a) => a.status === 'planned' && (a.model?.variant === 'gpt-5.6-sol' || String(a.model?.variant || '').includes('opus')),
+    ),
+    false,
+  )
 })
 
 test('SCENARIO E critical migration', () => {

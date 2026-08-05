@@ -85,7 +85,7 @@ roles:
     - shell
     default_effort: high
     minimum_effort: high
-    context_class: large
+    hy3_eligible: false
     review_policy: second_family_on_critical
 - id: AGENT-FRONTEND-ENGINEER
   kind: specialized_agent
@@ -102,7 +102,7 @@ roles:
     - vision
     default_effort: medium
     minimum_effort: low
-    context_class: medium
+    hy3_eligible: false
 - id: AGENT-BACKEND-ENGINEER
   kind: specialized_agent
   name: Backend Engineer
@@ -118,6 +118,7 @@ roles:
     default_effort: medium
     minimum_effort: low
     context_class: medium
+    hy3_eligible: false
 - id: AGENT-TEST-ENGINEER
   kind: specialized_agent
   name: Test Engineer
@@ -133,6 +134,7 @@ roles:
     default_effort: medium
     minimum_effort: low
     context_class: medium
+    hy3_eligible: false
 - id: AGENT-DEBUGGING
   kind: specialized_agent
   name: Debugging Agent
@@ -148,6 +150,7 @@ roles:
     default_effort: high
     minimum_effort: medium
     context_class: medium
+    hy3_eligible: false
 - id: AGENT-SECURITY-REVIEWER
   kind: specialized_agent
   name: Security Reviewer
@@ -161,7 +164,7 @@ roles:
     - shell
     default_effort: high
     minimum_effort: high
-    context_class: medium
+    hy3_eligible: false
     review_policy: no_hy3
 - id: AGENT-RELEASE-REVIEWER
   kind: specialized_agent
@@ -174,54 +177,59 @@ roles:
     - filesystem
     default_effort: medium
     minimum_effort: medium
+    hy3_eligible: false
 - id: AGENT-PRODUCT-ANALYST
   kind: specialized_agent
   name: Product Analyst
   reports_to: MGR-PRODUCT-EXPERIENCE
   domain: product_experience
   model_requirements:
-    task_profile: light
+    task_profile: product_analysis
     required_capabilities:
     - filesystem
-    default_effort: low
-    minimum_effort: none
+    default_effort: medium
+    minimum_effort: low
+    hy3_eligible: false
 - id: AGENT-UX-ANALYST
   kind: specialized_agent
   name: UX Analyst
   reports_to: MGR-PRODUCT-EXPERIENCE
   domain: product_experience
   model_requirements:
-    task_profile: light
+    task_profile: ux_analysis
     required_capabilities:
     - filesystem
     preferred_capabilities:
     - vision
     default_effort: medium
-    minimum_effort: low
+    minimum_effort: medium
+    hy3_eligible: false
 - id: AGENT-INTERFACE-DESIGNER
   kind: specialized_agent
   name: Interface Designer
   reports_to: MGR-PRODUCT-EXPERIENCE
   domain: product_experience
   model_requirements:
-    task_profile: light
+    task_profile: interface_design
     required_capabilities:
-    - filesystem
-    preferred_capabilities:
     - vision
+    preferred_capabilities:
+    - filesystem
     default_effort: medium
-    minimum_effort: low
+    minimum_effort: medium
+    hy3_eligible: false
 - id: AGENT-INTERACTION-DESIGNER
   kind: specialized_agent
   name: Interaction Designer
   reports_to: MGR-PRODUCT-EXPERIENCE
   domain: product_experience
   model_requirements:
-    task_profile: light
+    task_profile: interaction_design
     required_capabilities:
     - filesystem
     default_effort: medium
-    minimum_effort: low
+    minimum_effort: medium
+    hy3_eligible: false
 - id: AGENT-VISUAL-REVIEWER
   kind: specialized_agent
   name: Visual Reviewer
@@ -235,6 +243,7 @@ roles:
     - filesystem
     default_effort: medium
     minimum_effort: low
+    hy3_eligible: false
 - id: AGENT-ACCESSIBILITY-REVIEWER
   kind: specialized_agent
   name: Accessibility Reviewer
@@ -246,6 +255,7 @@ roles:
     - filesystem
     default_effort: medium
     minimum_effort: low
+    hy3_eligible: true
 - id: AGENT-RESEARCH
   kind: specialized_agent
   name: Research Agent
@@ -260,6 +270,7 @@ roles:
     default_effort: medium
     minimum_effort: low
     context_class: large
+    hy3_eligible: false
 - id: AGENT-SOURCE-VERIFIER
   kind: specialized_agent
   name: Source Verifier
@@ -273,6 +284,7 @@ roles:
     - web_search
     default_effort: low
     minimum_effort: none
+    hy3_eligible: true
 - id: AGENT-LONG-CONTEXT-READER
   kind: specialized_agent
   name: Long-Context Reader
@@ -285,17 +297,21 @@ roles:
     default_effort: high
     minimum_effort: medium
     context_class: large
+    hy3_eligible: false
 - id: AGENT-SYNTHESIS
   kind: specialized_agent
   name: Synthesis Agent
   reports_to: MGR-RESEARCH
   domain: research
   model_requirements:
-    task_profile: long_read
+    task_profile: light_information_processing
     required_capabilities:
     - filesystem
-    default_effort: medium
-    minimum_effort: low
+    preferred_capabilities: []
+    default_effort: low
+    minimum_effort: none
+    context_class: small
+    hy3_eligible: true
 - id: AGENT-FACT-CHECKER
   kind: specialized_agent
   name: Fact Checker
@@ -309,17 +325,19 @@ roles:
     - web_search
     default_effort: medium
     minimum_effort: low
+    hy3_eligible: true
 - id: AGENT-MISSION-EVALUATOR
   kind: specialized_agent
   name: Mission Evaluator
   reports_to: MGR-LEARNING-EVALUATION
   domain: learning_evaluation
   model_requirements:
-    task_profile: light
+    task_profile: mission_evaluation
     required_capabilities:
     - filesystem
     default_effort: medium
-    minimum_effort: low
+    minimum_effort: medium
+    hy3_eligible: false
 - id: AGENT-MODEL-EVALUATOR
   kind: specialized_agent
   name: Model Evaluator
@@ -331,6 +349,7 @@ roles:
     - filesystem
     default_effort: medium
     minimum_effort: low
+    hy3_eligible: true
 - id: AGENT-ROUTING-EVALUATOR
   kind: specialized_agent
   name: Routing Evaluator
@@ -342,17 +361,19 @@ roles:
     - filesystem
     default_effort: medium
     minimum_effort: low
+    hy3_eligible: true
 - id: AGENT-EVIDENCE-AUDITOR
   kind: specialized_agent
   name: Evidence Auditor
   reports_to: MGR-LEARNING-EVALUATION
   domain: learning_evaluation
   model_requirements:
-    task_profile: light
+    task_profile: evidence_audit
     required_capabilities:
     - filesystem
     default_effort: medium
     minimum_effort: low
+    hy3_eligible: false
 - id: AGENT-LESSONS
   kind: specialized_agent
   name: Lessons Agent
@@ -364,14 +385,16 @@ roles:
     - filesystem
     default_effort: low
     minimum_effort: none
+    hy3_eligible: true
 - id: AGENT-PEDAGOGY
   kind: specialized_agent
   name: Pedagogy Agent
   reports_to: MGR-LEARNING-EVALUATION
   domain: learning_evaluation
   model_requirements:
-    task_profile: light
+    task_profile: pedagogy
     required_capabilities:
     - filesystem
     default_effort: low
     minimum_effort: none
+    hy3_eligible: true

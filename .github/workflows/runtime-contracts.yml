@@ -1,0 +1,69 @@
+name: runtime-contracts
+on:
+  pull_request:
+    branches: [main, feat/role-model-separation]
+    paths:
+      - 'contracts/**'
+      - 'runtime/**'
+      - 'scripts/**'
+      - 'test/**'
+      - 'manifests/**'
+      - 'constitution/**'
+      - 'registry/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'generate-registry.mjs'
+      - '.github/workflows/runtime-contracts.yml'
+  push:
+    branches: [feat/role-model-separation]
+    paths:
+      - 'contracts/**'
+      - 'runtime/**'
+      - 'scripts/**'
+      - 'test/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'generate-registry.mjs'
+      - '.github/workflows/runtime-contracts.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Unit tests
+        run: npm test
+      - name: Registry verify
+        run: node generate-registry.mjs --verify
+      - name: Clean tree after generate
+        run: git diff --exit-code
+      - name: YAML parse contracts
+        run: |
+          node -e "
+          import yaml from 'js-yaml';
+          import fs from 'fs';
+          import path from 'path';
+          const dir='contracts';
+          for (const f of fs.readdirSync(dir).filter(x=>x.endsWith('.yaml'))) {
+            yaml.load(fs.readFileSync(path.join(dir,f),'utf8'));
+            console.log('ok', f);
+          }
+          "
+      - name: Secret scan proofs
+        run: |
+          if rg -n 'sk-[a-zA-Z0-9]{10,}|ghp_|BEGIN PRIVATE|api[_-]?key\s*[:=]\s*['\''\"][A-Za-z0-9]' docs/proofs contracts 2>/dev/null; then
+            echo 'secret-like content found'; exit 1
+          fi
+          echo 'secret scan clean'
+      - name: No IA CLI invocation
+        run: |
+          # Ensure workflow itself doesn't call model CLIs
+          ! rg -n 'claude |codex |kimi |hermes chat|grok ' .github/workflows/runtime-contracts.yml

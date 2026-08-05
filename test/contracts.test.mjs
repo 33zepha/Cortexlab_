@@ -137,8 +137,10 @@ test('bindings transitoires couvrent les AG-* legacy sans figer Luna comme role'
     assert.ok(byLegacy[id], id)
   }
   assert.equal(byLegacy['AG-LUNA'].maps_role_to, null)
-  assert.equal(byLegacy['AG-LUNA'].default_model_variant, 'luna-max')
+  assert.equal(byLegacy['AG-LUNA'].default_model_variant, 'gpt-5.6-luna')
   assert.equal(byLegacy['AG-CODEX'].maps_role_to, 'MGR-ENGINEERING')
+  assert.equal(byLegacy['AG-CODEX'].default_model_variant, 'gpt-5.6-luna')
+  assert.equal(byLegacy['AG-KIMI'].default_model_variant, 'k3')
   assert.equal(catalogs.transitional.chief_of_staff.role_id, 'ROLE-CHIEF-OF-STAFF')
   assert.equal(catalogs.transitional.chief_of_staff.legacy_agent_id, null)
 })

@@ -66,6 +66,34 @@ export function loadTransitionalBindings(dir = CONTRACTS_DIR) {
 }
 
 /** Ids de rôles ne doivent pas être des marques modèles. */
+/**
+ * Normalize V2 nested SessionAssignment (or legacy flat) into validator-friendly form.
+ * V2 outputs always nested; legacy may use model.provider + flat effort string.
+ */
+export function normalizeLegacySessionAssignment(assignment) {
+  if (!assignment || typeof assignment !== 'object') return assignment
+  const a = { ...assignment }
+  // model
+  if (a.model && typeof a.model === 'object') {
+    a.model = {
+      family: a.model.family,
+      variant: a.model.variant,
+      access_channel: a.model.access_channel || a.model.provider || null,
+    }
+  }
+  // effort nested → also expose flat for checks
+  if (a.effort && typeof a.effort === 'object') {
+    a.effort_requested = a.effort.requested
+    a.effort_actual = a.effort.canonical
+    a.provider_effort = a.effort.provider
+    a.effort_minimum = a.effort.minimum
+  } else if (typeof a.effort === 'string') {
+    a.effort_requested = a.effort_requested || a.effort
+    a.effort_actual = a.effort_actual || a.effort
+  }
+  return a
+}
+
 export function assertRoleIdsAreOrganizational(roles) {
   const bad = []
   for (const r of roles || []) {
@@ -125,6 +153,7 @@ export function validateSessionAssignment(assignment, catalogs) {
   const roles = catalogs.roles
   const models = catalogs.models
   const efforts = catalogs.efforts
+  assignment = normalizeLegacySessionAssignment(assignment)
 
   if (!assignment || typeof assignment !== 'object') {
     return { ok: false, errors: ['assignment missing'] }

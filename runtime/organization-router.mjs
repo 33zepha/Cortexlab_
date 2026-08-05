@@ -102,7 +102,9 @@ export function routeOrganization(mission = {}, rolesDoc = loadRoles()) {
     risk = 'medium',
     needs_evaluation = false,
     needs_pedagogy = false,
+    context_required = 0,
   } = mission
+  mission.context_required = context_required
 
   const text = `${goal} ${(domains || []).join(' ')}`
   const tokens = tokenizeMissionText(text)
@@ -151,10 +153,21 @@ export function routeOrganization(mission = {}, rolesDoc = loadRoles()) {
     hasAnyToken(tokens, uiTokens) ||
     hasPhrase(text, 'mission control') && hasAnyToken(tokens, ['mobile', 'visuel', 'visual', 'ux', 'ui', 'design', 'refonte'])
 
+  const lightInfoTokens = [
+    'extract', 'extraire', 'extraction', 'classify', 'classer', 'classification',
+    'reformulate', 'reformuler', 'summarize', 'resumer', 'resume', 'résumer',
+    'transform', 'transformation', 'label', 'etiqueter', 'étiqueter',
+    'sort', 'trier', 'normalize', 'normaliser', 'entrees', 'entries', 'rows',
+  ]
+  const wantLightInfo =
+    hasAnyToken(tokens, lightInfoTokens) &&
+    !hasAnyToken(tokens, ['architecture', 'migration', 'security', 'securite', 'refactor'])
+
   const wantResearch =
     domainResearch ||
-    hasAnyToken(tokens, ['research', 'source', 'paper', 'benchmark', 'documentaire', 'synthèse', 'synthese', 'web', 'twitter', 'x']) ||
-    hasPhrase(text, 'orchestration agentique')
+    hasAnyToken(tokens, ['research', 'source', 'paper', 'benchmark', 'documentaire', 'synthese', 'web', 'twitter']) ||
+    hasPhrase(text, 'orchestration agentique') ||
+    (wantLightInfo && !wantEng && !wantPx)
 
   // Ambiguous?
   const signalStrength = (wantEng ? 1 : 0) + (wantPx ? 1 : 0) + (wantResearch ? 1 : 0) + (domains.length ? 1 : 0)
@@ -237,15 +250,22 @@ export function routeOrganization(mission = {}, rolesDoc = loadRoles()) {
     proofs.add('visual-proof')
   }
 
-  if (wantResearch) {
+  if (wantResearch || wantLightInfo) {
     addManager('MGR-RESEARCH')
-    rationale.push('research signals → MGR-RESEARCH')
-    addAgent('AGENT-RESEARCH')
-    if (hasAnyToken(tokens, ['source', 'cite', 'verif', 'comparer', 'compare'])) addAgent('AGENT-SOURCE-VERIFIER')
-    if (hasAnyToken(tokens, ['long', 'huge', 'massif', 'context'])) addAgent('AGENT-LONG-CONTEXT-READER')
-    addAgent('AGENT-SYNTHESIS')
-    if (hasAnyToken(tokens, ['fact', 'claim', 'contradict'])) addAgent('AGENT-FACT-CHECKER')
-    proofs.add('sources')
+    if (wantLightInfo && !domainResearch && !hasAnyToken(tokens, ['research', 'paper', 'benchmark', 'long', 'huge'])) {
+      rationale.push('light information processing → MGR-RESEARCH / AGENT-SYNTHESIS')
+      addAgent('AGENT-SYNTHESIS')
+    } else {
+      rationale.push('research signals → MGR-RESEARCH')
+      addAgent('AGENT-RESEARCH')
+      if (hasAnyToken(tokens, ['source', 'cite', 'verif', 'comparer', 'compare'])) addAgent('AGENT-SOURCE-VERIFIER')
+      if (hasAnyToken(tokens, ['long', 'huge', 'massif', 'context']) || (mission.context_required || 0) >= 100000) {
+        addAgent('AGENT-LONG-CONTEXT-READER')
+      }
+      addAgent('AGENT-SYNTHESIS')
+      if (hasAnyToken(tokens, ['fact', 'claim', 'contradict'])) addAgent('AGENT-FACT-CHECKER')
+      proofs.add('sources')
+    }
   }
 
   // Mnemosyne rules
