@@ -89,7 +89,15 @@ for (const mf of manifestFiles) {
         role: ag?.role || null,
         provider: ag?.provider || null,
         model: ag?.model || null,
+        // Chaine de rattachement : sans elle le dashboard ne peut pas afficher
+        // qui repond a qui, et une hierarchie incoherente passe inapercue.
+        reports_to: ag?.reports_to || null,
+        reasoning_effort: ag?.reasoning_effort || null,
         strengths: ag?.strengths || null,
+        // Perimetre d'autorite lisible (n'entre PAS dans le scoring du router,
+        // qui ne matche que `strengths`).
+        domain_expertise: ag?.domain_expertise || null,
+        capabilities: ag?.capabilities || null,
         cost_index: ag?.cost_index ?? null,
         quality_index: ag?.quality_index ?? null,
       })
