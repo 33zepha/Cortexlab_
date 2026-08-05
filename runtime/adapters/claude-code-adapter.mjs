@@ -61,10 +61,9 @@ export function preflight({ model, effort } = {}) {
 }
 
 /** Public argv for spawn + audit — NEVER includes prompt text. */
-export function buildArgv({ model, effort, permissionMode = 'acceptEdits' }) {
-  return [
+export function buildArgv({ model, effort, permissionMode = 'acceptEdits', bare = false }) {
+  const argv = [
     '-p',
-    '--bare',
     '--output-format',
     'json',
     '--model',
@@ -75,6 +74,9 @@ export function buildArgv({ model, effort, permissionMode = 'acceptEdits' }) {
     permissionMode,
     '--no-session-persistence',
   ]
+  // --bare can skip auth/session loading on some installs; default off for real runs
+  if (bare) argv.splice(1, 0, '--bare')
+  return argv
 }
 
 export function parseResult(stdout) {
