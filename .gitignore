@@ -19,3 +19,5 @@ bundles/*.json
 # External attachments (rapports collés, hors produit)
 .hermes/
 plans/
+.cortex/
+ledger/e2e-session-runner-v1.ndjson
