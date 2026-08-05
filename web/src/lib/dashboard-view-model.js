@@ -53,7 +53,10 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
 
   // Determine provenance for each section
   const isMissionLive = missions && missions.length > 0
-  const activeMission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0]
+  // /api/missions returns missions reverse-chronological (most recent first).
+  // Prefer a genuinely in-progress mission (status running/active); otherwise
+  // fall back to the most recent real mission — never a fabricated one.
+  const activeMission = missions.find((m) => /running|active/i.test(m.status || '')) || missions[0] || null
 
   const hasNumericProgress = typeof activeMission?.progress === 'number'
 
@@ -173,8 +176,11 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
       { ts: new Date().toISOString(), data: { agent: 'Hermes' }, type: 'Mission démarrée par commande externe' },
     ],
 
-    // Terminal output — PLACEHOLDER until runtime exposes a real stream
-    terminal: `> cortex mission status MIS-2024-05-24-001\n\nMission: Refonte plateforme RH multi-agent\nStatus: Running\nProgress: 62%\nActive Agents: 7\nBudget: €12.45 / €25.00\nTokens: 1,243,672 / 3,000,000\nStart Time: 2024-05-24 12:47:33\nUptime: 2h 47m 12s\n\n>`,
+    // Terminal output — DERIVED from the real active mission when one exists,
+    // otherwise a plain "no mission" message. No fabricated mission data.
+    terminal: isMissionLive
+      ? `> cortex mission status ${activeMission.id}\n\nMission: ${activeMission.name || activeMission.mission || activeMission.id}\nDomain: ${activeMission.domain || '—'}\nStatus: ${activeMission.status || '—'}\nProgress: ${hasNumericProgress ? `${activeMission.progress}%` : '—'}\nActive Agents: ${activeAgentCount}\nBudget: ${isBudgetCompleteLive ? `€${formatNumber(budgetCost)} / €${formatNumber(budgetLimit)}` : '—'}\nManager: ${activeMission.manager?.name || '—'}\nStart Time: ${activeMission.started_at || '—'}\nLast Event: ${activeMission.latest_event?.ts || '—'}\n\n>`
+      : `> cortex mission status\n\nNo active mission in the ledger.\n\n>`,
 
     // Health panel — PLACEHOLDER until runtime exposes real health metrics
     health: {
@@ -278,10 +284,10 @@ export function buildDashboardViewModel(ledgerData, now, selectedNodeId = DEFAUL
       },
 
       terminal: {
-        kind: 'PLACEHOLDER',
-        source: 'hardcoded template (no runtime logs)',
-        updatedAt: null,
-        confidence: 0,
+        kind: isMissionLive ? 'DERIVED' : 'PLACEHOLDER',
+        source: isMissionLive ? 'formatted from ledger.missions[0] via /api/missions' : 'no active mission',
+        updatedAt: isMissionLive ? lastSync : null,
+        confidence: isMissionLive ? 1 : 0,
       },
 
       health: {

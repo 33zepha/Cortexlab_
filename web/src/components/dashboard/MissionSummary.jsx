@@ -10,12 +10,13 @@ function SummaryMetric({ label, value, percent }) {
 
 export default function MissionSummary({ summary }) {
   const { mission, progress, budget, tokens, activeAgent } = summary
+  const isRunning = /running|active/i.test(mission?.status || '')
   return (
     <aside className="mission-summary-card">
       <span className="reference-kicker">ACTIVE MISSION</span>
-      <h2>{mission?.name || mission?.mission || 'Refonte plateforme RH'}</h2>
-      <p>{mission?.id || 'MIS-2024-05-24-001'}</p>
-      <span className="summary-running"><i />Running</span>
+      <h2>{mission?.name || mission?.mission || 'Aucune mission active'}</h2>
+      <p>{mission?.id || '—'}</p>
+      <span className="summary-running"><i />{mission ? (isRunning ? 'Running' : mission.status) : 'Hors ligne'}</span>
       <div className="summary-meter"><span><b style={{ width: `${progress}%` }} /></span><strong>{progress}%</strong></div>
       <div className="summary-divider" />
       <SummaryMetric label="Budget" value={`${budget.cost} / ${budget.limit}`} percent={budget.percent} />

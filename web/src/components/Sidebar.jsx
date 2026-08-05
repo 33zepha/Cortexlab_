@@ -1,4 +1,5 @@
 import Icon from './Icon.jsx'
+import phanesLogo from '../assets/phanes-logo.svg'
 
 // Section 1/2 of docs/UI_VISION.md: seven business spaces + a separated
 // System/Settings utility zone. Only Overview ships with a real view in this
@@ -50,8 +51,10 @@ export default function Sidebar({ activeSpace = 'overview', onNavigate = () => {
       {open && <div className="sidebar-backdrop" onClick={onClose} aria-hidden="true" />}
       <aside className={`sidebar-shell ${open ? 'is-open' : ''}`}>
         <div className="brand-row">
-          <span className="brand-mark" aria-hidden="true"><i /></span>
-          <span className="brand-name">Cortex Lab</span>
+          <span className="brand-logo" role="img" aria-label="Cortex Lab">
+            <img src={phanesLogo} alt="" />
+          </span>
+          <span className="brand-name">cortexlab_</span>
           <button type="button" className="sidebar-close" onClick={onClose} aria-label="Fermer la navigation">
             <Icon name="close" />
           </button>

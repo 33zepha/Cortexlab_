@@ -1,14 +1,6 @@
+import { useMemo, useState } from 'react'
 import Icon from './Icon.jsx'
-import { relativeTime } from '../lib/ledger.js'
-
-const STATUS = {
-  running: { label: 'En cours', tone: 'success' },
-  autonomous: { label: 'Autonome', tone: 'success' },
-  information: { label: 'Information', tone: 'warning' },
-  escalated: { label: 'Attention', tone: 'error' },
-  incomplete: { label: 'Incomplète', tone: 'warning' },
-  closed: { label: 'Fermée', tone: 'neutral' },
-}
+import { relativeTime, missionStatus } from '../lib/ledger.js'
 
 const PHASE = {
   starting: 'Initialisation',
@@ -114,7 +106,7 @@ export default function MissionTable({ missions, now, query = '', attentionOnly 
             {visible.length === 0 ? (
               <tr><td colSpan="7" className="empty-cell">Aucune mission ne correspond à cette vue.</td></tr>
             ) : visible.map((mission) => {
-              const status = STATUS[mission.status] || STATUS.closed
+              const status = missionStatus(mission.status) || { label: mission.status || 'Terminée', tone: 'neutral' }
               const budget = mission.budget || { cost: 0, limits: {}, percentage: null }
               const rawEvent = mission.latest_event?.type || '—'
               const openMission = () => onSelect?.(mission.id)

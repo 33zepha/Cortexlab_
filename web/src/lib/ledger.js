@@ -34,6 +34,24 @@ export function shortTs(ts) {
   }).format(date)
 }
 
+// Shared mission status → { label, tone } mapping so the pill in MissionTable
+// and the status text in MissionSummary/MissionHeader stay in sync.
+// tone: success (autonomous), warning (information), error (escalated),
+// info (running/active — blue), neutral (incomplete/closed/unknown).
+const MISSION_STATUS = {
+  running: { label: 'En cours', tone: 'info' },
+  active: { label: 'En cours', tone: 'info' },
+  autonomous: { label: 'Autonome', tone: 'success' },
+  information: { label: 'Information', tone: 'warning' },
+  escalated: { label: 'Attention', tone: 'error' },
+  incomplete: { label: 'Incomplète', tone: 'warning' },
+  closed: { label: 'Fermée', tone: 'neutral' },
+}
+
+export function missionStatus(status) {
+  return MISSION_STATUS[status] || { label: status || 'Inconnu', tone: 'neutral' }
+}
+
 export function closureVariant(closure) {
   switch (closure) {
     case 'LIVRAISON_AUTONOME': return 'success'
